@@ -686,9 +686,11 @@ function capNhatTongQuanOffTheoQuan(ngayXem, thuXem) {
   const elBadge = document.getElementById('tongOffHomNayBadge');
   if (elBadge) elBadge.innerText = `${tongToanKV} Rider OFF`;
   
-  if (document.getElementById('offCountPN')) document.getElementById('offCountPN').innerText = (pn1+pn2);
-  if (document.getElementById('offCountTB')) document.getElementById('offCountTB').innerText = (tb1+tb2);
-  if (document.getElementById('offCountTD')) document.getElementById('offCountTD').innerText = (td1+td2);
+  if (document.getElementById('offCountQ2')) document.getElementById('offCountQ2').innerText = (pn1+pn2);
+  if (document.getElementById('offCountQ4')) document.getElementById('offCountQ4').innerText = (tb1+tb2);
+  if (document.getElementById('offCountQ7')) document.getElementById('offCountQ7').innerText = (td1+td2);
+  if (document.getElementById('offCountQ9')) document.getElementById('offCountQ9').innerText = (q9_1+q9_2);
+  if (document.getElementById('offCountBT')) document.getElementById('offCountBT').innerText = (bt_1+bt_2);
   
   // Update 3 thẻ mới
   if (document.getElementById('offCountCOT1')) document.getElementById('offCountCOT1').innerText = cot1;

@@ -276,23 +276,35 @@
               </div>
             </div>
             <div class="card-body p-2">
-              <div class="row g-2 text-center mb-2">
-                <div class="col-4">
+              <div class="row row-cols-5 g-2 text-center mb-2">
+                <div class="col">
                   <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'quận 2', '', 'QUẬN 2')">
                     <div class="small fw-bold text-primary mb-1">QUẬN 2</div>
-                    <div class="fs-5 fw-bold text-dark" id="offCountPN">0</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountQ2">0</div>
                   </div>
                 </div>
-                <div class="col-4">
+                <div class="col">
                   <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'quận 4', '', 'QUẬN 4')">
                     <div class="small fw-bold text-warning mb-1">QUẬN 4</div>
-                    <div class="fs-5 fw-bold text-dark" id="offCountTB">0</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountQ4">0</div>
                   </div>
                 </div>
-                <div class="col-4">
+                <div class="col">
                   <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'quận 7', '', 'QUẬN 7')">
                     <div class="small fw-bold text-info mb-1">QUẬN 7</div>
-                    <div class="fs-5 fw-bold text-dark" id="offCountTD">0</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountQ7">0</div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'quận 9', '', 'QUẬN 9')">
+                    <div class="small fw-bold text-success mb-1">QUẬN 9</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountQ9">0</div>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'bình thạnh', '', 'BÌNH THẠNH')">
+                    <div class="small fw-bold text-danger mb-1">BÌNH THẠNH</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountBT">0</div>
                   </div>
                 </div>
               </div>
@@ -509,6 +521,28 @@
               </button>
             </div>
             <div class="kpi-val text-info" id="kpiThuDuc">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
+            <div class="kpi-label text-success" id="lblKpi4">
+              QUẬN 9
+              <button class="btn btn-outline-success text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 9', 'Quận Quận 9')" title="Xem chi tiết đơn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-success" id="kpiQ9">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
+            <div class="kpi-label text-danger" id="lblKpi5">
+              BÌNH THẠNH
+              <button class="btn btn-outline-danger text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')" title="Xem chi tiết đơn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-danger" id="kpiBT">—</div>
           </div>
         </div>
         <div class="col-6 col-md-3 col-lg">
@@ -1010,6 +1044,8 @@
               <option value="Quận 2">Quận 2</option>
               <option value="Quận 4">Quận 4</option>
               <option value="Quận 7">Quận 7</option>
+              <option value="Quận 9">Quận 9</option>
+              <option value="Bình Thạnh">Bình Thạnh</option>
               <option value="BK">BACKUP (BK)</option>
             </select>
           </div>
@@ -1882,6 +1918,8 @@
       if (s.includes('quận 2') || s.includes('pn')) return 'quận 2';
       if (s.includes('quận 4') || s.includes('tb')) return 'quận 4';
       if (s.includes('quận 7') || s.includes('td')) return 'quận 7';
+      if (s.includes('quận 9')) return 'quận 9';
+      if (s.includes('bình thạnh') || s.includes('bt')) return 'bình thạnh';
       return s.trim();
     }
 
@@ -2475,6 +2513,8 @@ if (user.role === 'RIDER') {
         document.getElementById('kpiPhuNhuan').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 2').length;
         document.getElementById('kpiTanBinh').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 4').length;
         document.getElementById('kpiThuDuc').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 7').length;
+        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 9').length;
+        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = uniquePending.filter(d => normQ(d.quan) === 'bình thạnh').length;
         document.getElementById('kpiMp').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
         document.getElementById('kpiWh').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
         document.getElementById('kpiHv').innerText = uniquePending.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
