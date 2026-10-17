@@ -1,0 +1,2505 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Điều Phối KV2</title>
+  <!-- PWA Cấu hình App Điện thoại -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0d3b66">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1048/1048313.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    /* THANH MENU NATIVE */
+    .top-navbar {
+      background: linear-gradient(135deg, #0d3b66, #00509d);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 1050;
+      padding: 6px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-title {
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .menu-group { display: flex; flex-wrap: wrap; gap: 4px; }
+    .menu-btn {
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.9);
+      padding: 5px 10px;
+      border-radius: 5px;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+      transition: all 0.1s ease;
+    }
+    .menu-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .menu-btn.active { background: #f77f00 !important; color: #fff !important; font-weight: 700; border-color: #f77f00; }
+
+    .badge-cot1 { background-color: #0d6efd; color: white; }
+    .badge-cot2 { background-color: #fd7e14; color: white; }
+    .table th { background-color: #1b4965 !important; color: white !important; vertical-align: middle; }
+    .table td { vertical-align: middle; }
+
+    .content-section { display: none; }
+    .content-section.active { display: block; }
+
+    /* KPI MINI */
+    .kpi-mini-card {
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      padding: 6px 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 72px;
+    }
+    .kpi-mini-card .kpi-label { 
+      font-size: 0.7rem; 
+      text-transform: uppercase; 
+      font-weight: 700; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 100%;
+    }
+    .kpi-mini-card .kpi-val { font-size: 1.25rem; font-weight: 800; line-height: 1.2; margin-top: 2px; }
+    .kpi-mini-btn { font-size: 0.68rem; padding: 1px 5px; border-radius: 3px; line-height: 1; }
+    .card-hv-mini { background: linear-gradient(135deg, #6f42c1, #482384); color: white; border: none; }
+
+    /* BẢNG 3 QUẬN */
+    .district-card { border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; }
+    .district-header { padding: 5px 8px; font-size: 0.82rem; font-weight: 700; }
+    .district-search { font-size: 0.72rem; padding: 2px 6px; height: 24px; max-width: 110px; }
+    .district-table th { font-size: 0.75rem; padding: 3px 6px !important; background-color: #f8fafc !important; color: #475569 !important; }
+    .district-table td { font-size: 0.78rem; padding: 3px 6px !important; }
+    .district-badge { font-size: 0.75rem; font-weight: 700; padding: 2px 6px; }
+
+    /* TOP 5 */
+    .top5-card { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 6px; }
+    .top5-table th { font-size: 0.73rem; padding: 2px 5px !important; }
+    .top5-table td { font-size: 0.76rem; padding: 2px 5px !important; }
+    .top5-toggle-btn { font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; }
+
+    /* NGÀY ĐẶC BIỆT */
+    .special-day-thu2 { background-color: #fef08a !important; color: #854d0e !important; }
+    .special-day-sal { background-color: #ffedd5 !important; color: #9a3412 !important; }
+    .special-day-double { background-color: #fee2e2 !important; color: #991b1b !important; font-weight: 700 !important; }
+
+    /* THANH ĐỒNG BỘ */
+    .sync-bar { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 5px; padding: 6px 12px; font-size: 0.8rem; }
+    .badge-pulse {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #198754;
+      margin-right: 5px;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
+      70% { box-shadow: 0 0 0 5px rgba(25, 135, 84, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- MENU ĐIỀU HƯỚNG NATIVE -->
+  <div class="top-navbar mb-2">
+    <div class="brand-title">
+      <i class="bi bi-truck-front-fill text-warning fs-5"></i> ĐIỀU PHỐI KV2
+    </div>
+    <div class="menu-group my-1 my-md-0">
+      <button class="menu-btn active" id="btn-tuyenRider" onclick="chuyenTab('tuyenRider')">
+        <i class="bi bi-geo-alt-fill"></i> Tuyến Rider
+      </button>
+      <button class="menu-btn" id="btn-lichOff" onclick="chuyenTab('lichOff')">
+        <i class="bi bi-calendar2-week-fill"></i> Lịch OFF
+      </button>
+      <button class="menu-btn" id="btn-performance" onclick="chuyenTab('performance')">
+        <i class="bi bi-speedometer2"></i> Performance
+      </button>
+      <div class="dropdown" onmouseover="this.querySelector('.dropdown-menu').style.display='block'" onmouseout="this.querySelector('.dropdown-menu').style.display='none'">
+        <button class="menu-btn" id="btn-hangHoa" onclick="chuyenTab('hangHoa')" style="border:none;">
+          <i class="bi bi-box-seam-fill"></i> Hàng Hóa <i class="bi bi-caret-down-fill ms-1" style="font-size: 0.6rem;"></i>
+        </button>
+        <ul class="dropdown-menu shadow mt-0 border-0" style="background-color: #0d3b66; min-width: 200px;">
+          <li id="btnInboundDropdown"><a class="dropdown-item text-white fw-bold py-2 custom-hover" href="#" onclick="chuyenSubTabHangHoa('INBOUND')"><i class="bi bi-box-arrow-in-down me-2"></i>INBOUND</a></li>
+          <li><a class="dropdown-item text-white fw-bold py-2 custom-hover" href="#" onclick="chuyenSubTabHangHoa('PENDING')"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>PENDING ATTEMPT</a></li>
+        </ul>
+        <style>
+          .custom-hover:hover { background-color: #f77f00 !important; color: white !important; }
+        </style>
+      </div>
+      <button class="menu-btn" id="btn-diemDanh" onclick="chuyenTab('diemDanh')">
+        <i class="bi bi-qr-code-scan"></i> Điểm Danh
+      </button>
+      <button class="menu-btn" id="btn-thongTinRider" onclick="chuyenTab('thongTinRider')">
+  <i class="bi bi-info-circle-fill"></i> Thông Tin Chung
+</button>
+    </div>
+   <!-- THÔNG TIN TÀI KHOẢN & ĐĂNG XUẤT -->
+    <div class="d-flex align-items-center gap-2">
+      <!-- Nút Chuông & Profile cho Rider -->
+      <button class="btn btn-xs btn-outline-warning py-0 px-2 fw-bold shadow-sm position-relative" id="btnRiderProfile" style="display:none; font-size:0.75rem; height:26px;" onclick="chuyenTab('profile')">
+        <i class="bi bi-person-circle me-1"></i> Hồ Sơ
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" id="badgeRiderNoti" style="display:none;"><span class="visually-hidden">New</span></span>
+      </button>
+
+      <!-- NÚT TẢI APP LÚC NÀO CŨNG HIỆN -->
+      <button class="btn btn-xs btn-info text-dark py-0 px-2 fw-bold shadow-sm" id="btnInstallApp" style="font-size:0.75rem; height:26px;" onclick="caiDatAppLenDienThoai()">
+        <i class="bi bi-download me-1"></i> Tải App
+      </button>
+
+      <span class="badge bg-light text-dark font-monospace" id="userDisplayBadge" style="font-size:0.75rem;">Chưa đăng nhập</span>
+      <!-- Các nút Admin, Reload, Thoát giữ nguyên... -->
+      <!-- Nút dành riêng cho Super Admin -->
+      <button class="btn btn-xs btn-warning py-0 px-2 fw-bold" id="btnAdminManageUsers" style="display:none; font-size:0.72rem; height:26px;" onclick="moModalQuanLyFTE()">
+        👑 Quản Lý FTE
+      </button>
+      <button class="btn btn-sm btn-outline-light py-0 px-2" style="font-size: 0.78rem; height: 26px;" onclick="lamMoiDuLieu()" title="Tải lại dữ liệu">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-danger text-white py-0 px-2" style="font-size: 0.78rem; height: 26px;" onclick="xuLyDangXuat()" title="Đăng xuất">
+        <i class="bi bi-box-arrow-right"></i> Thoát
+      </button>
+    </div>
+  </div>
+
+  <div class="container-fluid px-2 px-md-3 pb-3" style="max-width: 1480px;">
+    <!-- ==================== 1. TUYẾN RIDER ==================== -->
+    <div id="section-tuyenRider" class="content-section active">
+      <div class="card shadow-sm border-0 mb-2">
+        <div class="card-body py-2">
+          <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-5 col-lg-4">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="text" id="riderSearch" class="form-control" placeholder="Tìm tên, ID, mã tuyến, phường..." oninput="filterRiderData()">
+              </div>
+            </div>
+            <div class="col-6 col-md-3 col-lg-3">
+              <select id="riderFilterCa" class="form-select form-select-sm" onchange="filterRiderData()">
+                <option value="">Tất cả Ca (COT)</option>
+                <option value="COT 1">Ca COT 1</option>
+                <option value="COT 2">Ca COT 2</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-4 col-lg-3">
+              <select id="riderFilterQuanDeli" class="form-select form-select-sm" onchange="filterRiderData()">
+                <option value="">Tất cả Quận Deli</option>
+              </select>
+            </div>
+            <div class="col-12 col-lg-2 text-end text-muted small" id="riderCountLabel">
+              Đang tải...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered align-middle mb-0">
+            <thead>
+              <tr class="text-center">
+                <th style="width: 45px;">STT</th>
+                <th style="width: 95px;">Mã RD</th>
+                <th style="min-width: 160px;">Họ và Tên</th>
+                <th style="width: 80px;">Ca</th>
+                <th style="min-width: 200px;">Tuyến Pick (Lấy hàng)</th>
+                <th style="min-width: 180px;">Địa Bàn Deli (Giao hàng)</th>
+                <th style="width: 90px;">Nhóm</th>
+                <th style="min-width: 150px;">Lịch OFF Tuần</th>
+              </tr>
+            </thead>
+            <tbody id="riderTableBody">
+              <tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải danh sách Rider...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 2. LỊCH OFF ==================== -->
+    <div id="section-lichOff" class="content-section">
+      
+      <!-- KHỐI 1: NÚT ĐĂNG KÝ, TỔNG QUAN & BẢNG BACKUP -->
+      <div class="row g-2 mb-3">
+        <!-- CỘT 1: NÚT ĐĂNG KÝ LỊCH OFF -->
+        <div class="col-12 col-xl-2">
+          <div class="card shadow-sm h-100 border-0">
+            <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-3">
+              <h6 class="fw-bold text-primary mb-3"><i class="bi bi-calendar-plus me-1"></i> ĐIỀN OFF</h6>
+              <button class="btn btn-primary w-100 py-2 fw-bold shadow-sm" onclick="moBangDangKyAllRider()">
+                <i class="bi bi-table me-1"></i> Đăng Ký Lịch Tuần
+              </button>
+              <button class="btn btn-warning text-dark w-100 py-1 mt-2 fw-bold shadow-sm position-relative" onclick="moBangDuyetOff()" id="btnDuyetOffFTE">
+  <i class="bi bi-ui-checks me-1"></i> Duyệt Đơn OFF
+  <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" id="badgePendingOff" style="display:none; font-size:10px;">0</span>
+</button>
+              <small class="text-muted mt-2" style="font-size: 0.7rem;">Cập nhật lịch cho toàn bộ RD</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- CỘT 2: TỔNG QUAN NGÀY OFF -->
+        <div class="col-12 col-xl-5">
+          <div class="card shadow-sm h-100 border-0" id="cardTongQuanQuanBox">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark"><i class="bi bi-pie-chart-fill text-danger me-1"></i> TỔNG QUAN NGÀY OFF:</span>
+              <div class="d-flex align-items-center gap-2">
+                <select id="selectNgayTongQuanOff" class="form-select form-select-sm fw-bold bg-light" style="width: auto; cursor:pointer;" onchange="capNhatTongQuanOffTheoQuan(this.value, this.options[this.selectedIndex].getAttribute('data-thu'))"></select>
+                <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1" id="tongOffHomNayBadge">0 Rider OFF</span>
+              </div>
+            </div>
+            <div class="card-body p-2">
+              <div class="row g-2 text-center mb-2">
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'quận 2', '', 'QUẬN 2')">
+                    <div class="small fw-bold text-primary mb-1">QUẬN 2</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountPN">0</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'quận 4', '', 'QUẬN 4')">
+                    <div class="small fw-bold text-warning mb-1">QUẬN 4</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountTB">0</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-light shadow-sm" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#e2e8f0'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff(document.getElementById('selectNgayTongQuanOff').value, 'quận 7', '', 'QUẬN 7')">
+                    <div class="small fw-bold text-info mb-1">QUẬN 7</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountTD">0</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row g-2 text-center">
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-white shadow-sm border-secondary" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor=''" onclick="xemTongHopCa(document.getElementById('selectNgayTongQuanOff').value, 'cot 1', 'TỔNG HỢP ĐIỀU PHỐI - COT 1')">
+                    <div class="small fw-bold text-secondary mb-1">COT 1</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountCOT1">0</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-white shadow-sm border-secondary" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor=''" onclick="xemTongHopCa(document.getElementById('selectNgayTongQuanOff').value, 'cot 2', 'TỔNG HỢP ĐIỀU PHỐI - COT 2')">
+                    <div class="small fw-bold text-secondary mb-1">COT 2</div>
+                    <div class="fs-5 fw-bold text-dark" id="offCountCOT2">0</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 border rounded bg-danger-subtle shadow-sm border-danger" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#fecdd3'" onmouseout="this.style.backgroundColor=''" onclick="xemTongHopCa(document.getElementById('selectNgayTongQuanOff').value, '', 'TỔNG HỢP ĐIỀU PHỐI - TOÀN KHU VỰC 2')">
+                    <div class="small fw-bold text-danger mb-1">TỔNG KV 2</div>
+                    <div class="fs-5 fw-bold text-danger" id="offCountKV2">0</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CỘT 3: 2 THẺ NÚT BẤM BACKUP PICK & DELI -->
+        <div class="col-12 col-xl-5">
+          <div class="row g-2 h-100 align-items-center">
+            <!-- NÚT BACKUP PICK -->
+            <div class="col-6 h-100">
+              <button class="btn btn-light w-100 h-100 py-3 shadow-sm border-0 border-start border-warning border-4 text-center" 
+                      style="display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s;"
+                      onmouseover="this.style.backgroundColor='#fef3c7'" onmouseout="this.style.backgroundColor=''"
+                      onclick="moModalBackup('PICK')">
+                <span class="fw-bold text-dark mb-1" style="font-size: 14px;"><i class="bi bi-box-seam text-warning me-2 fs-5"></i>BACKUP PICK</span>
+                <div class="badge bg-warning text-dark fs-6 mt-1 px-3 py-1 shadow-sm"><span id="badgeCountPick">0</span> Lượt Cần BK</div>
+              </button>
+            </div>
+            <!-- NÚT BACKUP DELI -->
+            <div class="col-6 h-100">
+              <button class="btn btn-light w-100 h-100 py-3 shadow-sm border-0 border-start border-success border-4 text-center"
+                      style="display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s;"
+                      onmouseover="this.style.backgroundColor='#dcfce7'" onmouseout="this.style.backgroundColor=''"
+                      onclick="moModalBackup('DELI')">
+                <span class="fw-bold text-dark mb-1" style="font-size: 14px;"><i class="bi bi-motorcycle text-success me-2 fs-5"></i>BACKUP DELI</span>
+                <div class="badge bg-success text-white fs-6 mt-1 px-3 py-1 shadow-sm"><span id="badgeCountDeli">0</span> Lượt Cần BK</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div> <!-- KẾT THÚC KHỐI 1 -->
+
+      <!-- KHỐI 2: BẢNG MA TRẬN OFF -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+          <span class="fw-bold text-dark"><i class="bi bi-calendar3 text-primary me-1"></i> MA TRẬN OFF (THỨ 2 <i class="bi bi-arrow-right"></i> CHỦ NHẬT)</span>
+          <div class="d-flex align-items-center gap-2">
+            <select id="selectTuanOff" class="form-select form-select-sm" style="width: auto;" onchange="dongBoTuanOff('main')"></select>
+            <div class="d-none d-md-flex align-items-center gap-2 small ms-3">
+              <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle-fill"></i> Thứ 2</span> <span class="text-muted" style="font-size:0.75rem;">Hạn chế OFF</span>
+              <span class="badge bg-danger-subtle text-danger">1, 15, 25</span> <span class="text-muted" style="font-size:0.75rem;">Mini Sale</span>
+              <span class="badge bg-danger-subtle text-danger">Ngày Đôi</span> <span class="text-muted" style="font-size:0.75rem;">Siêu Sale</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle text-center mb-0" style="font-size: 14px;">
+              <thead class="table-dark sticky-top" id="theadMaTranOff"></thead>
+              <tbody id="tbodyMaTranOff"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- ĐÓNG SECTION LỊCH OFF AN TOÀN TUYỆT ĐỐI -->
+
+    <!-- ==================== 3. PERFORMANCE ==================== -->
+    <div id="section-performance" class="content-section">
+<!-- THẺ QUẢN LÝ TUYẾN PICK CHO RIDER BACKUP -->
+      <div class="row g-2 mb-2">
+        <div class="col-12 col-md-8 col-lg-6">
+           <div class="card border-0 shadow-sm border-start border-warning border-4" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#fffbeb'" onmouseout="this.style.backgroundColor=''" onclick="moModalPhanPhuongPick()">
+             <div class="card-body py-2 d-flex justify-content-between align-items-center bg-white rounded-end">
+               <div>
+                 <h6 class="fw-bold text-dark mb-0" style="font-size:14px;"><i class="bi bi-box-seam-fill text-warning me-2 fs-5"></i>QUẢN LÝ PHƯỜNG LẤY HÀNG (BK)</h6>
+                 <div class="small mt-1 fw-semibold text-muted" id="lblCountChuaCoPick">Đang đếm dữ liệu Rider...</div>
+               </div>
+               <i class="bi bi-chevron-right fs-4 text-warning"></i>
+             </div>
+           </div>
+        </div>
+      </div>
+
+      <!-- MODAL QUẢN LÝ PHÂN PHƯỜNG LẤY HÀNG -->
+      <div class="modal fade" id="modalPhanPhuongPick" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 1600px;">
+          <div class="modal-content bg-light">
+            <div class="modal-header bg-warning text-dark py-2">
+              <h6 class="modal-title fw-bold mb-0"><i class="bi bi-boxes me-1"></i>PHÂN PHƯỜNG LẤY HÀNG & THÔNG TIN TUYẾN</h6>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2">
+              <div class="row g-2 h-100">
+                <!-- CỘT TRÁI: DATA SHEET -->
+                <div class="col-12 col-lg-7 d-flex flex-column">
+                  <div class="fw-bold text-danger mb-1" style="font-size:13px;"><i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>DATA XẾP TUYẾN LẤY HÀNG (TỪ SHEET):</div>
+                  <div class="table-responsive bg-white rounded shadow-sm border flex-grow-1" style="max-height: 70vh;">
+                    <table class="table table-sm table-bordered table-hover align-middle mb-0" style="font-size: 12px;">
+                      <thead class="table-warning sticky-top text-center" id="theadPickData"></thead>
+                      <tbody id="tbodyPickData"><tr><td class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2 text-warning"></span>Đang tải dữ liệu từ Sheet...</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- CỘT PHẢI: RIDER CHƯA CÓ PICK -->
+                <div class="col-12 col-lg-5 d-flex flex-column">
+                  <div class="fw-bold text-primary mb-1 d-flex justify-content-between align-items-center" style="font-size:13px;">
+                    <span><i class="bi bi-person-fill-exclamation me-1"></i>RIDER CẦN XẾP PHƯỜNG LẤY:</span>
+                    <button class="btn btn-xs btn-outline-primary py-0" onclick="loadThongKeChuaCoPick()"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+                  </div>
+                  <div class="bg-white rounded shadow-sm border flex-grow-1 p-2" style="max-height: 70vh; overflow-y: auto;" id="vungRiderChuaCoPick">
+                     <!-- Dữ liệu đếm sẽ đổ vào đây -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card shadow-sm border-0 mb-2">
+        <div class="card-body py-2">
+          <div class="input-group input-group-sm" style="max-width: 400px;">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text" id="perfSearch" class="form-control" placeholder="Tìm kiếm trong bảng..." oninput="filterDynamicTable('perfTable', this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive" style="max-height: 700px;">
+          <table class="table table-hover table-bordered align-middle mb-0" id="perfTable">
+            <thead id="perfThead"></thead>
+            <tbody id="perfTbody">
+              <tr><td class="text-center py-4 text-muted">Chưa nạp dữ liệu Performance</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 4. HÀNG HÓA ==================== -->
+    <!-- ==================== 4. HÀNG HÓA ==================== -->
+    <div id="section-hangHoa" class="content-section">
+      <div class="sync-bar shadow-sm mb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <span class="badge bg-danger fs-6 py-1 px-2 shadow-sm" id="titleKieuHangHoa"><i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT</span>
+          <span class="badge-pulse ms-2"></span>
+          <span class="fw-bold text-dark me-1">Tự động đồng bộ Inbound:</span>
+          <span class="text-muted">Nạp lúc: <strong class="text-primary font-monospace" id="hangLastFetchTime">—</strong></span>
+          <span class="text-secondary small ms-1" id="hangSheetTimeLabel"></span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.8rem;">
+            Cập nhật sau: <strong class="text-danger font-monospace fs-6" id="nextUpdateCountdown">30s</strong>
+          </span>
+          <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.78rem; height: 28px;" onclick="triggerManualHangHoaSync()">
+            <i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay
+          </button>
+        </div>
+      </div>
+
+      <!-- 7 THẺ KPI MINI -->
+      <div class="row g-2 mb-2" id="hangHoaKpiRow">
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card bg-danger text-white">
+            <div class="kpi-label opacity-90">
+              TỔNG ĐƠN
+              <button class="btn btn-light text-danger kpi-mini-btn" onclick="xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')" title="Xem chi tiết đơn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val" id="kpiTongDon">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(1)">
+            <div class="kpi-label text-primary" id="lblKpi1">
+              QUẬN 2
+              <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi('Quận 2', 'Quận Quận 2')" title="Xem chi tiết đơn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-primary" id="kpiPhuNhuan">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
+            <div class="kpi-label text-warning" id="lblKpi2">
+              QUẬN 4
+              <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 4', 'Quận Quận 4')" title="Xem chi tiết đơn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-warning" id="kpiTanBinh">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
+            <div class="kpi-label text-warning" id="lblKpi2">
+              QUẬN 7
+              <button class="btn btn-outline-info text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 7', 'TP. Quận 7')" title="Xem chi tiết đơn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-info" id="kpiThuDuc">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card">
+            <div class="kpi-label text-success">
+              ĐƠN MP
+              <button class="btn btn-outline-success text-dark kpi-mini-btn" onclick="xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Xem chi tiết đơn MP">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-success" id="kpiMp">—</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg">
+          <div class="kpi-mini-card">
+            <div class="kpi-label text-secondary">
+              ĐƠN WH
+              <button class="btn btn-outline-secondary text-dark kpi-mini-btn" onclick="xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Xem chi tiết đơn WH">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-secondary" id="kpiWh">—</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-3 col-lg">
+          <div class="kpi-mini-card card-hv-mini shadow-sm">
+            <div class="kpi-label text-warning">
+              <i class="bi bi-shield-fill-exclamation"></i> ĐƠN HV
+              <button class="btn btn-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn HV">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="kpi-val text-white" id="kpiHv">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BẢNG TOP PHƯỜNG RỚT -->
+      <div class="card shadow-sm border-0 mb-2 top5-card">
+        <div class="card-header bg-transparent py-1 px-3 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold text-danger" style="font-size: 0.78rem;">
+              <i class="bi bi-fire me-1"></i>TOP PHƯỜNG RỚT NHIỀU NHẤT
+            </span>
+            <span class="text-muted d-none d-sm-inline" style="font-size: 0.7rem;">(Điểm nóng cần ưu tiên xử lý)</span>
+          </div>
+          <button class="btn btn-outline-danger top5-toggle-btn d-flex align-items-center gap-1" type="button" onclick="dongMoTop5()" id="btnToggleTop5">
+            <i class="bi bi-chevron-up" id="iconToggleTop5"></i>
+            <span id="textToggleTop5">Thu gọn</span>
+          </button>
+        </div>
+        <div id="collapseTop5">
+          <div class="card-body p-1 border-top border-danger-subtle">
+            <div class="table-responsive">
+              <table class="table table-hover table-bordered table-sm top5-table align-middle mb-0 bg-white">
+                <thead class="table-light">
+                  <tr class="text-center">
+                    <th style="width: 48px;">Hạng</th>
+                    <th>Phường</th>
+                    <th style="width: 90px;">Số Đơn</th>
+                    <th style="width: 50px;">Xem</th>
+                  </tr>
+                </thead>
+                <tbody id="bangTop5Body">
+                  <tr><td colspan="4" class="text-center py-2 text-muted">Đang nạp Top...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 BẢNG QUẬN CHI TIẾT -->
+      <div class="row g-2">
+        <div class="col-12 col-lg-4">
+          <div class="district-card shadow-sm h-100">
+            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-primary border-2 text-primary">
+              <div>
+                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 2
+                <span class="badge bg-primary district-badge ms-1" id="countPhuNhuanBadge">0</span>
+              </div>
+              <input type="text" id="searchPN" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('PN')">
+            </div>
+            <div>
+              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
+                <thead>
+                  <tr class="text-center">
+                    <th>Phường</th>
+                    <th style="width: 65px;">Số Đơn</th>
+                    <th style="width: 50px;">Xem</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyPN">
+                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="district-card shadow-sm h-100">
+            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-warning border-2 text-warning">
+              <div>
+                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 4
+                <span class="badge bg-warning text-dark district-badge ms-1" id="countTanBinhBadge">0</span>
+              </div>
+              <input type="text" id="searchTB" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('TB')">
+            </div>
+            <div>
+              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
+                <thead>
+                  <tr class="text-center">
+                    <th>Phường</th>
+                    <th style="width: 65px;">Số Đơn</th>
+                    <th style="width: 50px;">Xem</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyTB">
+                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="district-card shadow-sm h-100">
+            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-info border-2 text-info">
+              <div>
+                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 7
+                <span class="badge bg-info text-dark district-badge ms-1" id="countThuDucBadge">0</span>
+              </div>
+              <input type="text" id="searchTD" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('TD')">
+            </div>
+            <div>
+              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
+                <thead>
+                  <tr class="text-center">
+                    <th>Phường</th>
+                    <th style="width: 65px;">Số Đơn</th>
+                    <th style="width: 50px;">Xem</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyTD">
+                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 5. ĐIỂM DANH ==================== -->
+    <div id="section-diemDanh" class="content-section">
+      <div class="row g-2 mb-2">
+        <!-- KHUNG CA COT 1 -->
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="card shadow-sm border-0 h-100 bg-white p-3 text-center border-top border-primary border-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge bg-primary px-2 py-1 font-monospace fw-bold">CA COT 1</span>
+              <span id="badgeTrangThaiCOT1" class="badge bg-success">ĐANG MỞ</span>
+            </div>
+            <h6 class="fw-bold text-primary mb-1"><i class="bi bi-qr-code me-1"></i>MÃ QR ĐIỂM DANH COT 1</h6>
+            <div class="text-secondary small fw-bold" id="txtHienThiGioCOT1" style="font-size: 0.85rem;">
+              Khung giờ: 11h40 - 12h15
+            </div>
+            
+            <div class="my-2 p-2 border rounded bg-light" style="min-height: 175px; display:flex; align-items:center; justify-content:center;">
+              <div id="boxQrCOT1">
+                <img id="qrImageCOT1" src="" alt="Mã QR COT 1" style="width: 155px; height: 155px; object-fit: contain;">
+              </div>
+              <div id="boxKhoaCOT1" style="display:none;" class="text-danger py-3">
+                <i class="bi bi-lock-fill" style="font-size: 3rem;"></i>
+                <div class="fw-bold small mt-1">CỔNG COT 1 ĐANG KHÓA</div>
+                <div class="text-muted" style="font-size: 0.75rem;" id="lyDoKhoaCOT1">Ngoài khung giờ quy định</div>
+              </div>
+            </div>
+
+            <button id="btnToggleCOT1" class="btn btn-sm btn-danger w-100 py-1 fw-bold mb-2" onclick="toggleKhoaCaThuCong('COT1')">
+              <i class="bi bi-power me-1"></i>KHÓA CỔNG COT 1
+            </button>
+
+            <!-- KÉO & NHẬP SỐ COT 1 -->
+            <div class="p-2 border rounded bg-light text-start" style="font-size: 0.75rem;">
+              <div class="fw-bold text-primary d-flex justify-content-between align-items-center mb-1">
+                <span><i class="bi bi-door-open me-1"></i>Giờ Mở Cổng:</span>
+                <span class="badge bg-primary fs-6 font-monospace" id="lblMoCOT1">11h40</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="width:30px;">Giờ:</span>
+                <input type="range" class="form-range flex-fill" id="rangeMoGioCOT1" min="1" max="24" value="11" oninput="dongBoTuSlider('COT1', 'mo', 'gio')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numMoGioCOT1" min="1" max="24" value="11" oninput="dongBoTuInput('COT1', 'mo', 'gio')">
+                <span class="small text-muted">h</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="width:30px;">Phút:</span>
+                <input type="range" class="form-range flex-fill" id="rangeMoPhutCOT1" min="0" max="59" value="40" oninput="dongBoTuSlider('COT1', 'mo', 'phut')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numMoPhutCOT1" min="0" max="59" value="40" oninput="dongBoTuInput('COT1', 'mo', 'phut')">
+                <span class="small text-muted">p</span>
+              </div>
+
+              <div class="fw-bold text-danger d-flex justify-content-between align-items-center mb-1 border-top pt-1">
+                <span><i class="bi bi-door-closed me-1"></i>Giờ Đóng Cổng:</span>
+                <span class="badge bg-danger fs-6 font-monospace" id="lblDongCOT1">12h15</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="width:30px;">Giờ:</span>
+                <input type="range" class="form-range flex-fill" id="rangeDongGioCOT1" min="1" max="24" value="12" oninput="dongBoTuSlider('COT1', 'dong', 'gio')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numDongGioCOT1" min="1" max="24" value="12" oninput="dongBoTuInput('COT1', 'dong', 'gio')">
+                <span class="small text-muted">h</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="width:30px;">Phút:</span>
+                <input type="range" class="form-range flex-fill" id="rangeDongPhutCOT1" min="0" max="59" value="15" oninput="dongBoTuSlider('COT1', 'dong', 'phut')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numDongPhutCOT1" min="0" max="59" value="15" oninput="dongBoTuInput('COT1', 'dong', 'phut')">
+                <span class="small text-muted">p</span>
+              </div>
+
+              <button class="btn btn-sm btn-primary w-100 fw-bold py-1" onclick="luuGioSlider('COT1')">
+                <i class="bi bi-floppy-fill me-1"></i> Lưu Khung Giờ COT 1
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KHUNG CA COT 2 -->
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="card shadow-sm border-0 h-100 bg-white p-3 text-center border-top border-warning border-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge bg-warning text-dark px-2 py-1 font-monospace fw-bold">CA COT 2</span>
+              <span id="badgeTrangThaiCOT2" class="badge bg-success">ĐANG MỞ</span>
+            </div>
+            <h6 class="fw-bold text-warning text-dark mb-1"><i class="bi bi-qr-code me-1"></i>MÃ QR ĐIỂM DANH COT 2</h6>
+            <div class="text-secondary small fw-bold" id="txtHienThiGioCOT2" style="font-size: 0.85rem;">
+              Khung giờ: 15h30 - 16h15
+            </div>
+            
+            <div class="my-2 p-2 border rounded bg-light" style="min-height: 175px; display:flex; align-items:center; justify-content:center;">
+              <div id="boxQrCOT2">
+                <img id="qrImageCOT2" src="" alt="Mã QR COT 2" style="width: 155px; height: 155px; object-fit: contain;">
+              </div>
+              <div id="boxKhoaCOT2" style="display:none;" class="text-danger py-3">
+                <i class="bi bi-lock-fill" style="font-size: 3rem;"></i>
+                <div class="fw-bold small mt-1">CỔNG COT 2 ĐANG KHÓA</div>
+                <div class="text-muted" style="font-size: 0.75rem;" id="lyDoKhoaCOT2">Ngoài khung giờ quy định</div>
+              </div>
+            </div>
+
+            <button id="btnToggleCOT2" class="btn btn-sm btn-danger w-100 py-1 fw-bold mb-2" onclick="toggleKhoaCaThuCong('COT2')">
+              <i class="bi bi-power me-1"></i>KHÓA CỔNG COT 2
+            </button>
+
+            <!-- KÉO & NHẬP SỐ COT 2 -->
+            <div class="p-2 border rounded bg-light text-start" style="font-size: 0.75rem;">
+              <div class="fw-bold text-warning text-dark d-flex justify-content-between align-items-center mb-1">
+                <span><i class="bi bi-door-open me-1"></i>Giờ Mở Cổng:</span>
+                <span class="badge bg-warning text-dark fs-6 font-monospace" id="lblMoCOT2">15h30</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="width:30px;">Giờ:</span>
+                <input type="range" class="form-range flex-fill" id="rangeMoGioCOT2" min="1" max="24" value="15" oninput="dongBoTuSlider('COT2', 'mo', 'gio')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numMoGioCOT2" min="1" max="24" value="15" oninput="dongBoTuInput('COT2', 'mo', 'gio')">
+                <span class="small text-muted">h</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="width:30px;">Phút:</span>
+                <input type="range" class="form-range flex-fill" id="rangeMoPhutCOT2" min="0" max="59" value="30" oninput="dongBoTuSlider('COT2', 'mo', 'phut')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numMoPhutCOT2" min="0" max="59" value="30" oninput="dongBoTuInput('COT2', 'mo', 'phut')">
+                <span class="small text-muted">p</span>
+              </div>
+
+              <div class="fw-bold text-danger d-flex justify-content-between align-items-center mb-1 border-top pt-1">
+                <span><i class="bi bi-door-closed me-1"></i>Giờ Đóng Cổng:</span>
+                <span class="badge bg-danger fs-6 font-monospace" id="lblDongCOT2">16h15</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span style="width:30px;">Giờ:</span>
+                <input type="range" class="form-range flex-fill" id="rangeDongGioCOT2" min="1" max="24" value="16" oninput="dongBoTuSlider('COT2', 'dong', 'gio')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numDongGioCOT2" min="1" max="24" value="16" oninput="dongBoTuInput('COT2', 'dong', 'gio')">
+                <span class="small text-muted">h</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span style="width:30px;">Phút:</span>
+                <input type="range" class="form-range flex-fill" id="rangeDongPhutCOT2" min="0" max="59" value="15" oninput="dongBoTuSlider('COT2', 'dong', 'phut')">
+                <input type="number" class="form-control form-control-sm text-center font-monospace fw-bold p-1" style="width: 55px; height: 26px;" id="numDongPhutCOT2" min="0" max="59" value="15" oninput="dongBoTuInput('COT2', 'dong', 'phut')">
+                <span class="small text-muted">p</span>
+              </div>
+
+              <button class="btn btn-sm btn-warning text-dark w-100 fw-bold py-1" onclick="luuGioSlider('COT2')">
+                <i class="bi bi-floppy-fill me-1"></i> Lưu Khung Giờ COT 2
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG LỊCH SỬ ĐIỂM DANH HÔM NAY -->
+        <div class="col-12 col-lg-4" id="colContainerBangDD">
+          <div class="card shadow-sm border-0 h-100 bg-white p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+              <div>
+                <h6 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-success me-1"></i>ĐIỂM DANH HÔM NAY</h6>
+                <div class="text-muted fw-semibold" style="font-size: 0.72rem;" id="lblNgayDiemDanhHomNay">--/--/----</div>
+              </div>
+              <div class="d-flex gap-1">
+                <button class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size: 0.72rem;" onclick="toggleThuGonBangDD()" id="btnThuGonBangDD" title="Thu gọn / Mở bảng">
+                  <i class="bi bi-chevron-up" id="iconThuGonDD"></i>
+                </button>
+                <button class="btn btn-xs btn-outline-success py-0 px-2" style="font-size: 0.72rem;" onclick="loadLichSuDiemDanh()" title="Làm mới">
+                  <i class="bi bi-arrow-clockwise"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <a href="/album-diem-danh" target="_blank" class="btn btn-primary btn-sm w-100 fw-bold py-1 text-decoration-none shadow-sm">
+                <i class="bi bi-images me-1"></i>Xem Album Ảnh Điểm Danh
+              </a>
+            </div>
+            
+            <div id="vungBangDiemDanhBody">
+              <div class="table-responsive" style="max-height: 480px;">
+                <table class="table table-bordered table-hover table-sm align-middle text-center mb-0" style="font-size: 0.78rem;">
+                  <thead class="table-light sticky-top">
+                    <tr>
+                      <th style="width: 35px;">STT</th>
+                      <th>Giờ</th>
+                      <th>Mã RD</th>
+                      <th>Họ và Tên</th>
+                      <th style="width: 60px;">Ca</th>
+                      <th style="width: 85px;">Trạng Thái</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyLichSuDiemDanh">
+                    <tr><td colspan="6" class="py-3 text-muted">Đang tải lượt điểm danh hôm nay...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ==================== 7. HỒ SƠ RIDER (PROFILE) ==================== -->
+    <div id="section-profile" class="content-section">
+      <div class="row g-2">
+        <div class="col-12 col-md-4">
+          <div class="card shadow-sm border-0 text-center p-3 h-100">
+            <i class="bi bi-person-bounding-box text-primary mb-2" style="font-size: 3rem;"></i>
+            <h5 class="fw-bold text-primary mb-0" id="profName">TÊN RIDER</h5>
+            <div class="font-monospace text-muted mb-2" id="profId">MÃ ID</div>
+            
+            <!-- Ô NHẬP SỐ ĐIỆN THOẠI -->
+            <div class="input-group input-group-sm mb-3 mt-2 shadow-sm">
+              <span class="input-group-text bg-light fw-bold text-secondary"><i class="bi bi-telephone-fill"></i></span>
+              <input type="text" id="profPhone" class="form-control fw-bold text-center text-success" placeholder="Chưa cập nhật SĐT">
+              <button class="btn btn-outline-secondary" type="button" id="btnEditPhone" onclick="moKhoaSDTRider()" style="display:none;" title="Sửa SĐT"><i class="bi bi-pencil-square"></i></button>
+              <button class="btn btn-success fw-bold" type="button" id="btnSavePhone" onclick="capNhatSDTRider()"><i class="bi bi-floppy"></i> Lưu</button>
+            </div>
+
+            <!-- THÔNG TIN TUYẾN ĐẢM NHIỆM -->
+            <div class="border rounded p-2 mb-3 bg-light text-start shadow-sm" style="font-size: 13px;">
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom border-primary-subtle">
+                <span class="fw-bold text-primary" style="font-size: 12px;"><i class="bi bi-pin-map-fill me-1"></i>KHU VỰC HOẠT ĐỘNG:</span>
+                <span class="badge bg-secondary font-monospace" id="profCaBadge">CA -</span>
+              </div>
+              <div class="mb-1 text-truncate" title="Thông tin Pick (Lấy hàng)">
+                <span class="text-muted small"><i class="bi bi-box-seam me-1"></i>Pick:</span> 
+                <span id="profPickInfo" class="fw-bold text-dark font-monospace" style="font-size: 12px;">Đang tải...</span>
+              </div>
+              <div class="text-truncate" title="Thông tin Deli (Giao hàng)">
+                <span class="text-muted small"><i class="bi bi-motorcycle me-1"></i>Deli:</span> 
+                <span id="profDeliInfo" class="fw-bold text-dark font-monospace" style="font-size: 12px;">Đang tải...</span>
+              </div>
+            </div>
+
+            <!-- HIỂN THỊ LỊCH OFF (CÓ THỂ CLICK ĐỂ XEM CHI TIẾT) -->
+            <div class="border rounded p-2 mb-3 bg-light text-start shadow-sm border-danger border-start border-4" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor='#f8f9fa'" onclick="moChiTietLichOffProfile()">
+              <div class="fw-bold text-danger mb-1 d-flex justify-content-between align-items-center" style="font-size:12px;">
+                <span><i class="bi bi-calendar3 me-1"></i>LỊCH OFF HỆ THỐNG:</span>
+                <i class="bi bi-chevron-right text-muted"></i>
+              </div>
+              <div id="profLichOffTuan" class="fw-bold text-dark font-monospace" style="font-size:13px;">Đang kiểm tra dữ liệu...</div>
+              <div class="text-muted mt-1" style="font-size: 10px;"><i>Bấm vào để xem chi tiết lịch của Tháng và Tuần</i></div>
+            </div>
+            <button class="btn btn-danger btn-sm w-100 fw-bold mt-auto shadow-sm" onclick="moBangXinOff()"><i class="bi bi-envelope-paper-fill me-1"></i>Tạo Đơn Xin OFF Mới</button>
+          </div>
+        </div>
+        <div class="col-12 col-md-8">
+          <div class="card shadow-sm border-0 h-100 p-3">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-2"><i class="bi bi-bell-fill text-warning me-1"></i>KẾT QUẢ DUYỆT ĐƠN OFF CỦA BẠN</h6>
+            <div class="table-responsive" style="max-height: 250px;">
+              <table class="table table-sm table-bordered align-middle text-center mb-0" style="font-size:12px;">
+                <thead class="table-light sticky-top"><tr><th>Ngày Gửi</th><th>Ngày Nghỉ</th><th>Trạng Thái</th></tr></thead>
+                <tbody id="tbodyRiderHistory"><tr><td colspan="3" class="text-muted py-3">Đang nạp dữ liệu...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+ <!-- ==================== 6. THÔNG TIN CHUNG CHO RIDER ==================== -->
+    <div id="section-thongTinRider" class="content-section">
+      <!-- 3 NÚT CHUYỂN TIỂU MỤC -->
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        <button class="btn btn-sm btn-primary sub-tab-tt-btn fw-bold active" id="btn-sub-hubToHub" onclick="chuyenSubTabThongTin('hubToHub')">
+          <i class="bi bi-diagram-3-fill me-1"></i> 1. Hub To Hub
+        </button>
+        <button class="btn btn-sm btn-outline-primary sub-tab-tt-btn fw-bold" id="btn-sub-groupZalo" onclick="chuyenSubTabThongTin('groupZalo')">
+          <i class="bi bi-chat-dots-fill me-1"></i> 2. Group Zalo Vận Hành
+        </button>
+        <button class="btn btn-sm btn-outline-primary sub-tab-tt-btn fw-bold" id="btn-sub-quyDinh" onclick="chuyenSubTabThongTin('quyDinh')">
+          <i class="bi bi-journal-text me-1"></i> 3. Quy Định & Giờ Giấc
+        </button>
+      </div>
+
+      <!-- VÙNG NỘI DUNG THAY ĐỔI DỰA THEO TIỂU MỤC ĐƯỢC CHỌN -->
+      <div id="vungDuLieuThongTin">
+        <div class="text-center py-5 text-muted">Đang tải dữ liệu...</div>
+      </div>
+    </div>
+
+  <!-- MODAL ĐIỀN ĐƠN OFF CÁ NHÂN -->
+  <div class="modal fade" id="modalRiderDangKyOff" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2">
+          <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-pencil-square me-1"></i>Đăng Ký Xin Nghỉ OFF</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3">
+          <form id="formDangKyOff" onsubmit="submitFormOff(event)">
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Mã Rider (ID):</label>
+              <input type="text" id="offRiderId" class="form-control form-control-sm" placeholder="VD: 113711" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Họ và Tên:</label>
+              <input type="text" id="offRiderName" class="form-control form-control-sm" placeholder="VD: Nguyễn Văn A" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Ngày xin OFF:</label>
+              <input type="date" id="offNgay" class="form-control form-control-sm" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Loại OFF:</label>
+              <select id="offLoai" class="form-select form-select-sm">
+                <option value="OFF Kế Hoạch Tuần">OFF Kế Hoạch Tuần</option>
+                <option value="OFF Đột Xuất">OFF Đột Xuất</option>
+                <option value="OFF Đổi Ca / Tuyến">OFF Đổi Ca / Tuyến</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Lý do:</label>
+              <textarea id="offLyDo" class="form-control form-control-sm" rows="2" placeholder="Nhập lý do xin nghỉ..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold" id="btnSubmitOff">
+              <i class="bi bi-send-fill me-1"></i>Gửi Đơn Xin OFF
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL BẢNG ĐĂNG KÝ LỊCH OFF TOÀN BỘ RIDER (GIAO DIỆN MỚI) -->
+<div class="modal fade" id="modalDangKyAllRider" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 1400px;">
+    <div class="modal-content bg-light">
+      <div class="modal-header bg-primary text-white py-2">
+        <h5 class="modal-title fs-6 fw-bold">
+          <i class="bi bi-calendar-check-fill me-1"></i>BẢNG LƯU & ĐỒNG BỘ ĐIỀN OFF RIDER
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <!-- BỘ LỌC BẢNG OFF -->
+        <div class="d-flex flex-wrap align-items-center gap-3 bg-white p-3 rounded shadow-sm mb-3 border">
+          <div>
+            <label class="form-label mb-1 fw-bold text-primary" style="font-size: 12px;">🗓️ Tuần xếp lịch</label>
+            <select id="selWeekNewOff" class="form-select form-select-sm border-primary fw-bold text-primary" onchange="doiTuanNewOff()" style="min-width: 175px;"></select>
+          </div>
+          <div>
+            <label class="form-label mb-1 fw-bold text-secondary" style="font-size: 12px;">⏰ Ca làm việc</label>
+            <select id="selCaNewOff" class="form-select form-select-sm" onchange="renderTableNewOff()" style="min-width: 125px;">
+              <option value="Tất cả">Tất cả Ca</option>
+              <option value="COT 1" selected>COT 1</option>
+              <option value="COT 2">COT 2</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label mb-1 fw-bold text-secondary" style="font-size: 12px;">📍 Quận Deli</label>
+            <select id="selQuanNewOff" class="form-select form-select-sm" onchange="renderTableNewOff()" style="min-width: 145px;">
+              <option value="Tất cả">Tất cả Quận</option>
+              <option value="Quận 2">Quận 2</option>
+              <option value="Quận 4">Quận 4</option>
+              <option value="Quận 7">Quận 7</option>
+              <option value="BK">BACKUP (BK)</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label mb-1 fw-bold text-secondary" style="font-size: 12px;">🔍 Tìm kiếm Rider</label>
+            <input type="text" id="txtSearchNewOff" class="form-control form-control-sm search-input" placeholder="Nhập ID, tên hoặc tuyến..." oninput="renderTableNewOff()">
+          </div>
+          <div class="ms-auto d-flex align-items-center gap-3">
+            <div class="text-end">
+              <div class="text-muted" style="font-size: 11px;">RIDER TRÊN BẢNG</div>
+              <span id="txtCountNewOff" class="badge bg-secondary fs-6">0</span>
+            </div>
+            <div class="text-end">
+              <div class="text-muted" style="font-size: 11px;">TỔNG ĐÃ ĐIỀN OFF</div>
+              <span id="txtOffCountNewOff" class="badge bg-warning text-dark fs-6 fw-bold">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG DANH SÁCH RIDER ĐIỀN OFF -->
+        <div class="table-responsive bg-white rounded shadow-sm border" style="max-height: calc(100vh - 250px);">
+          <table class="table table-hover table-bordered align-middle mb-0" style="font-size: 13px;">
+            <thead class="table-primary sticky-top text-center">
+              <tr>
+                <th style="width: 80px;">Mã ID</th>
+                <th style="min-width: 160px;">Họ và Tên</th>
+                <th style="width: 85px;">Ca</th>
+                <th style="min-width: 150px;">Khu vực tuyến</th>
+                <th style="min-width: 320px;">Chọn Ngày OFF Trong Tuần</th>
+                <th style="width: 130px;">Loại OFF</th>
+                <th style="min-width: 170px;">Tuyến lấy hàng / Trực bù</th>
+                <th style="min-width: 130px;">Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody id="riderTableBodyNewOff">
+              <tr><td colspan="8" class="text-center py-4 text-muted">Đang tải dữ liệu Rider...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer bg-white d-flex justify-content-between py-2 border-top">
+        <span class="text-muted small">💡 <i>Lưu xong tự động làm mới giao diện, tiếp tục chọn lượt mới lập tức.</i></span>
+        <div>
+          <button type="button" class="btn btn-secondary btn-sm px-3 me-2" data-bs-dismiss="modal">Đóng</button>
+          <button id="btnSubmitNewOff" class="btn btn-primary px-4 fw-bold shadow-sm" onclick="moPopupXacNhanNewOff()">
+            🚀 LƯU & ĐỒNG BỘ (<span id="btnOffCountFooter">0</span> RD)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL XÁC NHẬN LƯU OFF -->
+<div class="modal fade" id="modalConfirmNewOff" tabindex="-1" style="z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-2">
+        <h6 class="mb-0 fw-bold">XÁC NHẬN LƯU ĐĂNG KÝ OFF</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <p class="mb-2 fw-bold text-primary fs-6" id="modalPromptTextNewOff"></p>
+        
+        <!-- TÙY CHỌN CHẾ ĐỘ ĐĂNG KÝ MỚI HAY THAY THẾ NGÀY OFF TRONG TUẦN -->
+        <div class="p-2 mb-2 rounded border border-primary bg-primary-subtle">
+          <div class="fw-bold text-dark mb-1" style="font-size: 12px;"><i class="bi bi-gear-fill me-1 text-primary"></i>Chế độ lưu lịch tuần này:</div>
+          <div class="form-check mb-1">
+            <input class="form-check-input" type="radio" name="cheDoLuuOff" id="radLuuMoi" value="NEW" checked>
+            <label class="form-check-label small fw-bold text-dark" for="radLuuMoi" style="cursor:pointer;">
+              ➕ Đăng ký OFF mới <span class="text-muted fw-normal">(Giữ nguyên các ngày OFF đã có trong tuần)</span>
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="cheDoLuuOff" id="radThayThe" value="REPLACE">
+            <label class="form-check-label small fw-bold text-danger" for="radThayThe" style="cursor:pointer;">
+              🔄 Thay đổi ngày OFF <span class="text-muted fw-normal">(Xóa ngày OFF cũ trong tuần này & ghi đè ngày mới)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="alert alert-warning py-2 mb-2" style="font-size: 12px;">
+          ⚠️ Dữ liệu sẽ đồng bộ trực tiếp vào <b>TỔNG QUAN RD</b>, <b>Lịch Ops 1-2</b> và lưu nhật ký.
+        </div>
+        <div class="border rounded p-2 bg-light" style="max-height: 250px; overflow-y: auto; font-size: 12px;" id="modalRiderListNewOff"></div>
+      </div>
+      <div class="modal-footer py-2 bg-light d-flex justify-content-end gap-2 border-top">
+        <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Hủy / Kiểm tra lại</button>
+        <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" id="btnConfirmActionNewOff" onclick="thucHienLuuDongBoNewOff()">
+          ✅ Xác nhận & Lưu ngay
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POPUP PHÓNG TO MÃ QR RA TOÀN MÀN HÌNH -->
+  <div id="modalZoomQR" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:9999999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div class="card border-0 shadow-lg text-center p-3 p-md-4 bg-white" style="max-width:92%; width:420px; border-radius:18px; position:relative; animation:fadeIn 0.2s ease-out;">
+      <button type="button" class="btn-close position-absolute top-0 end-0 m-3" onclick="dongZoomQR()"></button>
+      
+      <span class="badge bg-primary px-3 py-1 mb-2 font-monospace fs-6 align-self-center">QUÉT MÃ TRỰC TIẾP</span>
+      <h5 class="fw-bold text-dark mb-1" id="zoomQrTitle">Mã QR Nhóm Zalo</h5>
+      <div class="small text-muted mb-3" style="font-size:0.75rem;">Đưa camera điện thoại hoặc Zalo vào khung hình để quét</div>
+
+      <!-- KHUNG ẢNH QR PHÓNG TO CỰC NÉT -->
+      <div class="d-flex justify-content-center p-2 bg-light rounded-3 border mb-3">
+        <img id="zoomQrImg" src="" style="width:280px; height:280px; max-width:100%; object-fit:contain; border-radius:10px;">
+      </div>
+
+      <div class="d-flex gap-2">
+        <a id="zoomQrLinkBtn" href="#" target="_blank" class="btn btn-primary btn-sm flex-fill fw-bold py-2 shadow-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i> Mở Đường Link
+        </a>
+        <button type="button" class="btn btn-secondary btn-sm px-3" onclick="dongZoomQR()">
+          Đóng (Esc)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XEM CHI TIẾT ĐƠN HÀNG (KÍNH LÚP HÀNG HÓA) -->
+  <div class="modal fade" id="modalChiTietDon" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2">
+          <h5 class="modal-title fs-6 fw-bold" id="modalTitle">Chi Tiết Đơn Hàng</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-2">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge bg-secondary fs-6" id="modalCountBadge">0 đơn rớt</span>
+            <button class="btn btn-sm btn-outline-primary py-0" onclick="copyAllShipmentIds()">
+              <i class="bi bi-clipboard me-1"></i> Sao chép tất cả mã đơn
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered table-hover align-middle mb-0" style="font-size: 0.8rem;">
+              <thead class="table-light">
+                <tr class="text-center">
+                  <th style="width: 40px;">STT</th>
+                  <th>Mã Đơn (Shipment ID)</th>
+                  <th style="width: 90px;">Loại Hàng</th>
+                  <th style="width: 90px;">Zone ID</th>
+                  <th style="width: 75px;">Đơn HV</th>
+                  <th>Thời Gian Nhận Trạm</th>
+                </tr>
+              </thead>
+              <tbody id="modalDonTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <!-- CUSTOM POPUP ĐĂNG NHẬP (CHỐNG ĐƠ 100%, KHÔNG DÙNG BOOTSTRAP BACKDROP) -->
+  <div id="modalAuthLogin" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.8); z-index:9999999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="width: 440px; max-width: 94%; margin: auto; animation: fadeIn 0.2s ease-out;">
+      <div class="card-header bg-primary text-white py-3 text-center border-0">
+        <h5 class="fw-bold mb-0"><i class="bi bi-shield-lock-fill me-2"></i>HỆ THỐNG ĐIỀU PHỐI KV2</h5>
+        <div class="small opacity-75 mt-1">Vui lòng đăng nhập để tiếp tục truy cập</div>
+      </div>
+      
+      <div class="card-body p-3 p-md-4 bg-white">
+        <!-- 2 NÚT CHUYỂN TAB ĐĂNG NHẬP -->
+        <div class="d-flex gap-2 mb-3">
+          <button type="button" class="btn btn-outline-primary flex-fill fw-bold py-2" id="btnTabRider" onclick="doiTabAuth('RIDER')">
+            🛵 RIDER KV2
+          </button>
+          <button type="button" class="btn btn-primary flex-fill fw-bold py-2 shadow-sm" id="btnTabFTE" onclick="doiTabAuth('FTE')">
+            👔 FTE / ADMIN
+          </button>
+        </div>
+
+        <!-- FORM RIDER ĐĂNG NHẬP BẰNG ID -->
+        <div id="formAuthRider" style="display: none;">
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Nhập Mã ID Rider của bạn:</label>
+            <input type="text" id="loginRiderId" class="form-control font-monospace fw-bold" placeholder="VD: 113711, 143231..." onkeydown="if(event.key==='Enter') submitLoginRider()">
+            <div class="form-text" style="font-size:0.72rem;">Nhập đúng Mã ID để vào xem tuyến, hàng hóa, lịch OFF...</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-dark">Mật khẩu:</label>
+            <div class="position-relative">
+              <input type="password" id="loginRiderPassword" class="form-control font-monospace" placeholder="Nhập mật khẩu..." onkeydown="if(event.key==='Enter') submitLoginRider()" style="padding-right: 40px;">
+              <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="cursor: pointer; font-size: 1.1rem;" onclick="togglePasswordVisibility('loginRiderPassword', this)"></i>
+            </div>
+            <div class="form-text text-danger fw-bold" style="font-size:0.75rem;">*Lần đầu đăng nhập: Hãy nhập Mã ID vào ô Mật khẩu</div>
+          </div>
+          <button type="button" class="btn btn-primary w-100 fw-bold py-2 shadow-sm mb-2" id="btnActionLoginRider" onclick="submitLoginRider()">
+            <i class="bi bi-box-arrow-in-right me-1"></i> VÀO HỆ THỐNG
+          </button>
+          <div class="text-center mt-2">
+            <a href="javascript:void(0)" class="small text-decoration-none fw-semibold text-danger" onclick="moBangQuenMatKhau()">Quên / Đổi mật khẩu?</a>
+          </div>
+        </div>
+
+        <!-- FORM FTE / ADMIN -->
+        <div id="formAuthFTE" style="display: block;">
+          <!-- ĐĂNG NHẬP FTE -->
+          <div id="boxFteLogin" style="display: block;">
+            <div class="mb-2">
+              <label class="form-label small fw-bold text-dark">Tên đăng nhập / Email:</label>
+              <input type="text" id="loginFteUsername" class="form-control form-control-sm" placeholder="Username hoặc admin">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-dark">Mật khẩu:</label>
+              <div class="position-relative">
+                <input type="password" id="loginFtePassword" class="form-control form-control-sm" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter') submitLoginFTE()" style="padding-right: 40px;">
+                <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-2 text-muted" style="cursor: pointer; font-size: 1rem;" onclick="togglePasswordVisibility('loginFtePassword', this)"></i>
+              </div>
+            </div>
+            <button type="button" class="btn btn-primary w-100 fw-bold py-2 shadow-sm mb-2" id="btnActionLoginFTE" onclick="submitLoginFTE()">
+              <i class="bi bi-box-arrow-in-right me-1"></i> ĐĂNG NHẬP FTE / ADMIN
+            </button>
+            <div class="d-flex justify-content-between px-1 mt-2">
+              <a href="javascript:void(0)" class="small text-decoration-none fw-semibold text-danger" onclick="moBangQuenMatKhau()">Quên / Đổi mật khẩu?</a>
+              <a href="javascript:void(0)" class="small text-decoration-none fw-semibold" onclick="chuyenManHinhFte('REGISTER')">Đăng ký FTE mới</a>
+            </div>
+          </div>
+
+          <!-- ĐĂNG KÝ FTE -->
+          <div id="boxFteRegister" style="display: none;">
+            <div class="mb-2">
+              <label class="form-label small fw-bold text-dark">Họ và tên của bạn:</label>
+              <input type="text" id="regFullName" class="form-control form-control-sm" placeholder="VD: Nguyễn Văn A">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold text-dark">Tên đăng nhập mới:</label>
+              <input type="text" id="regUsername" class="form-control form-control-sm" placeholder="Username viết liền không dấu">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-dark">Mật khẩu:</label>
+              <div class="position-relative">
+                <input type="password" id="regPassword" class="form-control form-control-sm" placeholder="Mật khẩu" style="padding-right: 40px;">
+                <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-2 text-muted" style="cursor: pointer; font-size: 1rem;" onclick="togglePasswordVisibility('regPassword', this)"></i>
+              </div>
+            </div>
+            <button type="button" class="btn btn-success w-100 fw-bold py-2 shadow-sm mb-2" id="btnActionRegisterFTE" onclick="submitRegisterFTE()">
+              <i class="bi bi-person-plus-fill me-1"></i> TẠO TÀI KHOẢN (CHỜ ADMIN DUYỆT)
+            </button>
+            <div class="text-center mt-2">
+              <a href="javascript:void(0)" class="small text-decoration-none fw-semibold" onclick="chuyenManHinhFte('LOGIN')">Quay lại Đăng nhập</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BẢNG QUẢN LÝ PHÂN QUYỀN FTE -->
+  <div id="modalAdminUsers" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:999999; align-items:center; justify-content:center; backdrop-filter:blur(3px);">
+    <div class="card border-0 shadow-lg" style="width: 1100px; max-width: 96%; max-height: 92vh; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;">
+      <div class="card-header bg-warning text-dark py-2 px-3 d-flex justify-content-between align-items-center flex-shrink-0">
+        <h6 class="modal-title fw-bold mb-0"><i class="bi bi-shield-lock-fill me-1"></i>👑 BẢNG QUẢN LÝ & CẤP QUYỀN TỪNG MENU (SUPER ADMIN)</h6>
+        <button type="button" class="btn-close" onclick="dongModalQuanLyFTE()"></button>
+      </div>
+      <div class="card-body p-3 bg-light flex-grow-1" style="overflow-y: auto;">
+        <div class="alert alert-info py-2 px-3 small mb-3 border-0 shadow-sm">
+          💡 <b>Quy tắc phân quyền:</b>
+          <ul class="mb-0 ps-3">
+            <li><b>Quyền Xem:</b> Cho phép bấm vào menu để xem nội dung. Nếu bỏ tick, nút menu bị ẩn.</li>
+            <li><b>Quyền Sửa:</b> Cho phép thực hiện thao tác (Lưu lịch OFF, Khóa/Mở cổng QR).</li>
+            <li><b>Rider KV2:</b> Mặc định chỉ có quyền xem các mục được bật, toàn bộ quyền sửa bị vô hiệu hóa 100%.</li>
+          </ul>
+        </div>
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle mb-0 text-center" style="font-size: 12px;">
+              <thead class="table-primary text-center align-middle">
+                <tr>
+                  <th rowspan="2" style="width: 140px;">Tài khoản / Họ Tên</th>
+                  <th rowspan="2" style="width: 80px;">Vai Trò</th>
+                  <th rowspan="2" style="width: 90px;">Trạng Thái</th>
+                  <th colspan="2">1. Tuyến Rider</th><th colspan="2">2. Lịch OFF</th><th colspan="2">3. Performance</th><th colspan="2">4. Hàng Hóa</th><th colspan="2">5. Điểm Danh</th><th colspan="2">6. Thông Tin</th>
+                  <th rowspan="2" style="width: 110px;">Thao Tác</th>
+                </tr>
+                <tr>
+                  <th>Xem</th><th>Sửa</th><th>Xem</th><th>Sửa</th><th>Xem</th><th>Sửa</th><th>Xem</th><th>Sửa</th><th>Xem</th><th>Sửa</th><th>Xem</th><th>Sửa</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAdminPermissions">
+                <tr><td colspan="16" class="py-4 text-muted">Đang tải ma trận phân quyền...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer py-2 px-3 bg-white border-top flex-shrink-0 d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary btn-sm px-4 fw-bold" onclick="dongModalQuanLyFTE()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XEM CHI TIẾT RIDER OFF -->
+  <div class="modal fade" id="modalChiTietRiderOff" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white py-2">
+          <h6 class="modal-title fw-bold mb-0" id="titleModalChiTietOff"><i class="bi bi-person-lines-fill me-1"></i>DANH SÁCH CHI TIẾT</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 13px;">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width: 50px;">STT</th><th style="width: 100px;">Mã RD</th><th class="text-start">Họ và Tên</th>
+                  <th style="width: 80px;">Ca</th><th class="text-start">Địa Bàn Deli</th><th class="text-start">Ghi chú tuần</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyChiTietOff"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL TỔNG HỢP CA (ACCORDION THU PHÓNG) -->
+  <div class="modal fade" id="modalTongHopCa" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content bg-light">
+        <div class="modal-header bg-primary text-white py-2">
+          <h6 class="modal-title fw-bold mb-0" id="titleModalTongHopCa"><i class="bi bi-layout-split me-1"></i>TỔNG HỢP ĐIỀU PHỐI CA</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-2">
+          <div class="accordion" id="accordionTongHopCa">
+            <div class="accordion-item border-0 shadow-sm mb-2 rounded overflow-hidden">
+              <h2 class="accordion-header" id="headingTongHopOff">
+                <button class="accordion-button bg-danger text-white fw-bold py-2 border-start border-danger border-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTongHopOff" style="font-size: 14px;">
+                  <i class="bi bi-person-x-fill me-2 fs-5"></i>DANH SÁCH RIDER OFF 
+                  <span class="badge bg-white text-danger ms-auto me-3 px-3 shadow-sm rounded-pill" id="countOffCa">0</span>
+                </button>
+              </h2>
+              <div id="collapseTongHopOff" class="accordion-collapse collapse show" data-bs-parent="#accordionTongHopCa">
+                <div class="accordion-body p-0 bg-light">
+                  <div class="table-responsive mb-0" style="max-height: 50vh;">
+                    <table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 12px;">
+                      <thead class="table-light sticky-top">
+                        <tr><th style="width: 40px;">STT</th><th style="width: 80px;">Mã RD</th><th class="text-start">Họ và Tên</th><th class="text-start">Địa Bàn Deli</th><th class="text-start">Ghi chú</th></tr>
+                      </thead><tbody id="tbodyTongHopOff"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item border-0 shadow-sm rounded overflow-hidden">
+              <h2 class="accordion-header" id="headingTongHopBk">
+                <button class="accordion-button collapsed bg-success text-white fw-bold py-2 border-start border-success border-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTongHopBk" style="font-size: 14px;">
+                  <i class="bi bi-shield-check me-2 fs-5"></i>BACKUP SẴN SÀNG
+                  <span class="badge bg-white text-success ms-auto me-3 px-3 shadow-sm rounded-pill" id="countBkCa">0</span>
+                </button>
+              </h2>
+              <div id="collapseTongHopBk" class="accordion-collapse collapse" data-bs-parent="#accordionTongHopCa">
+                <div class="accordion-body p-0 bg-light">
+                  <div class="table-responsive mb-0" style="max-height: 50vh;">
+                    <table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 12px;">
+                      <thead class="table-light sticky-top">
+                        <tr><th style="width: 40px;">STT</th><th style="width: 80px;">Mã BK</th><th class="text-start">Họ và Tên</th></tr>
+                      </thead><tbody id="tbodyTongHopBk"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- MODAL CHI TIẾT LỊCH OFF CỦA RIDER -->
+  <div class="modal fade" id="modalChiTietLichOffRider" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white py-2">
+          <h6 class="mb-0 fw-bold"><i class="bi bi-calendar-check-fill me-1"></i>CHI TIẾT LỊCH OFF CỦA BẠN</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3">
+          <!-- ĐẾM SỐ NGÀY NGHỈ THÁNG NÀY & THÁNG TRƯỚC -->
+          <div class="row g-2 mb-3 text-center">
+            <div class="col-6">
+              <div class="p-2 border rounded bg-light shadow-sm">
+                <div class="small fw-bold text-muted mb-1" id="lblThangTruoc">Tháng Trước</div>
+                <div class="fs-4 fw-bold text-dark" id="offThangTruoc">0</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 border rounded bg-danger-subtle shadow-sm border-danger">
+                <div class="small fw-bold text-danger mb-1" id="lblThangNay">Tháng Này</div>
+                <div class="fs-4 fw-bold text-danger" id="offThangNay">0</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- LỊCH TUẦN NÀY VÀ TUẦN SAU -->
+          <div class="border rounded p-2 bg-light mb-2 shadow-sm">
+            <div class="fw-bold text-primary mb-1 border-bottom pb-1" style="font-size: 13px;"><i class="bi bi-calendar2-week me-1"></i>Lịch OFF Tuần Này:</div>
+            <div id="offTuanNayList" class="fw-semibold text-dark lh-lg" style="font-size: 13px;">Đang tải...</div>
+          </div>
+          <div class="border rounded p-2 bg-light shadow-sm">
+            <div class="fw-bold text-success mb-1 border-bottom pb-1" style="font-size: 13px;"><i class="bi bi-calendar2-week me-1"></i>Lịch OFF Tuần Sau:</div>
+            <div id="offTuanSauList" class="fw-semibold text-dark lh-lg" style="font-size: 13px;">Đang tải...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XIN OFF (CHO RIDER) -->
+  <div class="modal fade" id="modalRiderXinOff" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white py-2">
+          <h6 class="fw-bold mb-0"><i class="bi bi-envelope-paper-fill me-1"></i>ĐƠN XIN NGHỈ (OFF)</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3">
+          <div class="alert alert-info py-2 small mb-3 border-info shadow-sm" style="font-size: 13px;">
+            💡 Xin OFF trước <b>từ 3 ngày</b> trở lên sẽ hợp lệ. Xin OFF gấp (trong ngày) bắt buộc phải tải lên ảnh minh chứng.
+          </div>
+          
+          <!-- THANH CHỌN LOẠI NGHỈ -->
+          <div class="d-flex gap-3 mb-2 pb-2 border-bottom">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="kieuNghiOff" id="nghi1Ngay" value="1" checked onchange="toggleKieuNghi()">
+              <label class="form-check-label fw-bold small text-primary" for="nghi1Ngay">Nghỉ 1 ngày</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="kieuNghiOff" id="nghiNhieuNgay" value="n" onchange="toggleKieuNghi()">
+              <label class="form-check-label fw-bold small text-danger" for="nghiNhieuNgay">Nghỉ dài ngày</label>
+            </div>
+          </div>
+
+          <!-- KHUNG CHỌN NGÀY -->
+          <div class="row g-2 mb-2">
+            <div class="col-12" id="colNgayBatDau">
+              <label class="form-label small fw-bold text-dark" id="lblNgayXinOff">Ngày Xin OFF:</label>
+              <input type="date" id="txtNgayXinOff" class="form-control form-control-sm border-primary" onchange="kiemTraNgayXinOff()">
+            </div>
+            <div class="col-6 d-none" id="colNgayKetThuc">
+              <label class="form-label small fw-bold text-dark">Đến hết ngày:</label>
+              <input type="date" id="txtNgayKetThuc" class="form-control form-control-sm border-danger" onchange="kiemTraNgayXinOff()">
+            </div>
+          </div>
+          
+          <div class="mb-2 text-end d-none" id="tongSoNgayNghiBox">
+            <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1">Tổng cộng: <strong id="tongSoNgayNghiVal" class="fs-6">0</strong> ngày</span>
+          </div>
+
+          <div class="mb-2">
+<div class="mb-2 p-2 bg-light border rounded">
+            <label class="form-label small fw-bold text-primary mb-1">Loại Hình Nghỉ (OFF):</label>
+            <select id="selLoaiNghiOffRider" class="form-select form-select-sm border-primary fw-bold text-dark">
+              <option value="OFF">OFF (Nghỉ cả ngày)</option>
+              <option value="OFF PICK">OFF PICK (Chỉ nghỉ đi lấy hàng)</option>
+              <option value="OFF DELI">OFF DELI (Chỉ nghỉ đi giao hàng)</option>
+            </select>
+          </div>
+            <label class="form-label small fw-bold text-dark">Lý do nghỉ:</label>
+            <textarea id="txtLyDoXinOff" class="form-control form-control-sm" rows="2" placeholder="Ghi rõ lý do xin nghỉ..."></textarea>
+          </div>
+          <div class="mb-3 d-none" id="khungTaiAnhMinhChung">
+            <label class="form-label small fw-bold text-danger">⚠️ Ảnh minh chứng (Bắt buộc do xin gấp):</label>
+            <input type="file" id="fileAnhMinhChung" class="form-control form-control-sm border-danger" accept="image/*">
+          </div>
+          <button class="btn btn-primary w-100 fw-bold shadow-sm" id="btnGuiDonXinOff" onclick="guiDonXinOff()">
+            <i class="bi bi-send-fill me-1"></i> Gửi Đơn
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DUYỆT OFF (CHO FTE) -->
+  <div class="modal fade" id="modalDuyetOff" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content bg-light">
+        <div class="modal-header bg-warning text-dark py-2">
+          <h6 class="fw-bold mb-0"><i class="bi bi-ui-checks me-1"></i>QUẢN LÝ ĐƠN XIN OFF</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-2">
+          <div class="table-responsive bg-white rounded shadow-sm border" style="max-height: 70vh;">
+            <table class="table table-hover table-bordered align-middle text-center mb-0" style="font-size: 13px;">
+              <thead class="table-warning sticky-top">
+                <tr>
+                  <th style="width: 140px;">Thời Gian Gửi</th>
+                  <th style="width: 80px;">Mã RD</th>
+                  <th class="text-start">Họ và Tên</th>
+                  <th style="width: 130px;">Ngày Nghỉ</th>
+                  <th style="width: 80px;">Tổng Ngày</th>
+                  <th class="text-start">Lý Do</th>
+                  <th style="width: 140px;">Check Báo Trước</th>
+                  <th style="width: 100px;">Trạng Thái</th>
+                  <th style="width: 90px;">Minh Chứng</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyDanhSachXinOff"><tr><td colspan="9" class="text-center py-4 text-muted">Đang tải danh sách...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CHI TIẾT INBOUND COT -->
+  <div class="modal fade" id="modalChiTietInbound" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content bg-light">
+        <div class="modal-header bg-primary text-white py-2">
+          <h6 class="modal-title fw-bold mb-0" id="titleModalInbound"><i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND RC</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-2"><div class="row g-2" id="bodyChiTietInboundCot"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XẾP BACKUP ĐIỀU PHỐI -->
+  <div class="modal fade" id="modalChiTietBackup" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content bg-light">
+        <div class="modal-header py-2" id="modalHeaderBackup" style="color: white;">
+          <h6 class="modal-title fw-bold mb-0" id="titleModalBackup">CHI TIẾT BACKUP</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-2">
+          <div id="vungGhepCapBackup" class="alert alert-warning py-2 mb-2 d-none shadow-sm border-warning align-items-center justify-content-between" style="font-size: 13px;">
+            <div>
+              <span class="fw-bold"><i class="bi bi-link-45deg me-1"></i>Đang chọn ghép:</span>
+              <span class="badge bg-danger ms-2" id="lblRiderOffSelected">Chưa chọn Rider OFF</span><i class="bi bi-arrow-right mx-2 text-muted"></i><span class="badge bg-success" id="lblRiderBkSelected">Chưa chọn Backup</span>
+            </div>
+            <button class="btn btn-sm btn-primary fw-bold px-3 py-1 shadow-sm" id="btnThucHienGhep" onclick="thucHienGhepBackup()" disabled><i class="bi bi-check-circle-fill me-1"></i>Xác nhận Gán Tuyến</button>
+          </div>
+          <div class="accordion" id="accordionBackupCa">
+            <div class="accordion-item border-0 shadow-sm mb-2 rounded overflow-hidden">
+              <h2 class="accordion-header" id="headingCot1">
+                <button class="accordion-button collapsed bg-white fw-bold text-primary py-2 border-start border-primary border-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCot1" style="font-size: 14px;">
+                  <i class="bi bi-sun-fill text-warning me-2 fs-5"></i> CA COT 1 <span class="badge bg-danger ms-auto me-3 px-3 shadow-sm rounded-pill"><span id="countBackupCot1">0</span> Cần BK</span>
+                </button>
+              </h2>
+              <div id="collapseCot1" class="accordion-collapse collapse" data-bs-parent="#accordionBackupCa">
+                <div class="accordion-body p-2 bg-light"><div class="row g-2" id="vungBangCot1"></div></div>
+              </div>
+            </div>
+            <div class="accordion-item border-0 shadow-sm rounded overflow-hidden">
+              <h2 class="accordion-header" id="headingCot2">
+                <button class="accordion-button collapsed bg-white fw-bold text-dark py-2 border-start border-warning border-4" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCot2" style="font-size: 14px;">
+                  <i class="bi bi-moon-stars-fill text-warning me-2 fs-5"></i> CA COT 2 <span class="badge bg-danger ms-auto me-3 px-3 shadow-sm rounded-pill"><span id="countBackupCot2">0</span> Cần BK</span>
+                </button>
+              </h2>
+              <div id="collapseCot2" class="accordion-collapse collapse" data-bs-parent="#accordionBackupCa">
+                <div class="accordion-body p-2 bg-light"><div class="row g-2" id="vungBangCot2"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ĐỔI MẬT KHẨU (DUY NHẤT 1 BẢN GỐC) -->
+  <div class="modal fade" id="modalChangePassword" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white py-2">
+          <h5 class="modal-title fw-bold fs-6"><i class="bi bi-shield-lock-fill me-2"></i>ĐỔI MẬT KHẨU BẢO MẬT</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3">
+          <div class="alert alert-warning py-2 mb-3 shadow-sm border-warning" style="font-size: 13px;">
+            💡 <b>Quên mật khẩu?</b> Vui lòng báo lại cho <b>Phúc Anh (Admin)</b> để được hỗ trợ cấp lại (Reset) mật khẩu nhé!
+          </div>
+          <p id="msgRequirePass" class="text-danger fw-bold d-none small mb-3">⚠️ Lần đầu đăng nhập: Vui lòng đổi mật khẩu mới để bảo mật!</p>
+          <div class="row g-2 mb-2" id="boxChgRoleUser">
+            <div class="col-4">
+              <label class="form-label fw-bold small text-dark">Vai trò</label>
+              <select id="chgPassRole" class="form-select form-select-sm fw-bold">
+                <option value="RIDER">RIDER</option><option value="FTE">FTE / ADMIN</option>
+              </select>
+            </div>
+            <div class="col-8">
+              <label class="form-label fw-bold small text-dark">ID / Tên đăng nhập</label>
+              <input type="text" id="chgPassUsername" class="form-control form-control-sm font-monospace fw-bold" placeholder="Nhập ID hoặc Username...">
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-bold small text-dark">Mật khẩu Hiện tại (Hoặc ID nếu lần đầu)</label>
+            <div class="position-relative">
+              <input type="password" id="chgPassOld" class="form-control form-control-sm font-monospace" placeholder="Nhập mật khẩu hiện tại..." style="padding-right: 40px;">
+              <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-2 text-muted" style="cursor: pointer; font-size: 1rem;" onclick="togglePasswordVisibility('chgPassOld', this)"></i>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-bold small text-primary">Mật khẩu Mới</label>
+            <div class="position-relative">
+              <input type="password" id="chgPassNew" class="form-control form-control-sm font-monospace border-primary" placeholder="Nhập mật khẩu mới..." style="padding-right: 40px;">
+              <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-2 text-muted" style="cursor: pointer; font-size: 1rem;" onclick="togglePasswordVisibility('chgPassNew', this)"></i>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-primary">Nhập lại Mật khẩu Mới</label>
+            <div class="position-relative">
+              <input type="password" id="chgPassConfirm" class="form-control form-control-sm font-monospace border-primary" placeholder="Nhập lại để xác nhận..." style="padding-right: 40px;">
+              <i class="bi bi-eye position-absolute top-50 end-0 translate-middle-y me-2 text-muted" style="cursor: pointer; font-size: 1rem;" onclick="togglePasswordVisibility('chgPassConfirm', this)"></i>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer py-2 bg-light">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+          <button type="button" class="btn btn-danger btn-sm fw-bold px-4" onclick="thucHienDoiMatKhau()"><i class="bi bi-check-circle-fill me-1"></i>Cập nhật Mật khẩu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="/js/lich-off.js"></script>
+  <script src="/js/thong-tin-rider.js"></script>
+  <script src="/js/profile_rider.js"></script>
+  <script src="/js/performance_rider.js"></script>
+  <script>
+    window.API_BASE = '/api';
+    const API_BASE = '/api';
+
+    let ridersData = [], dateHeadersGlobal = [], listPN = [], listTB = [], listTD = [], cachedInboundOrders = [], currentModalShipmentIds = [];
+    let currentTab = 'tuyenRider';
+    let loadedTabs = { tuyenRider: false, lichOff: false, performance: false, hangHoa: false };
+    let isTop5Open = true;
+
+    function dongMoTop5() {
+      isTop5Open = !isTop5Open;
+      const el = document.getElementById('collapseTop5');
+      if (el) el.style.display = isTop5Open ? 'block' : 'none';
+      const icon = document.getElementById('iconToggleTop5');
+      if (icon) icon.className = isTop5Open ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+      const txt = document.getElementById('textToggleTop5');
+      if (txt) txt.innerText = isTop5Open ? 'Thu gọn' : 'Mở rộng';
+    }
+
+    function chuyenTab(tabId) {
+      currentTab = tabId;
+      document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+      const btn = document.getElementById('btn-' + tabId);
+      if (btn) btn.classList.add('active');
+
+      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+      const sec = document.getElementById('section-' + tabId);
+      if (sec) sec.classList.add('active');
+
+      if (tabId === 'tuyenRider') { if (!loadedTabs.tuyenRider) loadRiderData(); } 
+      else if (tabId === 'lichOff') { if (!loadedTabs.tuyenRider) loadRiderData(); else { if (typeof renderMaTranOff === 'function') renderMaTranOff(); if (typeof filterOffData === 'function') filterOffData(); } } 
+      else if (tabId === 'performance') { loadPerformanceData(); } 
+      else if (tabId === 'hangHoa') { loadHangHoaData(); } 
+      else if (tabId === 'diemDanh') { khoiTaoTabDiemDanh(); }
+      else if (tabId === 'thongTinRider') { loadThongTinChungData(); }
+    }
+
+    function lamMoiDuLieu() {
+      if (currentTab === 'tuyenRider' || currentTab === 'lichOff') { loadedTabs.tuyenRider = false; loadRiderData(); } 
+      else if (currentTab === 'performance') { loadPerformanceData(); } 
+      else if (currentTab === 'hangHoa') { loadHangHoaData(); } 
+      else if (currentTab === 'diemDanh') { loadLichSuDiemDanh(); }
+    }
+
+    // TẢI RIDER & PERFORMANCE
+    async function loadRiderData() {
+      const tbody = document.getElementById('riderTableBody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải toàn bộ Rider...</td></tr>';
+      try {
+        const res = await fetch(`${API_BASE}/rider-data`); const data = await res.json();
+        ridersData = data.riders || []; dateHeadersGlobal = data.dateHeaders || []; loadedTabs.tuyenRider = true;
+        populateQuanDeliOptions(ridersData); filterRiderData();
+        if (typeof filterOffData === 'function') filterOffData();
+        if (typeof taoDropdownTuanOff === 'function') taoDropdownTuanOff(dateHeadersGlobal);
+        if (typeof renderMaTranOff === 'function') renderMaTranOff();
+      } catch (err) { if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Lỗi tải dữ liệu: ${err.message}</td></tr>`; }
+    }
+
+    function populateQuanDeliOptions(riders) {
+      const select = document.getElementById('riderFilterQuanDeli');
+      if (!select) return;
+      const quanSet = new Set();
+      riders.forEach(rd => { if (rd.quanDeli) quanSet.add(rd.quanDeli.trim()); });
+      select.innerHTML = '<option value="">Tất cả Quận Deli</option>';
+      Array.from(quanSet).sort().forEach(q => { select.innerHTML += `<option value="${q}">${q}</option>`; });
+    }
+
+    function filterRiderData() {
+      const kw = (document.getElementById('riderSearch')?.value || '').trim().toLowerCase();
+      const ca = document.getElementById('riderFilterCa')?.value || '';
+      const quan = document.getElementById('riderFilterQuanDeli')?.value || '';
+      const tbody = document.getElementById('riderTableBody');
+      if (!tbody) return;
+
+      const filtered = ridersData.filter(rd => {
+        const matchKw = !kw || rd.id.toLowerCase().includes(kw) || rd.name.toLowerCase().includes(kw) || rd.quanPick.toLowerCase().includes(kw) || rd.tuyenPick.toLowerCase().includes(kw);
+        const matchCa = !ca || rd.ca.includes(ca);
+        const matchQuan = !quan || rd.quanDeli.trim() === quan;
+        return matchKw && matchCa && matchQuan;
+      });
+
+      const lblCount = document.getElementById('riderCountLabel');
+      if (lblCount) lblCount.innerText = `Hiển thị: ${filtered.length} / ${ridersData.length} Rider`;
+      if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Không tìm thấy Rider phù hợp</td></tr>'; return; }
+
+      let html = '';
+      filtered.forEach((rd, idx) => {
+        const caBadge = rd.ca.includes('1') ? 'badge-cot1' : (rd.ca.includes('2') ? 'badge-cot2' : 'bg-secondary');
+        const bkBadge = rd.isBackup ? '<span class="badge bg-dark ms-1">BK</span>' : '';
+        html += `
+          <tr>
+            <td class="text-center text-muted small">${idx + 1}</td>
+            <td class="text-center fw-bold text-dark font-monospace">${rd.id}</td>
+            <td class="fw-bold text-start">${rd.name}${bkBadge}</td>
+            <td class="text-center"><span class="badge ${caBadge}">${rd.ca || '—'}</span></td>
+            <td class="text-start">${rd.quanPick} (P.${rd.phuongPick || '-'})<br><small class="text-secondary font-monospace">${rd.tuyenPick || ''}</small></td>
+            <td class="text-start"><strong class="text-primary">${rd.quanDeli}</strong> (P.${rd.phuongDeli || '-'})</td>
+            <td class="text-center small">${rd.nhom || '—'}</td>
+            <td class="text-danger fw-semibold small text-start">${rd.lichOff || '—'}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    async function loadPerformanceData() {
+      const tbody = document.getElementById('perfTbody');
+      if (tbody) tbody.innerHTML = '<tr><td class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải dữ liệu Performance...</td></tr>';
+      try {
+        const res = await fetch(`${API_BASE}/performance-data`); const data = await res.json();
+        loadedTabs.performance = true; renderDynamicTable('perfThead', 'perfTbody', data);
+      } catch (err) { if (tbody) tbody.innerHTML = `<tr><td class="text-center text-danger py-4">Lỗi: ${err.message}</td></tr>`; }
+    }
+
+    function renderDynamicTable(theadId, tbodyId, dataObj) {
+      const thead = document.getElementById(theadId); const tbody = document.getElementById(tbodyId);
+      if (!thead || !tbody) return;
+      thead.innerHTML = ''; tbody.innerHTML = '';
+      if (!dataObj || !dataObj.headers || dataObj.headers.length === 0) { tbody.innerHTML = '<tr><td class="text-center py-4 text-muted">Bảng tính chưa có dữ liệu</td></tr>'; return; }
+
+      let thHtml = '<tr class="text-center">';
+      dataObj.headers.forEach(h => { thHtml += `<th class="text-nowrap">${h || ''}</th>`; });
+      thHtml += '</tr>'; thead.innerHTML = thHtml;
+
+      if (!dataObj.rows || dataObj.rows.length === 0) { tbody.innerHTML = '<tr><td colspan="' + dataObj.headers.length + '" class="text-center py-4 text-muted">Không có hàng dữ liệu nào</td></tr>'; return; }
+      let tbHtml = '';
+      dataObj.rows.forEach(row => {
+        if (!row || row.length === 0) return;
+        tbHtml += '<tr>';
+        for (let i = 0; i < dataObj.headers.length; i++) { tbHtml += `<td class="text-nowrap">${row[i] !== undefined && row[i] !== '' ? row[i] : '—'}</td>`; }
+        tbHtml += '</tr>';
+      });
+      tbody.innerHTML = tbHtml || '<tr><td class="text-center py-4 text-muted">Không có dữ liệu</td></tr>';
+    }
+
+    function filterDynamicTable(tableId, keyword) {
+      const kw = (keyword || '').toLowerCase();
+      document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => { tr.style.display = tr.innerText.toLowerCase().includes(kw) ? '' : 'none'; });
+    }
+
+    // ================= TẢI DỮ LIỆU HÀNG HÓA =================
+    const REFRESH_INTERVAL_SEC = 30;
+    let countdownSec = REFRESH_INTERVAL_SEC, autoRefreshTimer = null, isFetchingHangHoa = false;
+
+    function getGioVietNamHienTai() { return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+
+    function startAutoRefreshCountdown() {
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec);
+      autoRefreshTimer = setInterval(() => {
+        countdownSec--;
+        if (countdownSec <= 0) {
+          countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec);
+          if (currentTab === 'hangHoa') {
+            if (typeof currentKieuHangHoa !== 'undefined' && currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
+            else loadHangHoaData(true);
+          }
+        } else { capNhatGiaoDienDongHo(countdownSec); }
+      }, 1000);
+    }
+
+    function capNhatGiaoDienDongHo(sec) { const el = document.getElementById('nextUpdateCountdown'); if (el) el.innerText = `${sec}s`; }
+
+    async function loadHangHoaData(isBackgroundSync = false) {
+      if (isFetchingHangHoa) return; isFetchingHangHoa = true;
+      const refreshBtn = document.querySelector("button[onclick='triggerManualHangHoaSync()']");
+      if (refreshBtn && !isBackgroundSync) { refreshBtn.disabled = true; refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang nạp...'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/hang-hoa-data`); const data = await res.json();
+        loadedTabs.hangHoa = true; if (!data) return;
+        cachedInboundOrders = data.inboundOrdersCache || [];
+
+        const elFetch = document.getElementById('hangLastFetchTime'); if (elFetch) elFetch.innerText = getGioVietNamHienTai();
+        const elSheetTime = document.getElementById('hangSheetTimeLabel');
+        if (elSheetTime && data.kpi && data.kpi.lastUpdate) elSheetTime.innerText = `(Ghi nhận: ${data.kpi.lastUpdate})`;
+
+        const k = data.kpi || {};
+        document.getElementById('kpiTongDon').innerText = k.tongDon || '0';
+        document.getElementById('kpiPhuNhuan').innerText = k.phuNhuan || '0';
+        document.getElementById('kpiTanBinh').innerText = k.tanBinh || '0';
+        document.getElementById('kpiThuDuc').innerText = k.thuDuc || '0';
+        document.getElementById('kpiMp').innerText = k.donMp || '0';
+        document.getElementById('kpiWh').innerText = k.donWh || '0';
+        document.getElementById('kpiHv').innerText = k.donHv || '0';
+
+        renderTop5Table(data.top5Phuong || []);
+        listPN = data.phuongPhuNhuan || []; listTB = data.phuongTanBinh || []; listTD = data.phuongThuDuc || [];
+
+        document.getElementById('countPhuNhuanBadge').innerText = listPN.length;
+        document.getElementById('countTanBinhBadge').innerText = listTB.length;
+        document.getElementById('countThuDucBadge').innerText = listTD.length;
+
+        filterQuanList('PN'); filterQuanList('TB'); filterQuanList('TD');
+      } catch (err) { console.error('Lỗi tải hàng hóa:', err); } 
+      finally {
+        isFetchingHangHoa = false;
+        if (refreshBtn && !isBackgroundSync) { refreshBtn.disabled = false; refreshBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay'; }
+      }
+    }
+
+    function renderTop5Table(topList) {
+      const tbody = document.getElementById('bangTop5Body'); if (!tbody) return; tbody.innerHTML = '';
+      if (!topList || topList.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-2 text-muted">Không có dữ liệu Top</td></tr>'; return; }
+      topList.forEach(item => {
+        const badgeColor = item.hang === '#1' ? 'bg-danger' : (item.hang === '#2' ? 'bg-warning text-dark' : 'bg-primary');
+        tbody.innerHTML += `
+          <tr>
+            <td class="text-center"><span class="badge ${badgeColor} fw-bold" style="font-size: 0.68rem;">${item.hang || ''}</span></td>
+            <td><strong>${item.ten || ''}</strong> <span class="badge bg-light text-secondary border ms-1" style="font-size:0.65rem;">${item.quan || ''}</span></td>
+            <td class="text-center font-monospace text-danger fw-bold fs-6">${item.soLuong || 0}</td>
+            <td class="text-center"><button class="btn btn-xs btn-outline-danger py-0 px-1" style="font-size: 0.7rem;" onclick="xemChiTietDon('${item.quan || ''}', '${item.ten || ''}')"><i class="bi bi-search"></i></button></td>
+          </tr>`;
+      });
+    }
+
+    function filterQuanList(quanCode) {
+      let dataList = [], tbodyId = '', searchId = '';
+      if (quanCode === 'PN') { dataList = listPN; tbodyId = 'tbodyPN'; searchId = 'searchPN'; }
+      else if (quanCode === 'TB') { dataList = listTB; tbodyId = 'tbodyTB'; searchId = 'searchTB'; }
+      else if (quanCode === 'TD') { dataList = listTD; tbodyId = 'tbodyTD'; searchId = 'searchTD'; }
+
+      const searchEl = document.getElementById(searchId); const kw = searchEl ? searchEl.value.trim().toLowerCase() : '';
+      const tbody = document.getElementById(tbodyId); if (!tbody) return;
+
+      const filtered = dataList.filter(item => !kw || (item.phuong || '').toLowerCase().includes(kw));
+      if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-2 text-muted small">Không có dữ liệu</td></tr>'; return; }
+
+      let html = '';
+      filtered.forEach(item => {
+        html += `
+          <tr>
+            <td class="fw-semibold text-truncate" style="max-width: 140px;" title="${item.phuong || ''}">${item.phuong || ''}</td>
+            <td class="text-center font-monospace fw-bold text-danger">${item.soLuong || 0}</td>
+            <td class="text-center"><button class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size: 0.7rem;" onclick="xemChiTietDon('${item.quan || ''}', '${item.phuong || ''}')"><i class="bi bi-search"></i></button></td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function normQ(q) {
+      if (!q) return ''; const s = q.toString().toLowerCase();
+      if (s.includes('quận 2') || s.includes('pn')) return 'quận 2';
+      if (s.includes('quận 4') || s.includes('tb')) return 'quận 4';
+      if (s.includes('quận 7') || s.includes('td')) return 'quận 7';
+      return s.trim();
+    }
+
+    function xemDonTheoKpi(type, label) {
+      const uniqueOrders = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
+      let donList = [];
+      if (type === 'all') donList = uniqueOrders;
+      else if (type === 'hv_only') donList = uniqueOrders.filter(d => (d.isHv || '').toLowerCase() === 'yes');
+      else if (type === 'mp_only') donList = uniqueOrders.filter(d => (d.loaiHang || '').toUpperCase() === 'MP');
+      else if (type === 'wh_only') donList = uniqueOrders.filter(d => (d.loaiHang || '').toUpperCase() === 'WH');
+      else donList = uniqueOrders.filter(d => normQ(d.quan) === normQ(type));
+      hienThiModalDon(`Danh Sách: ${label}`, donList);
+    }
+
+    function xemChiTietDon(quan, phuong) {
+      const targetQ = normQ(quan);
+      let cleanP = (phuong || '').trim().toLowerCase().replace(/\s*\([^)]*\)/g, '').trim();
+      const numMatch = cleanP.match(/(?:phường|p\.?)\s*0*(\d+)/i) || cleanP.match(/^0*(\d+)$/);
+      const targetNorm = numMatch ? `phường ${numMatch[1] < 10 ? '0' + numMatch[1] : numMatch[1]}` : cleanP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
+      const uniqueOrders = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
+
+      const donList = uniqueOrders.filter(d => {
+        const itemQ = normQ(d.quan);
+        let itemP = (d.phuong || '').trim().toLowerCase();
+        const itemNumMatch = itemP.match(/(?:phường|p\.?)\s*0*(\d+)/i) || itemP.match(/^0*(\d+)$/);
+        const itemNorm = itemNumMatch ? `phường ${itemNumMatch[1] < 10 ? '0' + itemNumMatch[1] : itemNumMatch[1]}` : itemP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
+        return (!targetQ || itemQ === targetQ) && (itemNorm === targetNorm || itemP.includes(targetNorm) || targetNorm.includes(itemP));
+      });
+      hienThiModalDon(`Đơn Rớt: ${phuong} ${quan ? '- ' + quan : ''}`, donList);
+    }
+
+    function hienThiModalDon(title, donList) {
+      const modalEl = document.getElementById('modalChiTietDon'); if (!modalEl) return;
+      document.getElementById('modalTitle').innerText = title; const tbody = document.getElementById('modalDonTbody');
+      currentModalShipmentIds = donList.map(d => d.shipmentId).filter(Boolean);
+
+      if (donList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Không có mã đơn rớt chưa gán Rider nào</td></tr>';
+        document.getElementById('modalCountBadge').innerText = '0 đơn rớt';
+      } else {
+        const hvCount = donList.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+        let badgeText = `${donList.length.toLocaleString('vi-VN')} đơn rớt`; if (hvCount > 0) badgeText += ` (⚠️ ${hvCount} đơn HV)`;
+        document.getElementById('modalCountBadge').innerText = badgeText;
+        let html = '';
+        donList.forEach((don, idx) => {
+          const isHv = (don.isHv || '').toLowerCase() === 'yes', isMp = (don.loaiHang || '').toUpperCase() === 'MP';
+          const badgeLoai = isMp ? '<span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">MP</span>' : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-bold">WH</span>';
+          html += `<tr class="${isHv ? 'table-warning' : ''}"><td class="text-center text-muted small">${idx + 1}</td><td class="font-monospace fw-bold ${isHv ? 'text-danger' : 'text-primary'}">${don.shipmentId}</td><td class="text-center">${badgeLoai}</td><td class="text-center small">${don.zoneId || '—'}</td><td class="text-center">${isHv ? '<span class="badge bg-danger text-white fw-bold"><i class="bi bi-star-fill me-1"></i>HV</span>' : '<span class="text-muted small">No</span>'}</td><td class="small text-muted">${don.receivedTime || '—'}</td></tr>`;
+        });
+        tbody.innerHTML = html;
+      }
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+
+    function copyAllShipmentIds() {
+      if (currentModalShipmentIds.length === 0) { alert("Không có mã đơn để sao chép!"); return; }
+      navigator.clipboard.writeText(currentModalShipmentIds.join('\n')).then(() => { alert(`Đã sao chép ${currentModalShipmentIds.length} mã đơn vào bộ nhớ tạm!`); }).catch(err => alert("Lỗi sao chép: " + err));
+    }
+
+    // ================= TẢI ĐIỂM DANH =================
+    let isThuGonDD = false;
+    function toggleThuGonBangDD() {
+      isThuGonDD = !isThuGonDD; const body = document.getElementById('vungBangDiemDanhBody'), icon = document.getElementById('iconThuGonDD');
+      if (body) body.style.display = isThuGonDD ? 'none' : 'block'; if (icon) icon.className = isThuGonDD ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+    }
+
+    function khoiTaoTabDiemDanh() {
+      const baseUrl = window.location.origin, d = new Date(), tokenNgay = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      const img1 = document.getElementById('qrImageCOT1'); if (img1) img1.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${baseUrl}/diem-danh?ca=COT1&token=${tokenNgay}`)}`;
+      const img2 = document.getElementById('qrImageCOT2'); if (img2) img2.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${baseUrl}/diem-danh?ca=COT2&token=${tokenNgay}`)}`;
+      loadLichSuDiemDanh(); loadCauHinhDiemDanh();
+    }
+
+    async function loadLichSuDiemDanh() {
+      const tbody = document.getElementById('tbodyLichSuDiemDanh');
+      try {
+        const res = await fetch(`${API_BASE}/lich-su-diem-danh`); const list = await res.json();
+        const dStr = new Date().toLocaleDateString('vi-VN');
+        const lbl = document.getElementById('lblNgayDiemDanhHomNay'); if (lbl) lbl.innerText = `Ngày: ${dStr} (${list.length} lượt)`;
+
+        if (!list || list.length === 0) { if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-muted">Chưa có rider nào điểm danh hôm nay (${dStr})</td></tr>`; return; }
+        let html = '';
+        list.forEach((item, idx) => {
+          html += `<tr><td class="text-muted small">${idx + 1}</td><td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td><td class="font-monospace">${item.id}</td><td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td><td><span class="badge ${item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td><td><span class="badge bg-success">Đã điểm danh</span></td></tr>`;
+        });
+        if (tbody) tbody.innerHTML = html;
+      } catch (e) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-3 text-muted">Chưa có lượt điểm danh nào</td></tr>'; }
+    }
+
+    let cauHinh2CaHienTai = null;
+    function formatTextHienThi(h, m) { const hInt = parseInt(h, 10), mInt = parseInt(m, 10); return mInt > 0 ? `${hInt}h${mInt < 10 ? '0' + mInt : mInt}` : `${hInt}h`; }
+    function dongBoTuSlider(caKey, loai, donVi) {
+      const sliderId = donVi === 'gio' ? (loai === 'mo' ? `rangeMoGio${caKey}` : `rangeDongGio${caKey}`) : (loai === 'mo' ? `rangeMoPhut${caKey}` : `rangeDongPhut${caKey}`);
+      const numInputId = donVi === 'gio' ? (loai === 'mo' ? `numMoGio${caKey}` : `numDongGio${caKey}`) : (loai === 'mo' ? `numMoPhut${caKey}` : `numDongPhut${caKey}`);
+      const elSlider = document.getElementById(sliderId), elNum = document.getElementById(numInputId);
+      if (elSlider && elNum) elNum.value = elSlider.value; capNhatNhanHienThi(caKey);
+    }
+    function dongBoTuInput(caKey, loai, donVi) {
+      const sliderId = donVi === 'gio' ? (loai === 'mo' ? `rangeMoGio${caKey}` : `rangeDongGio${caKey}`) : (loai === 'mo' ? `rangeMoPhut${caKey}` : `rangeDongPhut${caKey}`);
+      const numInputId = donVi === 'gio' ? (loai === 'mo' ? `numMoGio${caKey}` : `numDongGio${caKey}`) : (loai === 'mo' ? `numMoPhut${caKey}` : `numDongPhut${caKey}`);
+      const elNum = document.getElementById(numInputId), elSlider = document.getElementById(sliderId);
+      if (!elNum || !elSlider) return;
+      let val = parseInt(elNum.value, 10); if (isNaN(val)) val = 0;
+      if (donVi === 'gio') { if (val < 1) val = 1; if (val > 24) val = 24; } else { if (val < 0) val = 0; if (val > 59) val = 59; }
+      elSlider.value = val; capNhatNhanHienThi(caKey);
+    }
+    function capNhatNhanHienThi(caKey) {
+      const gMoEl = document.getElementById(`rangeMoGio${caKey}`), pMoEl = document.getElementById(`rangeMoPhut${caKey}`), gDongEl = document.getElementById(`rangeDongGio${caKey}`), pDongEl = document.getElementById(`rangeDongPhut${caKey}`);
+      if (!gMoEl || !pMoEl || !gDongEl || !pDongEl) return;
+      const txtMo = formatTextHienThi(gMoEl.value, pMoEl.value), txtDong = formatTextHienThi(gDongEl.value, pDongEl.value);
+      const lblMo = document.getElementById(`lblMo${caKey}`); if (lblMo) lblMo.innerText = txtMo;
+      const lblDong = document.getElementById(`lblDong${caKey}`); if (lblDong) lblDong.innerText = txtDong;
+      const txtHienThi = document.getElementById(`txtHienThiGio${caKey}`); if (txtHienThi) txtHienThi.innerText = `Khung giờ: ${txtMo} - ${txtDong}`;
+    }
+    function setInputValues(caKey, strMo, strDong) {
+      const macDinhMo = caKey === 'COT2' ? '15:30' : '11:40', macDinhDong = caKey === 'COT2' ? '16:15' : '12:15';
+      const partsMo = (strMo || macDinhMo).split(':'), partsDong = (strDong || macDinhDong).split(':');
+      const hM = parseInt(partsMo[0], 10), mM = parseInt(partsMo[1], 10), hD = parseInt(partsDong[0], 10), mD = parseInt(partsDong[1], 10);
+      const elRangeMoG = document.getElementById(`rangeMoGio${caKey}`); if (elRangeMoG) elRangeMoG.value = hM;
+      const elNumMoG = document.getElementById(`numMoGio${caKey}`); if (elNumMoG) elNumMoG.value = hM;
+      const elRangeMoP = document.getElementById(`rangeMoPhut${caKey}`); if (elRangeMoP) elRangeMoP.value = mM;
+      const elNumMoP = document.getElementById(`numMoPhut${caKey}`); if (elNumMoP) elNumMoP.value = mM;
+      const elRangeDongG = document.getElementById(`rangeDongGio${caKey}`); if (elRangeDongG) elRangeDongG.value = hD;
+      const elNumDongG = document.getElementById(`numDongGio${caKey}`); if (elNumDongG) elNumDongG.value = hD;
+      const elRangeDongP = document.getElementById(`rangeDongPhut${caKey}`); if (elRangeDongP) elRangeDongP.value = mD;
+      const elNumDongP = document.getElementById(`numDongPhut${caKey}`); if (elNumDongP) elNumDongP.value = mD;
+      capNhatNhanHienThi(caKey);
+    }
+    async function loadCauHinhDiemDanh() {
+      try { const res = await fetch(`${API_BASE}/cau-hinh-diem-danh`); cauHinh2CaHienTai = await res.json(); capNhatGiaoDien2Ca(cauHinh2CaHienTai); } 
+      catch (e) { console.error("Lỗi nạp cấu hình:", e); }
+    }
+    function capNhatGiaoDien2Ca(cfg) {
+      if (!cfg) return;
+      ['COT1', 'COT2'].forEach(caKey => {
+        if (cfg[caKey]) {
+          const c = cfg[caKey]; setInputValues(caKey, c.gioMo, c.gioDong);
+          const badge = document.getElementById(`badgeTrangThai${caKey}`), boxQr = document.getElementById(`boxQr${caKey}`), boxKh = document.getElementById(`boxKhoa${caKey}`), btnTog = document.getElementById(`btnToggle${caKey}`);
+          if (c.dangMoThucTe) {
+            if (badge) { badge.className = 'badge bg-success'; badge.innerText = 'ĐANG MỞ'; }
+            if (boxQr) boxQr.style.display = 'block'; if (boxKh) boxKh.style.display = 'none';
+            if (btnTog) { btnTog.className = `btn btn-sm btn-danger w-100 py-1 fw-bold mb-2`; btnTog.innerHTML = `<i class="bi bi-power me-1"></i>KHÓA CỔNG ${caKey === 'COT2'?'COT 2':'COT 1'}`; }
+          } else {
+            if (badge) { badge.className = 'badge bg-danger'; badge.innerText = 'ĐANG KHÓA'; }
+            if (boxQr) boxQr.style.display = 'none'; if (boxKh) boxKh.style.display = 'block';
+            const txtLyDo = document.getElementById(`lyDoKhoa${caKey}`); if (txtLyDo) txtLyDo.innerText = c.thongBao;
+            if (btnTog) { btnTog.className = `btn btn-sm btn-success w-100 py-1 fw-bold mb-2`; btnTog.innerHTML = `<i class="bi bi-unlock-fill me-1"></i>MỞ LẠI ${caKey === 'COT2'?'COT 2':'COT 1'}`; }
+          }
+        }
+      });
+    }
+    async function toggleKhoaCaThuCong(caKey) {
+      if (!cauHinh2CaHienTai) cauHinh2CaHienTai = { COT1: { dangMoThucTe: true, gioMo: '11:40', gioDong: '12:15' }, COT2: { dangMoThucTe: true, gioMo: '15:30', gioDong: '16:15' } };
+      const caObj = cauHinh2CaHienTai[caKey] || { dangMoThucTe: true };
+      const dangMo = caObj.dangMoThucTe, trangThaiMoi = dangMo ? 'DONG' : 'EP_MO', tenCa = caKey === 'COT2' ? 'COT 2' : 'COT 1';
+      if (!confirm(`Xác nhận ${dangMo ? 'KHÓA' : 'MỞ LẠI'} cổng điểm danh của ${tenCa}?`)) return;
+      caObj.dangMoThucTe = !dangMo; caObj.thongBao = dangMo ? `Điều phối đã KHÓA cổng điểm danh của ${tenCa}!` : 'Đang mở'; capNhatGiaoDien2Ca(cauHinh2CaHienTai);
+      try {
+        const res = await fetch(`${API_BASE}/cap-nhat-cau-hinh-ca`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ caKey, trangThaiThuCong: trangThaiMoi }) });
+        const data = await res.json(); if (data && data.cauHinhMoi) { cauHinh2CaHienTai = data.cauHinhMoi; capNhatGiaoDien2Ca(cauHinh2CaHienTai); }
+      } catch (e) { loadCauHinhDiemDanh(); }
+    }
+    async function luuGioSlider(caKey) {
+      const gMoEl = document.getElementById(`rangeMoGio${caKey}`), pMoEl = document.getElementById(`rangeMoPhut${caKey}`), gDongEl = document.getElementById(`rangeDongGio${caKey}`), pDongEl = document.getElementById(`rangeDongPhut${caKey}`);
+      if (!gMoEl || !pMoEl || !gDongEl || !pDongEl) return;
+      const strMo = `${String(gMoEl.value).padStart(2, '0')}:${String(pMoEl.value).padStart(2, '0')}`, strDong = `${String(gDongEl.value).padStart(2, '0')}:${String(pDongEl.value).padStart(2, '0')}`;
+      try {
+        await fetch(`${API_BASE}/cap-nhat-cau-hinh-ca`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ caKey, gioMo: strMo, gioDong: strDong, trangThaiThuCong: 'MO' }) });
+        alert(`Đã lưu khung giờ cho ${caKey === 'COT2' ? 'COT 2' : 'COT 1'}: ${formatTextHienThi(gMoEl.value, pMoEl.value)} đến ${formatTextHienThi(gDongEl.value, pDongEl.value)}!`);
+        loadCauHinhDiemDanh();
+      } catch (e) { alert("Lỗi lưu khung giờ!"); }
+    }
+
+    window.onload = function() {
+      // Tải dữ liệu ngầm trước
+      loadRiderData(); 
+      loadPerformanceData(); 
+      loadHangHoaData(); 
+      startAutoRefreshCountdown();
+      
+      // GỌI TRỰC TIẾP LỆNH CHẶN ĐĂNG NHẬP Ở ĐÂY ĐỂ ĐẢM BẢO 100% KHÔNG BỊ ĐƠ
+      kiemTraDangNhap();
+    };
+
+// Đăng ký Service Worker để biến Web thành App
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js?v=2').then(reg => {
+          console.log('App đã sẵn sàng tải về!');
+        }).catch(err => {});
+      });
+    }
+
+// XỬ LÝ NÚT TẢI APP THỦ CÔNG CHỐNG TRÌNH DUYỆT CHẶN POPUP
+    let batSuKienCaiDat;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Ngăn Chrome tự động hiện popup nhỏ ở dưới đáy
+      e.preventDefault();
+      // Lưu lại sự kiện để lúc nào Rider bấm nút mới gọi ra
+      batSuKienCaiDat = e;
+      // Hiện nút "Tải App" trên thanh Menu
+      const btnCaiDat = document.getElementById('btnInstallApp');
+      if (btnCaiDat) btnCaiDat.style.display = 'inline-block';
+    });
+
+    window.caiDatAppLenDienThoai = async function() {
+      if (batSuKienCaiDat) {
+        batSuKienCaiDat.prompt();
+        const { outcome } = await batSuKienCaiDat.userChoice;
+        if (outcome === 'accepted') {
+          document.getElementById('btnInstallApp').style.display = 'none';
+        }
+        batSuKienCaiDat = null;
+      } else {
+        alert("💡 HƯỚNG DẪN TẢI APP LÊN MÀN HÌNH CHÍNH:\n\n📱 NẾU DÙNG ANDROID (Chrome):\nBấm dấu 3 chấm ở góc trên bên phải trình duyệt ➔ Chọn 'Thêm vào màn hình chính' (Add to Home screen) hoặc 'Cài đặt ứng dụng'.\n\n🍎 NẾU DÙNG iPHONE (Safari):\nBấm nút [Chia sẻ] (Hình vuông có mũi tên chỉ lên ở cạnh dưới) ➔ Chọn 'Thêm vào MH chính'.");
+      }
+    };
+
+let currentUser = null;
+
+    function hienThiModalDangNhap(hien = true) {
+      const modal = document.getElementById('modalAuthLogin');
+      if (modal) {
+          modal.style.setProperty('display', hien ? 'flex' : 'none', 'important');
+      }
+    }
+
+    function kiemTraDangNhap() {
+      const savedUser = localStorage.getItem('KV2_LOGGED_USER');
+      if (savedUser) {
+        try {
+          currentUser = JSON.parse(savedUser);
+          hienThiModalDangNhap(false);
+          apDungPhanQuyen(currentUser);
+          
+          // NẾU LÀ RIDER -> CHUYỂN VÀO HỒ SƠ NGAY LẬP TỨC
+          if (currentUser.role === 'RIDER') {
+              chuyenTab('profile');
+          } else {
+              chuyenTab('tuyenRider');
+          }
+        } catch (e) {
+          localStorage.removeItem('KV2_LOGGED_USER');
+          hienThiModalDangNhap(true);
+        }
+      } else { 
+          hienThiModalDangNhap(true); 
+      }
+    }
+
+    function doiTabAuth(type) {
+      const btnRider = document.getElementById('btnTabRider'), btnFTE = document.getElementById('btnTabFTE'), formRider = document.getElementById('formAuthRider'), formFTE = document.getElementById('formAuthFTE');
+      if (type === 'RIDER') {
+        if (btnRider) btnRider.className = 'btn btn-primary flex-fill fw-bold py-2 shadow-sm'; if (btnFTE) btnFTE.className = 'btn btn-outline-primary flex-fill fw-bold py-2';
+        if (formRider) formRider.style.display = 'block'; if (formFTE) formFTE.style.display = 'none';
+        setTimeout(() => document.getElementById('loginRiderId')?.focus(), 50);
+      } else {
+        if (btnRider) btnRider.className = 'btn btn-outline-primary flex-fill fw-bold py-2'; if (btnFTE) btnFTE.className = 'btn btn-primary flex-fill fw-bold py-2 shadow-sm';
+        if (formRider) formRider.style.display = 'none'; if (formFTE) formFTE.style.display = 'block';
+        chuyenManHinhFte('LOGIN'); setTimeout(() => document.getElementById('loginFteUsername')?.focus(), 50);
+      }
+    }
+
+    function chuyenManHinhFte(manHinh) {
+      const boxLogin = document.getElementById('boxFteLogin'), boxReg = document.getElementById('boxFteRegister');
+      if (boxLogin) boxLogin.style.display = manHinh === 'LOGIN' ? 'block' : 'none';
+      if (boxReg) boxReg.style.display = manHinh === 'REGISTER' ? 'block' : 'none';
+    }
+
+    async function submitLoginFTE() {
+      const u = (document.getElementById('loginFteUsername')?.value || '').trim(), p = (document.getElementById('loginFtePassword')?.value || '').trim(), btn = document.getElementById('btnActionLoginFTE');
+      if (!u || !p) { alert("Vui lòng điền đầy đủ Tên đăng nhập và Mật khẩu!"); return; }
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xác thực...'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loaiDangNhap: 'FTE', username: u, password: p }) });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          if (data.requirePasswordChange) {
+              window.tempPendingUser = data.user; 
+              const roleEl = document.getElementById('chgPassRole'); if(roleEl) { roleEl.value = 'RIDER'; roleEl.disabled = true; }
+              const userEl = document.getElementById('chgPassUsername'); if(userEl) { userEl.value = data.user.id; userEl.disabled = true; }
+              if(document.getElementById('chgPassOld')) document.getElementById('chgPassOld').value = data.user.id; 
+              if(document.getElementById('chgPassNew')) document.getElementById('chgPassNew').value = '';
+              if(document.getElementById('chgPassConfirm')) document.getElementById('chgPassConfirm').value = '';
+              const msg = document.getElementById('msgRequirePass'); if (msg) msg.classList.remove('d-none');
+              
+              hienThiModalDangNhap(false);
+              setTimeout(() => { bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChangePassword')).show(); }, 200);
+              if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> VÀO HỆ THỐNG'; }
+          } else {
+              localStorage.setItem('KV2_LOGGED_USER', JSON.stringify(data.user)); window.location.reload();
+          }
+        } else {
+          alert("❌ " + (data.message || "Tên đăng nhập hoặc mật khẩu không chính xác!"));
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> ĐĂNG NHẬP FTE / ADMIN'; }
+        }
+      } catch (e) {
+        alert("❌ Lỗi kết nối máy chủ! Vui lòng thử lại."); if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> ĐĂNG NHẬP FTE / ADMIN'; }
+      }
+    }
+
+    async function submitRegisterFTE() {
+      const fullName = (document.getElementById('regFullName')?.value || '').trim(), username = (document.getElementById('regUsername')?.value || '').trim(), password = (document.getElementById('regPassword')?.value || '').trim(), btn = document.getElementById('btnActionRegisterFTE');
+      if (!fullName || !username || !password) { alert("Vui lòng điền đầy đủ Họ tên, Username và Mật khẩu!"); return; }
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang tạo...'; }
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/register-fte`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName, username, password }) });
+        const data = await res.json(); alert(data.message || "Đăng ký thành công!");
+        if (res.ok && data.success) chuyenManHinhFte('LOGIN');
+      } catch (e) { alert("❌ Lỗi kết nối khi đăng ký!"); } finally { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-person-plus-fill me-1"></i> TẠO TÀI KHOẢN (CHỜ ADMIN DUYỆT)'; } }
+    }
+
+    function apDungPhanQuyen(user) {
+      const badge = document.getElementById('userDisplayBadge'), btnAdmin = document.getElementById('btnAdminManageUsers'), perms = user.permissions || {};
+      if (user.role === 'SUPER_ADMIN') {
+        if (badge) { badge.className = 'badge bg-warning text-dark font-monospace'; badge.innerText = `👑 ADMIN: ${user.name}`; }
+        if (btnAdmin) btnAdmin.style.display = 'inline-block';
+        datTrangThaiMenuToanBo(true, true); return;
+      }
+      if (btnAdmin) btnAdmin.style.display = 'none';
+      if (badge) {
+        if (user.role === 'FTE') { badge.className = 'badge bg-info-subtle text-info border font-monospace'; badge.innerText = `👔 FTE: ${user.name}`; } 
+        else { badge.className = 'badge bg-secondary font-monospace'; badge.innerText = `🛵 RIDER: ${user.name} (${user.id})`; }
+      }
+
+      // Xử lý ẩn hiện nút Profile và Duyệt OFF
+      const btnRiderProfile = document.getElementById('btnRiderProfile');
+      const btnDuyetOffFTE = document.getElementById('btnDuyetOffFTE');
+      const btnRiderXinOff = document.getElementById('btnRiderXinOff');
+if (user.role === 'RIDER') {
+          if (btnRiderProfile) btnRiderProfile.style.display = 'inline-block';
+          if (btnRiderXinOff) btnRiderXinOff.style.display = 'inline-block';
+          if (btnDuyetOffFTE) btnDuyetOffFTE.style.display = 'none';
+          
+          // KHÓA CỨNG: Ẩn Inbound và Group Zalo
+          const btnInbound = document.getElementById('btnInboundDropdown');
+          if (btnInbound) btnInbound.style.display = 'none';
+          const btnZalo = document.getElementById('btn-sub-groupZalo');
+          if (btnZalo) btnZalo.style.display = 'none';
+
+          if (typeof window.checkThongBaoRider === 'function') window.checkThongBaoRider(user.id);
+      } else {
+          if (btnRiderProfile) btnRiderProfile.style.display = 'none';
+          if (btnRiderXinOff) btnRiderXinOff.style.display = 'none';
+          if (btnDuyetOffFTE) btnDuyetOffFTE.style.display = 'inline-block';
+          
+          // MỞ LẠI CHO FTE
+          const btnInbound = document.getElementById('btnInboundDropdown');
+          if (btnInbound) btnInbound.style.display = 'block';
+          const btnZalo = document.getElementById('btn-sub-groupZalo');
+          if (btnZalo) btnZalo.style.display = 'inline-block';
+
+          if (typeof window.checkDonChuaDuyet === 'function') window.checkDonChuaDuyet();
+      }
+
+      const cacMenu = [
+        { key: 'tuyenRider', btnId: 'btn-tuyenRider', secId: 'section-tuyenRider' }, { key: 'lichOff', btnId: 'btn-lichOff', secId: 'section-lichOff', editBtns: ['btnSubmitGAS'] },
+        { key: 'performance', btnId: 'btn-performance', secId: 'section-performance' }, { key: 'hangHoa', btnId: 'btn-hangHoa', secId: 'section-hangHoa' },
+        { key: 'diemDanh', btnId: 'btn-diemDanh', secId: 'section-diemDanh', editBtns: ['btnToggleCOT1', 'btnToggleCOT2'] }, { key: 'thongTinRider', btnId: 'btn-thongTinRider', secId: 'section-thongTinRider' }
+      ];
+
+      cacMenu.forEach(m => {
+        const p = perms[m.key] || { view: true, edit: false }, btnNav = document.getElementById(m.btnId);
+        if (btnNav) btnNav.style.display = p.view ? 'inline-flex' : 'none';
+        if (m.editBtns && m.editBtns.length > 0) { m.editBtns.forEach(bId => { const bEl = document.getElementById(bId); if (bEl) bEl.style.display = (user.role !== 'RIDER' && p.edit) ? '' : 'none'; }); }
+      });
+    }
+
+    function datTrangThaiMenuToanBo(viewAll, editAll) {
+      document.querySelectorAll('.menu-btn').forEach(btn => btn.style.display = viewAll ? 'inline-flex' : '');
+      ['btnSubmitGAS', 'btnToggleCOT1', 'btnToggleCOT2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = editAll ? '' : 'none'; });
+    }
+
+    function xuLyDangXuat() {
+      if (confirm("Bạn có chắc chắn muốn đăng xuất khỏi hệ thống không?")) { localStorage.removeItem('KV2_LOGGED_USER'); sessionStorage.clear(); location.reload(); }
+    }
+
+    window.togglePasswordVisibility = function(inputId, iconEl) {
+        const input = document.getElementById(inputId);
+        if (input) {
+            if (input.type === 'password') { input.type = 'text'; iconEl.classList.remove('bi-eye', 'text-muted'); iconEl.classList.add('bi-eye-slash', 'text-primary'); } 
+            else { input.type = 'password'; iconEl.classList.remove('bi-eye-slash', 'text-primary'); iconEl.classList.add('bi-eye', 'text-muted'); }
+        }
+    };
+
+    window.moBangDoiMatKhau = function() {
+        if (!window.currentUser) { alert("Vui lòng đăng nhập trước!"); return; }
+        const roleEl = document.getElementById('chgPassRole'); if(roleEl) { roleEl.value = window.currentUser.role === 'RIDER' ? 'RIDER' : 'FTE'; roleEl.disabled = true; }
+        const userEl = document.getElementById('chgPassUsername'); if(userEl) { userEl.value = window.currentUser.id || window.currentUser.username; userEl.disabled = true; }
+        if(document.getElementById('chgPassOld')) document.getElementById('chgPassOld').value = '';
+        if(document.getElementById('chgPassNew')) document.getElementById('chgPassNew').value = '';
+        if(document.getElementById('chgPassConfirm')) document.getElementById('chgPassConfirm').value = '';
+        if(document.getElementById('msgRequirePass')) document.getElementById('msgRequirePass').classList.add('d-none');
+        
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChangePassword')).show();
+    };
+
+    window.moBangQuenMatKhau = function() {
+        const roleEl = document.getElementById('chgPassRole'); if(roleEl) { roleEl.value = 'RIDER'; roleEl.disabled = false; }
+        const userEl = document.getElementById('chgPassUsername'); if(userEl) { userEl.value = ''; userEl.disabled = false; }
+        if(document.getElementById('chgPassOld')) document.getElementById('chgPassOld').value = '';
+        if(document.getElementById('chgPassNew')) document.getElementById('chgPassNew').value = '';
+        if(document.getElementById('chgPassConfirm')) document.getElementById('chgPassConfirm').value = '';
+        if(document.getElementById('msgRequirePass')) document.getElementById('msgRequirePass').classList.add('d-none');
+        
+        hienThiModalDangNhap(false);
+        setTimeout(() => { bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChangePassword')).show(); }, 200);
+    };
+
+    document.getElementById('modalChangePassword')?.addEventListener('hidden.bs.modal', function () {
+        if (!localStorage.getItem('KV2_LOGGED_USER')) { window.tempPendingUser = null; hienThiModalDangNhap(true); datTrangThaiMenuToanBo(false, false); }
+    });
+
+    async function thucHienDoiMatKhau() {
+        const role = document.getElementById('chgPassRole')?.value, username = document.getElementById('chgPassUsername')?.value, oldPassword = document.getElementById('chgPassOld')?.value, newPassword = document.getElementById('chgPassNew')?.value, confirmPassword = document.getElementById('chgPassConfirm')?.value;
+        if (!username || !oldPassword || !newPassword || !confirmPassword) { alert("Vui lòng nhập đầy đủ các trường!"); return; }
+        if (newPassword !== confirmPassword) { alert("Mật khẩu mới và Nhập lại không khớp nhau!"); return; }
+
+        try {
+            const res = await fetch('/api/auth/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role, username, oldPassword, newPassword }) });
+            const data = await res.json();
+            if (data.success) {
+                alert("✅ " + data.message);
+                
+                // GIẢI QUYẾT TRIỆT ĐỂ BÓNG ĐEN TRƯỚC KHI RELOAD
+                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                document.body.classList.remove('modal-open'); document.body.style = '';
+
+                if (window.tempPendingUser) { localStorage.setItem('KV2_LOGGED_USER', JSON.stringify(window.tempPendingUser)); }
+                window.location.reload(); 
+            } else { alert("❌ " + data.message); }
+        } catch (e) { alert("Lỗi kết nối máy chủ!"); }
+    }
+
+    async function submitLoginRider() {
+        const riderId = (document.getElementById('loginRiderId')?.value || '').trim(), password = (document.getElementById('loginRiderPassword')?.value || '').trim(), btn = document.getElementById('btnActionLoginRider');
+        if (!riderId || !password) { alert("Vui lòng nhập đầy đủ Mã ID và Mật khẩu!"); return; }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang kiểm tra...'; }
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ loaiDangNhap: 'RIDER', riderId: riderId, password: password }) });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                if (data.requirePasswordChange) {
+                    window.tempPendingUser = data.user; 
+                    const roleEl = document.getElementById('chgPassRole'); if(roleEl) { roleEl.value = 'RIDER'; roleEl.disabled = true; }
+                    const userEl = document.getElementById('chgPassUsername'); if(userEl) { userEl.value = data.user.id; userEl.disabled = true; }
+                    if(document.getElementById('chgPassOld')) document.getElementById('chgPassOld').value = data.user.id; 
+                    if(document.getElementById('chgPassNew')) document.getElementById('chgPassNew').value = '';
+                    if(document.getElementById('chgPassConfirm')) document.getElementById('chgPassConfirm').value = '';
+                    const msg = document.getElementById('msgRequirePass'); if (msg) msg.classList.remove('d-none');
+                    
+                    hienThiModalDangNhap(false);
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove()); // Dọn dẹp trước khi mở
+                    setTimeout(() => { bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChangePassword')).show(); }, 200);
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> VÀO HỆ THỐNG'; }
+                } else {
+                    localStorage.setItem('KV2_LOGGED_USER', JSON.stringify(data.user)); window.location.reload(); 
+                }
+            } else {
+                alert("❌ " + (data.message || "Mã ID hoặc Mật khẩu không hợp lệ!"));
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> VÀO HỆ THỐNG'; }
+            }
+        } catch (e) {
+            alert("❌ Lỗi kết nối máy chủ! Vui lòng thử lại.");
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> VÀO HỆ THỐNG'; }
+        }
+    }
+
+    // ================= XỬ LÝ QUẢN LÝ FTE =================
+    async function moModalQuanLyFTE() {
+      const pop = document.getElementById('modalAdminUsers');
+      if (!pop) { alert("Không tìm thấy bảng quản lý FTE!"); return; }
+      pop.style.setProperty('display', 'flex', 'important'); pop.style.setProperty('align-items', 'center', 'important'); pop.style.setProperty('justify-content', 'center', 'important');
+      const tbody = document.getElementById('tbodyAdminPermissions');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="16" class="py-4 text-muted"><div class="spinner-border spinner-border-sm text-warning me-2"></div>Đang tải ma trận phân quyền từ Google Sheet...</td></tr>';
+      try {
+        const res = await fetch(`${API_BASE}/admin/users-permissions`); danhSachUsersCache = await res.json(); renderBangPhanQuyenAdmin(danhSachUsersCache);
+      } catch (e) { if (tbody) tbody.innerHTML = '<tr><td colspan="16" class="text-danger py-4">Lỗi kết nối khi tải danh sách phân quyền!</td></tr>'; }
+    }
+
+    function dongModalQuanLyFTE() { const pop = document.getElementById('modalAdminUsers'); if (pop) pop.style.display = 'none'; }
+
+    function renderBangPhanQuyenAdmin(users) {
+      const tbody = document.getElementById('tbodyAdminPermissions'); if (!tbody) return;
+      if (!users || users.length === 0) { tbody.innerHTML = '<tr><td colspan="16" class="py-4 text-muted">Chưa có tài khoản nào trong hệ thống</td></tr>'; return; }
+      const menuKeys = ['tuyenRider', 'lichOff', 'performance', 'hangHoa', 'diemDanh', 'thongTinRider']; let html = '';
+      users.forEach(u => {
+        const isSuperAdmin = u.role === 'SUPER_ADMIN', isRiderDefault = u.role === 'RIDER_DEFAULT', p = u.permissions || {}; let checkColsHtml = '';
+        menuKeys.forEach(mKey => {
+          const mPerm = p[mKey] || { view: true, edit: false }, disableEdit = isSuperAdmin || isRiderDefault;
+          checkColsHtml += `<td><input type="checkbox" class="form-check-input" id="chk_v_${u.rowIndex}_${mKey}" ${mPerm.view ? 'checked' : ''} ${isSuperAdmin ? 'disabled' : ''}></td><td><input type="checkbox" class="form-check-input" id="chk_e_${u.rowIndex}_${mKey}" ${mPerm.edit ? 'checked' : ''} ${disableEdit ? 'disabled' : ''}></td>`;
+        });
+        const rowClass = isRiderDefault ? 'table-warning border-warning fw-bold' : '';
+        html += `<tr class="${rowClass}"><td class="text-start"><div class="fw-bold ${isRiderDefault ? 'text-primary' : 'text-dark font-monospace'}">${u.username === 'ALL_RIDERS' ? '⚡ CẤU HÌNH RIDER CHUNG' : u.username}</div><div class="small ${isRiderDefault ? 'text-dark' : 'text-muted'}">${u.fullName}</div></td><td>${isRiderDefault ? '<span class="badge bg-dark">TẤT CẢ RIDER</span>' : `<select class="form-select form-select-sm py-0 fw-bold" id="sel_role_${u.rowIndex}" ${isSuperAdmin ? 'disabled' : ''} style="font-size:11px;"><option value="FTE" ${u.role === 'FTE' ? 'selected' : ''}>FTE</option><option value="SUPER_ADMIN" ${isSuperAdmin ? 'selected' : ''}>SUPER ADMIN</option></select>`}</td><td>${isRiderDefault ? '<span class="badge bg-success">Áp dụng chung</span>' : `<select class="form-select form-select-sm py-0 fw-bold" id="sel_stat_${u.rowIndex}" ${isSuperAdmin ? 'disabled' : ''} style="font-size:11px;"><option value="Đã duyệt" ${u.status === 'Đã duyệt' ? 'selected' : ''}>Đã duyệt</option><option value="Chờ duyệt" ${u.status === 'Chờ duyệt' ? 'selected' : ''}>Chờ duyệt</option><option value="Bị khóa" ${u.status === 'Bị khóa' ? 'selected' : ''}>Bị khóa</option></select>`}</td>${checkColsHtml}<td>${!isSuperAdmin ? `<button class="btn btn-xs ${isRiderDefault ? 'btn-danger' : 'btn-primary'} py-1 px-2 fw-bold" onclick="luuPhanQuyenUser(${u.rowIndex}, '${u.role}')"><i class="bi bi-floppy me-1"></i>Lưu</button>` : '<span class="badge bg-secondary">Toàn quyền</span>'}</td></tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
+    async function luuPhanQuyenUser(rowIndex, roleType) {
+      const menuKeys = ['tuyenRider', 'lichOff', 'performance', 'hangHoa', 'diemDanh', 'thongTinRider'], newPermissions = {};
+      menuKeys.forEach(mKey => { const chkView = document.getElementById(`chk_v_${rowIndex}_${mKey}`), chkEdit = document.getElementById(`chk_e_${rowIndex}_${mKey}`); newPermissions[mKey] = { view: chkView ? chkView.checked : true, edit: (roleType === 'RIDER_DEFAULT') ? false : (chkEdit ? chkEdit.checked : false) }; });
+      const isRiderDef = (roleType === 'RIDER_DEFAULT'), newRole = isRiderDef ? 'RIDER_DEFAULT' : (document.getElementById(`sel_role_${rowIndex}`)?.value || 'FTE'), newStatus = isRiderDef ? 'Áp dụng chung' : (document.getElementById(`sel_stat_${rowIndex}`)?.value || 'Đã duyệt');
+      try {
+        const res = await fetch(`${API_BASE}/admin/save-user-permissions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rowIndex: rowIndex, role: newRole, status: newStatus, permissions: newPermissions }) });
+        const data = await res.json(); alert("✅ " + (data.message || 'Cập nhật thành công!')); moModalQuanLyFTE(); 
+      } catch (e) { alert("❌ Lỗi kết nối khi lưu phân quyền: " + e.message); }
+    }
+
+    // ================= XỬ LÝ HÀNG HÓA VÀ TAB PENDING =================
+    let currentKieuHangHoa = 'PENDING'; 
+    let globalInboundCot1 = [];
+    let globalInboundCot2 = [];
+
+    function chuyenSubTabHangHoa(kieu) {
+      currentKieuHangHoa = kieu; chuyenTab('hangHoa'); 
+      const titleEl = document.getElementById('titleKieuHangHoa');
+      
+      // XÓA TRẮNG DỮ LIỆU CŨ CHỐNG LỖI HIỂN THỊ CHỒNG CHÉO KHI CHỜ LOAD
+      document.getElementById('kpiTongDon').innerText = '...';
+      document.getElementById('kpiPhuNhuan').innerText = '...';
+      document.getElementById('kpiTanBinh').innerText = '...';
+      document.getElementById('kpiThuDuc').innerText = '...';
+      document.getElementById('kpiMp').innerText = '...';
+      document.getElementById('kpiWh').innerText = '...';
+      document.getElementById('kpiHv').innerText = '...';
+
+      if (kieu === 'INBOUND') {
+        titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> INBOUND'; titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm'; 
+        fetchDataInboundThucTe(); 
+      } else {
+        titleEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT'; titleEl.className = 'badge bg-danger fs-6 py-1 px-2 shadow-sm';
+        document.getElementById('kpiThuDuc').parentElement.parentElement.style.display = ''; document.getElementById('kpiHv').parentElement.parentElement.style.display = ''; document.querySelector('.top5-card').style.display = ''; document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = '');
+        const lblPN = document.getElementById('lblKpi1'); if(lblPN) { lblPN.innerHTML = 'QUẬN 2 <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 2\', \'Quận Quận 2\')"><i class="bi bi-search"></i></button>'; lblPN.parentElement.onclick = null; }
+        const lblTB = document.getElementById('lblKpi2'); if(lblTB) { lblTB.innerHTML = 'QUẬN 4 <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 4\', \'Quận Quận 4\')"><i class="bi bi-search"></i></button>'; lblTB.parentElement.onclick = null; }
+        loadHangHoaData(false); 
+      }
+    }
+
+    async function fetchDataInboundThucTe() {
+      document.getElementById('kpiTongDon').innerText = '...'; document.getElementById('kpiPhuNhuan').innerText = '...'; document.getElementById('kpiTanBinh').innerText = '...'; document.getElementById('kpiMp').innerText = '...'; document.getElementById('kpiWh').innerText = '...';
+      document.getElementById('kpiThuDuc').parentElement.parentElement.style.display = 'none'; document.getElementById('kpiHv').parentElement.parentElement.style.display = 'none'; document.querySelector('.top5-card').style.display = 'none'; document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = 'none');
+      try {
+        const res = await fetch(`${API_BASE}/hang-hoa-inbound`); const result = await res.json();
+        if (result.success && result.data) {
+          const d = result.data; globalInboundCot1 = d.chiTietCot1; globalInboundCot2 = d.chiTietCot2; document.getElementById('kpiTongDon').innerText = d.tongDonKhuVuc;
+          const lblPN = document.getElementById('lblKpi1'); if(lblPN) { lblPN.innerHTML = 'INBOUND COT 1 <i class="bi bi-hand-index-thumb ms-1"></i>'; lblPN.parentElement.onclick = () => showChiTietInbound(1); } document.getElementById('kpiPhuNhuan').innerText = d.tongCot1;
+          const lblTB = document.getElementById('lblKpi2'); if(lblTB) { lblTB.innerHTML = 'INBOUND COT 2 <i class="bi bi-hand-index-thumb ms-1"></i>'; lblTB.parentElement.onclick = () => showChiTietInbound(2); } document.getElementById('kpiTanBinh').innerText = d.tongCot2;
+          document.getElementById('kpiMp').innerText = d.tongMP; document.getElementById('kpiWh').innerText = d.tongWH; document.getElementById('hangLastFetchTime').innerText = new Date().toLocaleTimeString('vi-VN'); document.getElementById('hangSheetTimeLabel').innerText = '(Trích xuất từ TOTAL INBOUND)';
+        }
+      } catch (error) { alert("Lỗi tải dữ liệu Inbound: " + error.message); }
+    }
+
+    function showChiTietInbound(cotType) {
+      if (currentKieuHangHoa !== 'INBOUND') return; 
+      const data = cotType === 1 ? globalInboundCot1 : globalInboundCot2, title = cotType === 1 ? 'COT 1' : 'COT 2'; document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title}`; const container = document.getElementById('bodyChiTietInboundCot');
+      if (data.length === 0) { container.innerHTML = '<div class="col-12 text-center py-4 text-muted">Chưa có dữ liệu</div>'; } 
+      else {
+        const grouped = { 'Quận Quận 2': [], 'Quận Quận 4': [], 'Thành phố Quận 7': [] }; data.forEach(item => { if (grouped[item.quan]) grouped[item.quan].push(item); else grouped[item.quan] = [item]; });
+        const thuDucOrder = ["phường hiệp bình chánh", "phường hiệp bình phước", "phường linh đông", "phường bình chiểu", "phường tam bình", "phường tam phú", "phường linh chiểu", "phường bình thọ", "phường trường thọ", "phường linh trung", "phường linh xuân", "phường linh tây"];
+        const extractNumber = (str) => { const match = str.match(/\d+/); return match ? parseInt(match[0], 10) : 999; };
+        const layoutConfig = [ { name: 'Quận Quận 2', color: 'primary', icon: 'bi-geo-alt-fill', label: 'QUẬN 2' }, { name: 'Quận Quận 4', color: 'warning', icon: 'bi-geo-alt-fill', label: 'QUẬN 4' }, { name: 'Thành phố Quận 7', color: 'info', icon: 'bi-geo-alt-fill', label: 'QUẬN 7' } ];
+        let html = '';
+        layoutConfig.forEach(config => {
+          let phuongList = grouped[config.name] || [];
+          if (config.name === 'Thành phố Quận 7') { phuongList.sort((a, b) => { const nameA = a.phuong.toLowerCase().trim(), nameB = b.phuong.toLowerCase().trim(); let idxA = thuDucOrder.findIndex(p => nameA.includes(p)), idxB = thuDucOrder.findIndex(p => nameB.includes(p)); if (idxA === -1) idxA = 99; if (idxB === -1) idxB = 99; return idxA - idxB; }); } 
+          else { phuongList.sort((a, b) => extractNumber(a.phuong) - extractNumber(b.phuong)); }
+          let totalDon = phuongList.reduce((sum, item) => sum + item.soLuong, 0);
+          html += `<div class="col-12 col-lg-4"><div class="card h-100 shadow-sm border-${config.color}"><div class="card-header bg-white py-2 d-flex justify-content-between align-items-center border-bottom border-${config.color}"><span class="fw-bold text-${config.color}"><i class="bi ${config.icon} me-1"></i> ${config.label}</span><span class="badge bg-${config.color} ${config.color === 'warning' ? 'text-dark' : ''} fs-6">${totalDon}</span></div><div class="table-responsive" style="max-height: 60vh;"><table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 13px;"><thead class="table-light sticky-top"><tr><th class="text-start">Phường</th><th style="width: 80px;">Số Đơn</th></tr></thead><tbody>`;
+          if (phuongList.length === 0) { html += `<tr><td colspan="2" class="text-center text-muted py-3">Không có đơn</td></tr>`; } 
+          else { phuongList.forEach(item => { html += `<tr><td class="text-start fw-semibold">${item.phuong}</td><td class="text-danger fw-bold font-monospace">${item.soLuong}</td></tr>`; }); }
+          html += `</tbody></table></div></div></div>`;
+        });
+        container.innerHTML = html;
+      }
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietInbound')).show();
+    }
+
+    function triggerManualHangHoaSync() { countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec); if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe(); else loadHangHoaData(false); }
+    
+    const originalLoadHangHoaData = loadHangHoaData;
+    loadHangHoaData = async function(isBg) {
+      await originalLoadHangHoaData(isBg);
+      if (currentKieuHangHoa === 'PENDING' && cachedInboundOrders && cachedInboundOrders.length > 0) {
+        const uniquePending = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
+        document.getElementById('kpiTongDon').innerText = uniquePending.length;
+        document.getElementById('kpiPhuNhuan').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 2').length;
+        document.getElementById('kpiTanBinh').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 4').length;
+        document.getElementById('kpiThuDuc').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 7').length;
+        document.getElementById('kpiMp').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
+        document.getElementById('kpiWh').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
+        document.getElementById('kpiHv').innerText = uniquePending.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+      }
+    };
+
+    document.addEventListener('change', function(e) {
+      if (e.target.tagName === 'SELECT' && e.target.innerHTML.includes('-- Chọn tuyến --')) {
+        const tr = e.target.closest('tr'); if (!tr) return;
+        let selectedRoute = e.target.options[e.target.selectedIndex].text; if (selectedRoute.includes('-- Chọn tuyến --')) selectedRoute = ''; 
+        tr.querySelectorAll('td, button, div').forEach(cell => {
+          if (cell.innerText.match(/T\d\s+\d{2}\/\d{2}|Chủ Nhật/i) && !cell.classList.contains('bg-danger') && !cell.innerHTML.includes('OFF')) {
+             if (!cell.hasAttribute('data-orig-text')) cell.setAttribute('data-orig-text', cell.innerHTML);
+             const origText = cell.getAttribute('data-orig-text');
+             if (selectedRoute.trim() !== '') cell.innerHTML = `${origText}<br><span class="badge bg-info text-dark mt-1 shadow-sm px-1" style="font-size:0.65rem;">${selectedRoute}</span>`;
+             else cell.innerHTML = origText;
+          }
+        });
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => { kiemTraDangNhap(); });
+
+  </script>
+</body>
+</html>
+    
+  

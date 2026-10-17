@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: app-dieu-phoi-v2
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: SHEET_ID_KV2
+        sync: false
+      - key: SHEET_ID_TONG_QUAN
+        value: 1egevDkO38jiwpsRr_QG3-tvwgePxWMq6sNFznkKlwqw
