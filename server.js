@@ -697,7 +697,7 @@ app.post('/api/dong-bo-hang-loat', async (req, res) => {
 
     if (updateLogRows.length > 0) {
       sheets.spreadsheets.values.append({
-        spreadsheetId: SPREADSHEET_ID,
+        spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
         range: "'LƯU ĐIỀN OFF'!A:K",
         valueInputOption: 'USER_ENTERED',
         requestBody: { values: updateLogRows },
@@ -1689,7 +1689,7 @@ app.post('/api/xin-off/update-status', async (req, res) => {
       // GHI LOG 11 CỘT (CỘT I LÀ GHI CHÚ)
       const timestamp = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
       const logRow = [[ timestamp, tuanLamViecStr, riderId, riderName, caRider, diaBanRider, `${giaTriOffCanDien} (${datesList.join(', ')})`, datesList.length, lyDoThucSu || '—', fteName, 'Duyệt đơn xin OFF' ]];
-      sheets.spreadsheets.values.append({ spreadsheetId: SPREADSHEET_ID, range: "'LƯU ĐIỀN OFF'!A:K", valueInputOption: 'USER_ENTERED', requestBody: { values: logRow } }).catch(e => console.warn("Lỗi ghi log:", e.message));
+      sheets.spreadsheets.values.append({ spreadsheetId: SPREADSHEET_TONG_QUAN_ID, range: "'LƯU ĐIỀN OFF'!A:K", valueInputOption: 'USER_ENTERED', requestBody: { values: logRow } }).catch(e => console.warn("Lỗi ghi log:", e.message));
     }
     res.json({ success: true, message: syncMessage });
   } catch (error) { res.status(500).json({ success: false, message: error.message }); }
