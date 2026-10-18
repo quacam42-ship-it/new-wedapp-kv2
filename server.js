@@ -531,7 +531,7 @@ async function capNhatLichOffVaoSheet(spreadsheetId, sheetTitleOrGid, ridersData
   // Mở rộng vùng đọc lên 1000 dòng để bắt trọn cả KV1 + KV2 trên sheet Ops 1-2
   const resSheet = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `'${sheetTitle}'!A1:ZZ1000`,
+    range: `'${sheetTitle}'!A1:ZZ5000`,
   });
   const rows = resSheet.data.values || [];
   if (rows.length < 2) return { updatedCells: 0, logs: [] };
@@ -667,14 +667,8 @@ app.post('/api/dong-bo-hang-loat', async (req, res) => {
     const resMain = await capNhatLichOffVaoSheet(SPREADSHEET_TONG_QUAN_ID, 'TỔNG QUAN RD', ridersData, mode);
 
     // 2. Đồng bộ sang Sheet Lịch Ops 1-2 (gid=1744237792)
-    let opsMsg = '';
-    try {
-      const resOps = await capNhatLichOffVaoSheet(SPREADSHEET_OPS_1_2_ID, GID_OPS_1_2, ridersData, mode);
-      opsMsg = ` và đồng bộ sang Lịch Ops 1-2 (${resOps.updatedCells} ô)`;
-    } catch (opsErr) {
-      console.warn('Lỗi đồng bộ sang Ops 1-2:', opsErr.message);
-      opsMsg = ` (Lưu ý: Chưa ghi được sang Ops 1-2 do: ${opsErr.message})`;
-    }
+    const resOps = await capNhatLichOffVaoSheet(SPREADSHEET_OPS_1_2_ID, GID_OPS_1_2, ridersData, mode);
+    const opsMsg = ` và đồng bộ sang Lịch Ops 1-2 (${resOps.updatedCells} ô)`;
 
     // 3. Ghi nhật ký chuẩn 10 cột vào LƯU ĐIỀN OFF:
     // [Thời gian ghi nhận, Tuần làm việc, Mã ID, Họ và tên, Ca làm việc, Địa bàn / Tuyến, Chi tiết ngày OFF, Tổng ngày off, FTE điền, Kiểu off]
@@ -1689,8 +1683,8 @@ app.post('/api/xin-off/update-status', async (req, res) => {
       } catch (eInfo) {}
 
       const riderPayload = [{ id: riderId, ten: riderName, dates: datesList, loaiOff: giaTriOffCanDien, ghiChu: `Duyệt đơn: ${lyDoThucSu}` }];
-      try { await capNhatLichOffVaoSheet(SPREADSHEET_TONG_QUAN_ID, 'TỔNG QUAN RD', riderPayload, 'NEW'); syncMessage = `Đã tự động điền [${giaTriOffCanDien}] cho ${riderName}`; } catch (e1) {}
-      try { await capNhatLichOffVaoSheet(SPREADSHEET_OPS_1_2_ID, GID_OPS_1_2, riderPayload, 'NEW'); syncMessage += ` vào cả 2 Sheet!`; } catch (e2) {}
+      await capNhatLichOffVaoSheet(SPREADSHEET_TONG_QUAN_ID, 'TỔNG QUAN RD', riderPayload, 'NEW'); syncMessage = `Đã tự động điền [${giaTriOffCanDien}] cho ${riderName}`;
+      await capNhatLichOffVaoSheet(SPREADSHEET_OPS_1_2_ID, GID_OPS_1_2, riderPayload, 'NEW'); syncMessage += ` vào cả 2 Sheet!`;
 
       // GHI LOG 11 CỘT (CỘT I LÀ GHI CHÚ)
       const timestamp = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
