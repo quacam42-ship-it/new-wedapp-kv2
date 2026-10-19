@@ -476,7 +476,7 @@
         <div class="col-6 col-md-3 col-lg">
           <div class="kpi-mini-card bg-danger text-white">
             <div class="kpi-label opacity-90">
-              TỔNG PENDING
+              TỔNG ĐƠN
               <button class="btn btn-light text-danger kpi-mini-btn" onclick="xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')" title="Xem chi tiết đơn">
                 <i class="bi bi-search"></i>
               </button>
@@ -542,7 +542,7 @@
         <div class="col-6 col-md-3 col-lg">
           <div class="kpi-mini-card">
             <div class="kpi-label text-success">
-              PENDING ĐƠN MP
+              ĐƠN MP
               <button class="btn btn-outline-success text-dark kpi-mini-btn" onclick="xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Xem chi tiết đơn MP">
                 <i class="bi bi-search"></i>
               </button>
@@ -553,7 +553,7 @@
         <div class="col-6 col-md-3 col-lg">
           <div class="kpi-mini-card">
             <div class="kpi-label text-secondary">
-              PENDING ĐƠN WH
+              ĐƠN WH
               <button class="btn btn-outline-secondary text-dark kpi-mini-btn" onclick="xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Xem chi tiết đơn WH">
                 <i class="bi bi-search"></i>
               </button>
@@ -1765,7 +1765,7 @@
       if (tabId === 'tuyenRider') { if (!loadedTabs.tuyenRider) loadRiderData(); } 
       else if (tabId === 'lichOff') { if (!loadedTabs.tuyenRider) loadRiderData(); else { if (typeof renderMaTranOff === 'function') renderMaTranOff(); if (typeof filterOffData === 'function') filterOffData(); } } 
       else if (tabId === 'performance') { loadPerformanceData(); } 
-      else if (tabId === 'hangHoa') { loadHangHoaData(); } 
+      else if (tabId === 'hangHoa') { loadHangHoaData(); if (currentKieuHangHoa === 'PENDING' && typeof fetchDataInboundThucTe === 'function') fetchDataInboundThucTe(); } 
       else if (tabId === 'diemDanh') { khoiTaoTabDiemDanh(); }
       else if (tabId === 'thongTinRider') { loadThongTinChungData(); }
     }
@@ -1895,7 +1895,7 @@
       try {
         const res = await fetch(`${API_BASE}/hang-hoa-data`); const data = await res.json();
         loadedTabs.hangHoa = true; if (!data) return;
-        cachedInboundOrders = data.inboundOrdersCache || [];
+        cachedInboundOrders = data.cachedInboundOrders || data.inboundOrdersCache || [];
 
         const elFetch = document.getElementById('hangLastFetchTime'); if (elFetch) elFetch.innerText = getGioVietNamHienTai();
         const elSheetTime = document.getElementById('hangSheetTimeLabel');
@@ -2538,18 +2538,18 @@ if (user.role === 'RIDER') {
       document.getElementById('kpiHv').innerText = '...';
 
       if (kieu === 'INBOUND') {
-        titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> INBOUND'; titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm'; 
-        fetchDataInboundThucTe(); 
+        titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> PENDING'; titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm';
+        loadHangHoaData(false);
       } else {
         titleEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT'; titleEl.className = 'badge bg-danger fs-6 py-1 px-2 shadow-sm';
         document.getElementById('kpiThuDuc').parentElement.parentElement.style.display = ''; document.getElementById('kpiHv').parentElement.parentElement.style.display = ''; document.querySelector('.top5-card').style.display = ''; document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = '');
         const lblPN = document.getElementById('lblKpi1'); if(lblPN) { lblPN.innerHTML = 'QUẬN 2 <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 2\', \'Quận Quận 2\')"><i class="bi bi-search"></i></button>'; lblPN.parentElement.onclick = null; }
         const lblTB = document.getElementById('lblKpi2'); if(lblTB) { lblTB.innerHTML = 'QUẬN 4 <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 4\', \'Quận Quận 4\')"><i class="bi bi-search"></i></button>'; lblTB.parentElement.onclick = null; }
-        loadHangHoaData(false); 
+        fetchDataInboundThucTe();
       }
     }
 
-    async function fetchDataInboundThucTe() {
+async function fetchDataInboundThucTe() {
       document.getElementById('kpiTongDon').innerText = '...'; document.getElementById('kpiPhuNhuan').innerText = '...'; document.getElementById('kpiTanBinh').innerText = '...'; document.getElementById('kpiMp').innerText = '...'; document.getElementById('kpiWh').innerText = '...';
       document.getElementById('kpiThuDuc').parentElement.parentElement.style.display = 'none'; document.getElementById('kpiHv').parentElement.parentElement.style.display = 'none'; document.querySelector('.top5-card').style.display = 'none'; document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = 'none');
       try {
@@ -2593,7 +2593,7 @@ if (user.role === 'RIDER') {
     const originalLoadHangHoaData = loadHangHoaData;
     loadHangHoaData = async function(isBg) {
       await originalLoadHangHoaData(isBg);
-      if (currentKieuHangHoa === 'PENDING' && cachedInboundOrders && cachedInboundOrders.length > 0) {
+      if (currentKieuHangHoa === 'INBOUND' && cachedInboundOrders && cachedInboundOrders.length > 0) {
         const uniquePending = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
         document.getElementById('kpiTongDon').innerText = uniquePending.length;
         document.getElementById('kpiPhuNhuan').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 2').length;

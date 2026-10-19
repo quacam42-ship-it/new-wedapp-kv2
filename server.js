@@ -237,7 +237,7 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       lastUpdate: lastUpdateStr,
     };
 
-    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [], cachedInboundOrders: rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0') ? 'WH' : 'MP' })) });
+    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [], cachedInboundOrders: rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0') ? 'WH' : 'MP' })), inboundOrdersCache: rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0') ? 'WH' : 'MP' })) });
   } catch (error) {
     console.warn('L?i d?c DATA PENDING:', error.message);
     res.json({ headers: ['Thong bao'], rows: [['Dang cap nhat du lieu...']], kpi: { tongDon: 0, donMp: 0, donWh: 0, lastUpdate: new Date().toLocaleTimeString('vi-VN') }, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [] });
