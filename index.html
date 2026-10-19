@@ -694,6 +694,58 @@
             </div>
           </div>
         </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="district-card shadow-sm h-100">
+            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-success border-2 text-success">
+              <div>
+                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 9
+                <span class="badge bg-success district-badge ms-1" id="countQ9Badge">0</span>
+              </div>
+              <input type="text" id="searchQ9" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q9')">
+            </div>
+            <div>
+              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
+                <thead>
+                  <tr class="text-center">
+                    <th>Phường</th>
+                    <th style="width: 65px;">Số Đơn</th>
+                    <th style="width: 50px;">Xem</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyQ9">
+                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="district-card shadow-sm h-100">
+            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-danger border-2 text-danger">
+              <div>
+                <i class="bi bi-geo-alt-fill me-1"></i>BÌNH THẠNH
+                <span class="badge bg-danger district-badge ms-1" id="countBTBadge">0</span>
+              </div>
+              <input type="text" id="searchBT" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('BT')">
+            </div>
+            <div>
+              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
+                <thead>
+                  <tr class="text-center">
+                    <th>Phường</th>
+                    <th style="width: 65px;">Số Đơn</th>
+                    <th style="width: 50px;">Xem</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyBT">
+                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -858,11 +910,6 @@
               </div>
             </div>
 
-            <div class="mb-2">
-              <a href="/album-diem-danh" target="_blank" class="btn btn-primary btn-sm w-100 fw-bold py-1 text-decoration-none shadow-sm">
-                <i class="bi bi-images me-1"></i>Xem Album Ảnh Điểm Danh
-              </a>
-            </div>
             
             <div id="vungBangDiemDanhBody">
               <!-- Ô THẺ TỔNG HỢP -->
@@ -1881,12 +1928,15 @@
 
         renderTop5Table(data.top5Phuong || []);
         listPN = data.phuongPhuNhuan || []; listTB = data.phuongTanBinh || []; listTD = data.phuongThuDuc || [];
+        listQ9 = data.phuongQuan9 || []; listBT = data.phuongBinhThanh || [];
 
         document.getElementById('countPhuNhuanBadge').innerText = listPN.length;
         document.getElementById('countTanBinhBadge').innerText = listTB.length;
         document.getElementById('countThuDucBadge').innerText = listTD.length;
+        if (document.getElementById('countQ9Badge')) document.getElementById('countQ9Badge').innerText = listQ9.length;
+        if (document.getElementById('countBTBadge')) document.getElementById('countBTBadge').innerText = listBT.length;
 
-        filterQuanList('PN'); filterQuanList('TB'); filterQuanList('TD');
+        filterQuanList('PN'); filterQuanList('TB'); filterQuanList('TD'); filterQuanList('Q9'); filterQuanList('BT');
       } catch (err) { console.error('Lỗi tải hàng hóa:', err); } 
       finally {
         isFetchingHangHoa = false;
@@ -1914,6 +1964,8 @@
       if (quanCode === 'PN') { dataList = listPN; tbodyId = 'tbodyPN'; searchId = 'searchPN'; }
       else if (quanCode === 'TB') { dataList = listTB; tbodyId = 'tbodyTB'; searchId = 'searchTB'; }
       else if (quanCode === 'TD') { dataList = listTD; tbodyId = 'tbodyTD'; searchId = 'searchTD'; }
+      else if (quanCode === 'Q9') { dataList = listQ9 || []; tbodyId = 'tbodyQ9'; searchId = 'searchQ9'; }
+      else if (quanCode === 'BT') { dataList = listBT || []; tbodyId = 'tbodyBT'; searchId = 'searchBT'; }
 
       const searchEl = document.getElementById(searchId); const kw = searchEl ? searchEl.value.trim().toLowerCase() : '';
       const tbody = document.getElementById(tbodyId); if (!tbody) return;

@@ -6,7 +6,7 @@ if (typeof API_BASE === 'undefined') {
 // CÁC BIẾN TOÀN CỤC CHO BẢNG ĐIỀN OFF MỚI
 let sessionDraftMap = {};
 let cachedPayloadNewOff = null;
-const backupOptions = ["Quáº­n 2", "Quáº­n 4", "Quáº­n 7", "Quáº­n 9", "BÃ¬nh Tháº¡nh"];
+const backupOptions = ['Quận 2', 'Quận 4', 'Quận 7', 'Quận 9', 'BÌNH THẠNH'];
 
 // HÀM KIỂM TRA NGÀY ĐẶC BIỆT
 function kiemTraNgayDacBiet(dateStr, thuStr) {
@@ -133,17 +133,20 @@ function xemTongHopCa(ngay, caFilter, title) {
       });
 
       // Tự động đếm chi tiết số người OFF theo Quận
-      let countPN = 0, countTB = 0, countTD = 0;
+      let countQ2 = 0, countQ4 = 0, countQ7 = 0, countQ9 = 0, countBT = 0;
       listOff.forEach(rd => {
          const q = (rd.quanDeli || '').toLowerCase();
-         if (q.includes('quận 2') || q.includes('pn')) countPN++;
-         else if (q.includes('quận 4') || q.includes('tb')) countTB++;
-         else if (q.includes('quận 7') || q.includes('td')) countTD++;
+         if (q.includes('quận 2')) countQ2++;
+         else if (q.includes('quận 4')) countQ4++;
+         else if (q.includes('quận 7')) countQ7++;
+         else if (q.includes('quận 9')) countQ9++;
+         else if (q.includes('bình thạnh')) countBT++;
       });
       
       const titleEl = document.getElementById('titleModalTongHopCa');
       if (titleEl) {
-        titleEl.innerHTML = `<i class="bi bi-layout-split me-1"></i>${title} (PN: [${countPN}] | TB: [${countTB}] | TĐ: [${countTD}])`;
+        titleEl.innerHTML = `<i class="bi bi-layout-split me-1"></i>${title} (Q2: [${countQ2}] | Q4: [${countQ4}] | Q7: [${countQ7}] | Q9: [${countQ9}] | BT: [${countBT}])`;
+        //Đ: [${countTD}])`;
       }
       
       document.getElementById('countOffCa').innerText = listOff.length;
@@ -427,6 +430,8 @@ function xemDanhSachOffTuan(quanFilter, caFilter, title) {
   const selWeek = document.getElementById("selectTuanOff");
   const startIdx = parseInt(selWeek ? selWeek.value : 0, 10);
   const weekDates = dateHeadersGlobal.slice(startIdx, startIdx + 7);
+  const _today = new Date();
+  const todayStr = String(_today.getDate()).padStart(2,'0') + '/' + String(_today.getMonth()+1).padStart(2,'0');
   
   let filteredList = [];
   
@@ -490,6 +495,8 @@ function renderMaTranOff() {
   if (!dateHeadersGlobal || dateHeadersGlobal.length === 0) return;
   const startIdx = parseInt(document.getElementById('selectTuanOff')?.value || 0, 10);
   const weekDates = dateHeadersGlobal.slice(startIdx, startIdx + 7);
+  const _today = new Date();
+  const todayStr = String(_today.getDate()).padStart(2,'0') + '/' + String(_today.getMonth()+1).padStart(2,'0');
 
   const thead = document.getElementById('theadMaTranOff');
   const tbody = document.getElementById('tbodyMaTranOff');
@@ -510,24 +517,25 @@ function renderMaTranOff() {
     weekDates.forEach(dh => {
       const dacBiet = kiemTraNgayDacBiet(dh.date, dh.thu);
       let specialClass = dacBiet ? dacBiet.bgClass : '';
+      let todayClass = (dh.date === todayStr) ? 'bg-primary bg-opacity-25' : '';
       let specialBadge = dacBiet ? `<br><span style="font-size:0.65rem;">${dacBiet.label}</span>` : '';
-      thHtml += `<th class="${specialClass}"><div>${dh.thu || ''}</div><div class="fw-bold">${dh.date}</div>${specialBadge}</th>`;
+      thHtml += `<th class="${specialClass} ${todayClass}"><div>${dh.thu || ''}</div><div class="fw-bold">${dh.date}</div>${specialBadge}</th>`;
     });
   }
   thHtml += `</tr>`;
   thead.innerHTML = thHtml;
 
   const categoriesOff = [
-    { label: 'Quáº­n 2 - COT 1', quan: 'quáº­n 2', ca: 'cot 1' },
-    { label: 'Quáº­n 2 - COT 2', quan: 'quáº­n 2', ca: 'cot 2' },
-    { label: 'Quáº­n 4 - COT 1', quan: 'quáº­n 4', ca: 'cot 1' },
-    { label: 'Quáº­n 4 - COT 2', quan: 'quáº­n 4', ca: 'cot 2' },
-    { label: 'Quáº­n 7 - COT 1', quan: 'quáº­n 7', ca: 'cot 1' },
-    { label: 'Quáº­n 7 - COT 2', quan: 'quáº­n 7', ca: 'cot 2' },
-    { label: 'Quáº­n 9 - COT 1', quan: 'quáº­n 9', ca: 'cot 1' },
-    { label: 'Quáº­n 9 - COT 2', quan: 'quáº­n 9', ca: 'cot 2' },
-    { label: 'BÃ¬nh Tháº¡nh - COT 1', quan: 'bÃ¬nh tháº¡nh', ca: 'cot 1' },
-    { label: 'BÃ¬nh Tháº¡nh - COT 2', quan: 'bÃ¬nh tháº¡nh', ca: 'cot 2' }
+    { label: 'Quận 2 - COT 1', quan: 'quận 2', ca: 'cot 1' },
+    { label: 'Quận 2 - COT 2', quan: 'quận 2', ca: 'cot 2' },
+    { label: 'Quận 4 - COT 1', quan: 'quận 4', ca: 'cot 1' },
+    { label: 'Quận 4 - COT 2', quan: 'quận 4', ca: 'cot 2' },
+    { label: 'Quận 7 - COT 1', quan: 'quận 7', ca: 'cot 1' },
+    { label: 'Quận 7 - COT 2', quan: 'quận 7', ca: 'cot 2' },
+    { label: 'Quận 9 - COT 1', quan: 'quận 9', ca: 'cot 1' },
+    { label: 'Quận 9 - COT 2', quan: 'quận 9', ca: 'cot 2' },
+    { label: 'BÌNH THẠNH - COT 1', quan: 'bình thạnh', ca: 'cot 1' },
+    { label: 'BÌNH THẠNH - COT 2', quan: 'bình thạnh', ca: 'cot 2' }
   ];
 
   let tbHtml = '';
@@ -552,10 +560,12 @@ function renderMaTranOff() {
       }).length;
       
       sumTuan += countOff;
+      const isTodayCol = (dh.date === todayStr);
+      const todayCellStyle = isTodayCol ? 'background-color:#cfe2ff;' : '';
       if (countOff > 0) {
-         colsHtml += `<td style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff('${dh.date}', '${cat.quan}', '${cat.ca}', '${cat.label}')"><span class="badge bg-danger shadow-sm">${countOff}</span></td>`;
+         colsHtml += `<td style="cursor:pointer; transition: 0.2s; ${todayCellStyle}" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor='${isTodayCol ? '#cfe2ff' : ''}'" onclick="xemDanhSachOff('${dh.date}', '${cat.quan}', '${cat.ca}', '${cat.label}')"><span class="badge bg-danger shadow-sm">${countOff}</span></td>`;
       } else {
-         colsHtml += `<td><span class="text-muted">0</span></td>`;
+         colsHtml += `<td style="${todayCellStyle}"><span class="text-muted">0</span></td>`;
       }
     });
 
@@ -590,10 +600,12 @@ function renderMaTranOff() {
       }).length;
       
       // Thêm sự kiện onclick và đổi màu rê chuột cho Hàng TỔNG KV 2 OFF
-      if (totalOffDay > 0) {
-         tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOff('${dh.date}', '', '', 'TỔNG KHU VỰC 2')">${totalOffDay}</td>`;
+      const isTodayTotal = (dh.date === todayStr);
+    const todayTotalStyle = isTodayTotal ? 'background-color:#cfe2ff;' : '';
+    if (totalOffDay > 0) {
+         tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace" style="cursor:pointer; transition: 0.2s; ${todayTotalStyle}" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor='${isTodayTotal ? '#cfe2ff' : ''}'" onclick="xemDanhSachOff('${dh.date}', '', '', 'TỔNG KHU VỰC 2')">${totalOffDay}</td>`;
       } else {
-         tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace">0</td>`;
+         tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace" style="${todayTotalStyle}">0</td>`;
       }
     });
   }
@@ -669,19 +681,20 @@ function capNhatTongQuanOffTheoQuan(ngayXem, thuXem) {
     }).length;
   };
 
-  const q2_1 = demOff('quáº­n 2', 'cot 1'), q2_2 = demOff('quáº­n 2', 'cot 2');
-  const q4_1 = demOff('quáº­n 4', 'cot 1'), q4_2 = demOff('quáº­n 4', 'cot 2');
-  const q7_1 = demOff('quáº­n 7', 'cot 1'), q7_2 = demOff('quáº­n 7', 'cot 2');
-  const q9_1 = demOff('quáº­n 9', 'cot 1'), q9_2 = demOff('quáº­n 9', 'cot 2');
-  const bt_1 = demOff('bÃ¬nh tháº¡nh', 'cot 1'), bt_2 = demOff('bÃ¬nh tháº¡nh', 'cot 2');
+    const q2_1 = demOff('quận 2', 'cot 1'), q2_2 = demOff('quận 2', 'cot 2');
+  const q4_1 = demOff('quận 4', 'cot 1'), q4_2 = demOff('quận 4', 'cot 2');
+  const q7_1 = demOff('quận 7', 'cot 1'), q7_2 = demOff('quận 7', 'cot 2');
+  const q9_1 = demOff('quận 9', 'cot 1'), q9_2 = demOff('quận 9', 'cot 2');
+  const bt_1 = demOff('bình thạnh', 'cot 1'), bt_2 = demOff('bình thạnh', 'cot 2');
 
-  const cot1 = demOff('', 'cot 1');
-  const cot2 = demOff('', 'cot 2');
   const tongToanKV = q2_1 + q2_2 + q4_1 + q4_2 + q7_1 + q7_2 + q9_1 + q9_2 + bt_1 + bt_2;
 
   const pn1 = q2_1, pn2 = q2_2;
   const tb1 = q4_1, tb2 = q4_2;
   const td1 = q7_1, td2 = q7_2;
+
+  const cot1 = demOff('', 'cot 1');
+  const cot2 = demOff('', 'cot 2');
 
   const elBadge = document.getElementById('tongOffHomNayBadge');
   if (elBadge) elBadge.innerText = `${tongToanKV} Rider OFF`;
@@ -1006,7 +1019,7 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
 
     Object.keys(predefinedWards).forEach(quanName => {
       const wards = predefinedWards[quanName];
-      const quanCode = quanName === 'Quận 2' ? 'PN' : (quanName === 'Quận 4' ? 'TB' : 'TD');
+      const quanCode = quanName === 'Phú Nhuận' ? 'PN' : (quanName === 'Tân Bình' ? 'TB' : 'TD');
       const targetClass = `collapse-ward-${quanCode}-${caFilter}`;
 
       htmlOff += `
@@ -1020,7 +1033,7 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
         </tr>`;
 
       wards.forEach((ward, idx) => {
-        const wardFormat = quanName === 'Quận 7' ? ward : `${ward}`;
+        const wardFormat = quanName === 'Thủ Đức' ? ward : `${ward}`;
         const wardLabel = `${quanName} (P.${wardFormat})`;
         const idWard = `ward_${quanCode}_${caFilter}_${idx}`;
         const searchTxt = wardLabel.toLowerCase();
@@ -1422,7 +1435,7 @@ window.suaLichSuGhepTuyen = function(bkId) {
     const restoredRoutes = lsItem.routes.map((rName, idx) => {
         let rType = 'OFF';
         if (window.loaiBackupHienTai === 'DELI') {
-            if (rName.includes('Quận 2') || rName.includes('Quận 4') || rName.includes('Quận 7')) {
+            if (rName.includes('Phú Nhuận') || rName.includes('Tân Bình') || rName.includes('Thủ Đức')) {
                 if (rName.includes('P.')) rType = 'WARD'; 
             }
         }
@@ -1704,7 +1717,7 @@ window.chotLuuGhepBackupLenSheet = async function() {
         if (cartItem.routes.length === 0) return;
 
         let allRoutes = [];
-        let tuyenGanMap = window.loaiBackupHienTai === 'PICK' ? 'PICK' : 'Quận 4'; 
+        let tuyenGanMap = window.loaiBackupHienTai === 'PICK' ? 'PICK' : 'Tân Bình'; 
 
         cartItem.routes.forEach(rt => {
             backupMatches.push({
@@ -1716,8 +1729,8 @@ window.chotLuuGhepBackupLenSheet = async function() {
             allRoutes.push(rt.type === 'WARD' ? rt.route : `${rt.name} (${rt.route})`);
             
             if (window.loaiBackupHienTai === 'DELI') {
-                if (rt.route.includes('Quận 2')) tuyenGanMap = 'Quận 2';
-                if (rt.route.includes('Quận 7')) tuyenGanMap = 'Quận 7';
+                if (rt.route.includes('Phú Nhuận')) tuyenGanMap = 'Phú Nhuận';
+                if (rt.route.includes('Thủ Đức')) tuyenGanMap = 'Thủ Đức';
 
                 if (rt.type === 'OFF') {
                     const oldNote = sessionDraftMap[rt.id]?.note ? `${sessionDraftMap[rt.id].note}, ` : 'Trực bù: ';
@@ -1943,7 +1956,7 @@ function renderTableNewOff(skipSaveCurrent) {
     if (quan === "Tất cả") {
         matchQuan = true;
     } else if (quan === "BK") {
-        matchQuan = r.isBackup && !qDeli.includes("QUẬN 2") && !qDeli.includes("QUẬN 4") && !qDeli.includes("QUẬN 7");
+        matchQuan = r.isBackup && !qDeli.includes("PHÚ NHUẬN") && !qDeli.includes("TÂN BÌNH") && !qDeli.includes("THỦ ĐỨC");
     } else {
         matchQuan = qDeli.includes(quan.toUpperCase());
     }
@@ -1975,9 +1988,9 @@ function renderTableNewOff(skipSaveCurrent) {
       cotTuyens = `
         <select id="tuyenBK_${r.id}" class="form-select form-select-sm border-success fw-bold text-success" onchange="luuThongTinOff('${r.id}')">
           <option value="" ${draft.tuyenBK === '' ? 'selected' : ''}>-- Chọn tuyến --</option>
-          <option value="Quận 4" ${draft.tuyenBK === 'Quận 4' ? 'selected' : ''}>📍 Quận 4</option>
-          <option value="Quận 2" ${draft.tuyenBK === 'Quận 2' ? 'selected' : ''}>📍 Quận 2</option>
-          <option value="Quận 7" ${draft.tuyenBK === 'Quận 7' ? 'selected' : ''}>📍 Quận 7</option>
+          <option value="Tân Bình" ${draft.tuyenBK === 'Tân Bình' ? 'selected' : ''}>📍 Tân Bình</option>
+          <option value="Phú Nhuận" ${draft.tuyenBK === 'Phú Nhuận' ? 'selected' : ''}>📍 Phú Nhuận</option>
+          <option value="Thủ Đức" ${draft.tuyenBK === 'Thủ Đức' ? 'selected' : ''}>📍 Thủ Đức</option>
         </select>
       `;
     } else {
