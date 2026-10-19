@@ -2039,11 +2039,17 @@
       if (!panel || !tbody) return;
       panel.style.display = 'block';
       let filtered = danhSachDiemDanhHomNay;
-      if (loai === 'tre') filtered = danhSachDiemDanhHomNay.filter(i => (((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('trễ') || ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('tre'));
-      if (loai === 'ngoai') filtered = danhSachDiemDanhHomNay.filter(i => (((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('ngoài') || ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('ngoai'));
+      if (loai === 'tre') filtered = danhSachDiemDanhHomNay.filter(i => {
+        const s = ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase();
+        return s.includes('tr\u1ec7') || s.includes('tre');
+      });
+      if (loai === 'ngoai') filtered = danhSachDiemDanhHomNay.filter(i => {
+        const s = ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase();
+        return s.includes('ngo\u1ea1i') || s.includes('ngoai');
+      });
       if (loai === 'dunggio') filtered = danhSachDiemDanhHomNay.filter(i => {
         const s = ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase();
-        return !(s.includes('trễ')||s.includes('tre')) && !(s.includes('ngoài')||s.includes('ngoai'));
+        return !(s.includes('tr\u1ec7')||s.includes('tre')) && !(s.includes('ngo\u1ea1i')||s.includes('ngoai'));
       });
       let html = '';
       filtered.forEach((item, idx) => {
