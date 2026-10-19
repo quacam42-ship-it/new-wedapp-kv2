@@ -236,7 +236,7 @@
               </tr>
             </thead>
             <tbody id="riderTableBody">
-              <tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải danh sách Rider...</td></tr>
+              <tr><td colspan="7" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải danh sách Rider...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1143,12 +1143,11 @@
                 <th style="min-width: 150px;">Khu vực tuyến</th>
                 <th style="min-width: 320px;">Chọn Ngày OFF Trong Tuần</th>
                 <th style="width: 130px;">Loại OFF</th>
-                <th style="min-width: 170px;">Tuyến lấy hàng / Trực bù</th>
                 <th style="min-width: 130px;">Ghi chú</th>
               </tr>
             </thead>
             <tbody id="riderTableBodyNewOff">
-              <tr><td colspan="8" class="text-center py-4 text-muted">Đang tải dữ liệu Rider...</td></tr>
+              <tr><td colspan="7" class="text-center py-4 text-muted">Đang tải dữ liệu Rider...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1787,7 +1786,7 @@
     // TẢI RIDER & PERFORMANCE
     async function loadRiderData() {
       const tbody = document.getElementById('riderTableBody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải toàn bộ Rider...</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải toàn bộ Rider...</td></tr>';
       try {
         const res = await fetch(`${API_BASE}/rider-data`); const data = await res.json();
         ridersData = data.riders || []; dateHeadersGlobal = data.dateHeaders || []; loadedTabs.tuyenRider = true;
@@ -1823,7 +1822,7 @@
 
       const lblCount = document.getElementById('riderCountLabel');
       if (lblCount) lblCount.innerText = `Hiển thị: ${filtered.length} / ${ridersData.length} Rider`;
-      if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Không tìm thấy Rider phù hợp</td></tr>'; return; }
+      if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy Rider phù hợp</td></tr>'; return; }
 
       let html = '';
       filtered.forEach((rd, idx) => {

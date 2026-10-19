@@ -1968,7 +1968,7 @@ function renderTableNewOff(skipSaveCurrent) {
   document.getElementById("txtCountNewOff").textContent = filtered.length;
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Không tìm thấy Rider nào thỏa điều kiện!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy Rider nào thỏa điều kiện!</td></tr>';
     capNhatDemOFF();
     return;
   }
@@ -2033,7 +2033,6 @@ function renderTableNewOff(skipSaveCurrent) {
           <option value="OFF đột xuất" ${draft.loaiOff === 'OFF đột xuất' ? 'selected' : ''}>OFF đột xuất</option>
         </select>
       </td>
-      <td>${cotTuyens}</td>
       <td><input type="text" id="note_${r.id}" value="${draft.note}" class="form-control form-control-sm" placeholder="Ghi chú..." oninput="luuThongTinOff('${r.id}', true)"></td>
     </tr>`;
   });
