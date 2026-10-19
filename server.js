@@ -208,172 +208,39 @@ app.get('/api/performance-data', async (req, res) => {
 // 3. API: HÀNG HÓA - COUNT ĐÚNG 100% ĐƠN CHƯA GÁN RIDER (LMHub_Received & TRỐNG DRIVER_NAME)
 app.get('/api/hang-hoa-data', async (req, res) => {
   try {
-    const resSummary = await sheets.spreadsheets.values.batchGet({
-      spreadsheetId: SPREADSHEET_ID,
-      ranges: [
-        "'ĐƠN RỚT TRONG NGÀY'!A4:M7",   // Hàng 4: Tiêu đề KPI, Hàng 5: Số liệu KPI, Hàng 7: Last update
-        "'ĐƠN RỚT TRONG NGÀY'!D14:H21", // Bảng Top phường rớt (#1 -> #6)
-        "'ĐƠN RỚT TRONG NGÀY'!A8:C50",  // Bảng Pivot danh sách phường 3 quận
-        "'DATA INBOUND'!A2:T",          // Toàn bộ dữ liệu đơn Inbound để lấy danh sách chi tiết
-      ],
+    const resSummary = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+      range: "'DATA PENDING'!A2:O",
     });
 
-    const valRange = resSummary.data.valueRanges || [];
-    const kpiRows = valRange[0]?.values || [];
-    const topRows = valRange[1]?.values || [];
-    const pivotRows = valRange[2]?.values || [];
-    const inboundRows = valRange[3]?.values || [];
+    const rows = resSummary.data.values || [];
+    const lastUpdateStr = new Date().toLocaleTimeString('vi-VN');
 
-    // 1. Last Update từ ô A7
-    let lastUpdateStr = '';
-    if (kpiRows.length >= 4 && kpiRows[3] && kpiRows[3][0]) {
-      lastUpdateStr = kpiRows[3][0].replace(/last update\s*:\s*/i, '').trim();
-    } else {
-      lastUpdateStr = new Date().toLocaleTimeString('vi-VN');
-    }
+    let pendingMP = 0, pendingWH = 0;
+    rows.forEach(r => {
+      const whsId = (r[9] || '').toString().trim();
+      if (whsId && whsId !== '0' && whsId.toLowerCase() !== 'trong' && whsId.toLowerCase() !== 'trá»‘ng') {
+        pendingWH++;
+      } else {
+        pendingMP++;
+      }
+    });
 
-    // 2. 7 Thẻ KPI từ Hàng 5
-    const valRow = kpiRows.length >= 2 ? kpiRows[1] : [];
     const kpi = {
-      tongDon: valRow[0] || '0',
-      phuNhuan: valRow[2] || '0',
-      tanBinh: valRow[4] || '0',
-      thuDuc: valRow[6] || '0',
-      donMp: valRow[8] || '0',
-      donWh: valRow[10] || '0',
-      donHv: valRow[12] || '0',
+      tongDon: rows.length,
+      phuNhuan: 0,
+      tanBinh: 0,
+      thuDuc: 0,
+      donMp: pendingMP,
+      donWh: pendingWH,
+      donHv: 0,
       lastUpdate: lastUpdateStr,
     };
 
-    // 3. Top Phường rớt (#1 -> #6)
-    const top5Phuong = [];
-    topRows.forEach((r, idx) => {
-      if (idx === 0) return;
-      if (r && r[1] && r[2] && r[3]) {
-        const fullTen = r[2].trim();
-        let qName = '';
-        if (fullTen.includes('Quận 7')) qName = 'Quận 7';
-        else if (fullTen.includes('Quận 4')) qName = 'Quận 4';
-        else if (fullTen.includes('Quận 2')) qName = 'Quận 2';
-
-        const cleanP = fullTen.replace(/\s*\([^)]*\)/g, '').trim();
-
-        top5Phuong.push({
-          hang: r[1].trim(),
-          ten: cleanP,
-          quan: qName,
-          soLuong: r[3].trim(),
-        });
-      }
-    });
-
-    // 4. Bảng chi tiết phường 3 quận
-    const listPN = [], listTB = [], listTD = [];
-    let currentDistrict = 'Quận 2';
-
-    pivotRows.forEach(r => {
-      if (!r || r.length < 2) return;
-      const colA = (r[0] || '').toString().trim();
-      const colB = (r[1] || '').toString().trim();
-      const colC = (r[2] || '').toString().trim();
-
-      if (colA.includes('Quận Quận 4') && !colA.includes('Total')) {
-        currentDistrict = 'Quận 4';
-      } else if ((colA.includes('Quận 7') || colA.includes('TP. Quận 7')) && !colA.includes('Total')) {
-        currentDistrict = 'Quận 7';
-      }
-
-      if (colA.includes('Total') || colB.includes('Total') || colA.includes('Grand')) return;
-
-      if (colB && colC && !isNaN(colC.replace(/,/g, ''))) {
-        const item = {
-          phuong: colB,
-          soLuong: colC,
-          quan: currentDistrict,
-        };
-        if (currentDistrict === 'Quận 2') listPN.push(item);
-        else if (currentDistrict === 'Quận 4') listTB.push(item);
-        else if (currentDistrict === 'Quận 7') listTD.push(item);
-      }
-    });
-
-    // Sắp xếp thứ tự quy chuẩn cho 3 quận
-    const thuTuThuDuc = [
-      'Hiệp Bình Chánh', 'Hiệp Bình Phước', 'Linh Đông', 'Bình Chiểu',
-      'Tam Bình', 'Tam Phú', 'Linh Chiểu', 'Bình Thọ',
-      'Trường Thọ', 'Linh Trung', 'Linh Xuân', 'Linh Tây',
-    ];
-
-    listTD.sort((a, b) => {
-      let idxA = thuTuThuDuc.findIndex(t => a.phuong.toLowerCase().includes(t.toLowerCase()));
-      let idxB = thuTuThuDuc.findIndex(t => b.phuong.toLowerCase().includes(t.toLowerCase()));
-      if (idxA === -1) idxA = 999;
-      if (idxB === -1) idxB = 999;
-      return idxA - idxB;
-    });
-
-    const sortSoNhoDenLon = (arr) => {
-      arr.sort((a, b) => {
-        const numA = parseInt(a.phuong.replace(/\D/g, ''), 10) || 0;
-        const numB = parseInt(b.phuong.replace(/\D/g, ''), 10) || 0;
-        return numA - numB;
-      });
-    };
-
-    sortSoNhoDenLon(listPN);
-    sortSoNhoDenLon(listTB);
-
-    // 5. LỌC ĐÚNG 100% CÁC ĐƠN CHƯA GÁN RIDER TỪ DATA INBOUND
-    // Điều kiện chuẩn: Cột N (index 13) = LMHub_Received VÀ Cột F (index 5) driver_name trống
-    const inboundOrdersCache = [];
-    inboundRows.forEach(r => {
-      if (!r || !r[0]) return;
-      const shipmentId = (r[0] || '').toString().trim();
-      const driverId = (r[4] || '').toString().trim();
-      const driverName = (r[5] || '').toString().trim();
-      const statusV1 = (r[13] || '').toString().trim();
-
-      const isLMHubReceived = statusV1.toLowerCase() === 'lmhub_received' || statusV1.includes('LMHub_Received');
-      const isChuaGanRider = driverName === '' || driverName.toLowerCase() === 'chưa gán' || driverName.toLowerCase() === 'nan';
-
-      if (isLMHubReceived && isChuaGanRider) {
-        const rawHv = (r[12] || '').toString().toLowerCase().trim();
-
-        const isHv = (rawHv === 'yes' || rawHv === 'y' || rawHv === '1' || rawHv === 'true' || rawHv === 'hv');
-
-        const rawWhs = (r[9] || '').toString().trim();
-        const isMP = (rawWhs === '' || rawWhs === '0' || rawWhs.toLowerCase() === 'null');
-
-        inboundOrdersCache.push({
-          shipmentId: shipmentId,
-          zoneId: (r[1] || '').toString().trim(),
-          receivedTime: (r[6] || '').toString().trim(),
-          isHv: isHv ? 'yes' : 'no',
-          loaiHang: isMP ? 'MP' : 'WH',
-          quan: (r[18] || '').toString().trim(),   // Cột S: Quận Cũ
-          phuong: (r[19] || '').toString().trim(), // Cột T: Phường Cũ
-        });
-      }
-    });
-
-    res.json({
-      kpi,
-      top5Phuong,
-      phuongPhuNhuan: listPN,
-      phuongTanBinh: listTB,
-      phuongThuDuc: listTD,
-      inboundOrdersCache,
-    });
+    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [], cachedInboundOrders: rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0') ? 'WH' : 'MP' })) });
   } catch (error) {
-    console.error('Lỗi API Hàng Hóa:', error.message);
-    res.json({
-      kpi: { tongDon: '0', phuNhuan: '0', tanBinh: '0', thuDuc: '0', donMp: '0', donWh: '0', donHv: '0', lastUpdate: 'Đang kết nối...' },
-      top5Phuong: [],
-      phuongPhuNhuan: [],
-      phuongTanBinh: [],
-      phuongThuDuc: [],
-      inboundOrdersCache: [],
-    });
+    console.warn('L?i d?c DATA PENDING:', error.message);
+    res.json({ headers: ['Thong bao'], rows: [['Dang cap nhat du lieu...']], kpi: { tongDon: 0, donMp: 0, donWh: 0, lastUpdate: new Date().toLocaleTimeString('vi-VN') }, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [] });
   }
 });
 
@@ -1143,11 +1010,11 @@ app.get('/api/thong-tin-chung-rider', async (req, res) => {
 
     if (listZaloRaw.length === 0) {
       listZaloRaw = [
-        { ten: "group thông báo khu vậc 2", link: "https://zalo.me/g/zpaqsalq3rsp2ujhnupq" },
-        { ten: "RIDER SDD KV 2 ( Quáº­n 2 - Quáº­n 4 - Quáº­n 7 - Quáº­n 9 - BÃ¬nh Tháº¡nh )", link: "https://zalo.me/g/vwcnkfxkzsipkisurqc4" },
+        { ten: "GROUP THÔNG BÁO KHU VỰC 2", link: "https://zalo.me/g/zpaqsalq3rsp2ujhnupq" },
+        { ten: "RIDER SDD KV 2 ( QUẬN 2 - QUẬN 4 - QUẬN 7 - QUẬN 9 - BÌNH THẠNH )", link: "https://zalo.me/g/vwcnkfxkzsipkisurqc4" },
         { ten: "RIDER BACKUP FT KV1+2", link: "https://zalo.me/g/aavbzd404" },
-        { ten: "khu vậc 2 new cot1", link: "https://zalo.me/g/nnuxoghprlgkac0ubtt4" },
-        { ten: "khu vậc 2 new cot2", link: "https://zalo.me/g/8u97hmugwv7tk9asf3i5" }
+        { ten: "KHU VỰC 2 NEW COT1", link: "https://zalo.me/g/nnuxoghprlgkac0ubtt4" },
+        { ten: "KHU VỰC 2 NEW COT2", link: "https://zalo.me/g/8u97hmugwv7tk9asf3i5" }
       ];
     }
 
