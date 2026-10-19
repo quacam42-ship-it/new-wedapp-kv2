@@ -468,12 +468,6 @@
           <span class="text-secondary small ms-1" id="hangSheetTimeLabel"></span>
         </div>
         <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.8rem;">
-            Cập nhật sau: <strong class="text-danger font-monospace fs-6" id="nextUpdateCountdown">30s</strong>
-          </span>
-          <button class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.78rem; height: 28px;" onclick="triggerManualHangHoaSync()">
-            <i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay
-          </button>
         </div>
       </div>
 
@@ -1886,18 +1880,9 @@
     function getGioVietNamHienTai() { return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
 
     function startAutoRefreshCountdown() {
+      // Tắt tự động cập nhật 30s cho inbound
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-      countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec);
-      autoRefreshTimer = setInterval(() => {
-        countdownSec--;
-        if (countdownSec <= 0) {
-          countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec);
-          if (currentTab === 'hangHoa') {
-            if (typeof currentKieuHangHoa !== 'undefined' && currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
-            else loadHangHoaData(true);
-          }
-        } else { capNhatGiaoDienDongHo(countdownSec); }
-      }, 1000);
+      autoRefreshTimer = null;
     }
 
     function capNhatGiaoDienDongHo(sec) { const el = document.getElementById('nextUpdateCountdown'); if (el) el.innerText = `${sec}s`; }
