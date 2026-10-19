@@ -940,7 +940,7 @@ async function napAnhTuSheetVaoAlbum() {
 // 6. API: Điểm danh Rider
 app.post('/api/diem-danh', async (req, res) => {
   try {
-    const { riderId, riderName, caDiemDanh, caThucTe, anhBase64, ghiChu, coLichLam } = req.body;
+    const { riderId, riderName, caDiemDanh, caThucTe, anhBase64, ghiChu, coLichLam, tenThietBi, viDo, kinhDo } = req.body;
     if (!riderId) return res.status(400).json({ success: false, message: 'Thiếu mã Rider' });
 
     const caCheckKey = (caDiemDanh || '').toUpperCase().includes('2') ? 'COT2' : 'COT1';
@@ -949,6 +949,24 @@ app.post('/api/diem-danh', async (req, res) => {
 
     if (coLichLam === false) {
       return res.status(400).json({ success: false, message: 'Hôm nay bạn không có lịch làm, vui lòng check lại với FTE khu vực!' });
+    }
+
+    // Kiểm tra vị trí (không quá 50m so với tọa độ trạm)
+    const TARGET_LAT = 10.819452810093942;
+    const TARGET_LNG = 106.67217349075761;
+    if (viDo !== undefined && kinhDo !== undefined && viDo !== null && kinhDo !== null && viDo !== '' && kinhDo !== '') {
+      const R = 6371000;
+      const toRad = (x) => (x * Math.PI) / 180;
+      const dLat = toRad(Number(viDo) - TARGET_LAT);
+      const dLng = toRad(Number(kinhDo) - TARGET_LNG);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(TARGET_LAT)) * Math.cos(toRad(Number(viDo))) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+      if (distance > 50) {
+        return res.status(400).json({ success: false, message: `Bạn đang cách trạm ${Math.round(distance)}m (>50m). Không thể điểm danh!` });
+      }
     }
 
     const now = new Date();
@@ -1024,10 +1042,10 @@ app.post('/api/diem-danh', async (req, res) => {
 
     const ghiChuFinal = anhBase64 ? 'Đã chụp ảnh xác thực tại trạm' : (ghiChu || 'Quét QR');
 
-    const newRow = [timestamp, ngayDiemDanh, gioDiemDanh, riderId, riderName, caChuan, 'Đã điểm danh', ghiChuFinal];
+    const newRow = [timestamp, ngayDiemDanh, gioDiemDanh, riderId, riderName, caChuan, 'Đã điểm danh', ghiChuFinal, tenThietBi || 'Unknown', viDo || '', kinhDo || ''];
     await sheets.spreadsheets.values.append({
-      spreadsheetId: SPREADSHEET_ID,
-      range: "'LƯU ĐIỂM DANH'!A:H",
+      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+      range: "'LƯU ĐIỂM DANH'!A:K",
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [newRow] },
     });
@@ -1043,8 +1061,8 @@ app.post('/api/diem-danh', async (req, res) => {
 app.get('/api/lich-su-diem-danh', async (req, res) => {
   try {
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: "'LƯU ĐIỂM DANH'!A2:H500",
+      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+      range: "'LƯU ĐIỂM DANH'!A2:K500",
     });
     const rows = response.data.values || [];
 
