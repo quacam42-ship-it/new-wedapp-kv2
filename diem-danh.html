@@ -429,26 +429,11 @@
         viDo = pos.coords.latitude;
         kinhDo = pos.coords.longitude;
       } catch (err) {
-        alert("Không lấy được vị trí GPS. Vui lòng bật Location/GPS và cấp quyền cho trình duyệt!");
-        btn.disabled = false;
-        capNhatTrangThaiNutGui();
-        return;
-      }
-
-      // Kiểm tra khoảng cách <= 50m
-      const TARGET_LAT = 10.819452810093942;
-      const TARGET_LNG = 106.67217349075761;
-      const khoangCach = tinhKhoangCach(viDo, kinhDo, TARGET_LAT, TARGET_LNG);
-      if (khoangCach > 50) {
-        alert(`Bạn đang cách trạm ${Math.round(khoangCach)}m (>50m). Không thể điểm danh!`);
-        btn.disabled = false;
-        capNhatTrangThaiNutGui();
-        return;
+        viDo = '';
+        kinhDo = '';
       }
 
       const thoiGian = new Date().toLocaleTimeString('vi-VN');
-      const deviceId = layDeviceId();
-      const tenThietBi = `${navigator.userAgent} | ${deviceId}`;
       const payload = {
         riderId: riderHienTai.id,
         riderName: riderHienTai.name,
@@ -457,7 +442,6 @@
         coLichLam: (typeof riderCoLichLamHomNay !== 'undefined') ? riderCoLichLamHomNay : true,
         anhBase64: anhDaChupBase64 || '',
         ghiChu: `Quét di động (${riderHienTai.quanDeli || ''})`,
-        tenThietBi: tenThietBi,
         viDo: viDo,
         kinhDo: kinhDo
       };

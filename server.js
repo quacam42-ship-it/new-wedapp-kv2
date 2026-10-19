@@ -940,7 +940,7 @@ async function napAnhTuSheetVaoAlbum() {
 // 6. API: Điểm danh Rider
 app.post('/api/diem-danh', async (req, res) => {
   try {
-    const { riderId, riderName, caDiemDanh, caThucTe, anhBase64, ghiChu, coLichLam, tenThietBi, viDo, kinhDo } = req.body;
+    const { riderId, riderName, caDiemDanh, caThucTe, anhBase64, ghiChu, coLichLam, viDo, kinhDo } = req.body;
     if (!riderId) return res.status(400).json({ success: false, message: 'Thiếu mã Rider' });
 
     const caCheckKey = (caDiemDanh || '').toUpperCase().includes('2') ? 'COT2' : 'COT1';
@@ -951,9 +951,10 @@ app.post('/api/diem-danh', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Hôm nay bạn không có lịch làm, vui lòng check lại với FTE khu vực!' });
     }
 
-    // Kiểm tra vị trí (không quá 50m so với tọa độ trạm)
+    // Xác định trong kho / ngoài kho (không từ chối, chỉ ghi nhận)
     const TARGET_LAT = 10.819452810093942;
     const TARGET_LNG = 106.67217349075761;
+    let viTri = 'Không xác định';
     if (viDo !== undefined && kinhDo !== undefined && viDo !== null && kinhDo !== null && viDo !== '' && kinhDo !== '') {
       const R = 6371000;
       const toRad = (x) => (x * Math.PI) / 180;
@@ -964,9 +965,7 @@ app.post('/api/diem-danh', async (req, res) => {
         Math.sin(dLng / 2) * Math.sin(dLng / 2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distance = R * c;
-      if (distance > 50) {
-        return res.status(400).json({ success: false, message: `Bạn đang cách trạm ${Math.round(distance)}m (>50m). Không thể điểm danh!` });
-      }
+      viTri = distance <= 50 ? 'Trong kho' : 'Ngoài kho';
     }
 
     const now = new Date();
@@ -1042,7 +1041,7 @@ app.post('/api/diem-danh', async (req, res) => {
 
     const ghiChuFinal = anhBase64 ? 'Đã chụp ảnh xác thực tại trạm' : (ghiChu || 'Quét QR');
 
-    const newRow = [timestamp, ngayDiemDanh, gioDiemDanh, riderId, riderName, caChuan, 'Đã điểm danh', ghiChuFinal, tenThietBi || 'Unknown', viDo || '', kinhDo || ''];
+    const newRow = [timestamp, ngayDiemDanh, gioDiemDanh, riderId, riderName, caChuan, 'Đã điểm danh', ghiChuFinal, viDo || '', kinhDo || '', viTri];
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
       range: "'LƯU ĐIỂM DANH'!A:K",
