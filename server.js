@@ -1093,6 +1093,7 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
         ca: r[5] || '',
         trangThai: 'Đã điểm danh',
         ghiChu: r[7] || '',
+        viTri: r[10] || '',
       }))
       .reverse();
 

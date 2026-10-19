@@ -374,7 +374,7 @@
         </div>
         <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-hover table-bordered align-middle text-center mb-0" style="font-size: 14px;">
+            <table class="table table-hover table-bordered align-middle text-center mb-0" style="font-size: 13px; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
               <thead class="table-dark sticky-top" id="theadMaTranOff"></thead>
               <tbody id="tbodyMaTranOff"></tbody>
             </table>
@@ -865,7 +865,29 @@
             </div>
             
             <div id="vungBangDiemDanhBody">
-              <div class="table-responsive" style="max-height: 480px;">
+              <!-- Ô THẺ TỔNG HỢP -->
+              <div class="row g-2 mb-2" id="cardTongHopDiemDanh">
+                <div class="col-4">
+                  <div class="card border-0 shadow-sm text-center p-2" style="cursor:pointer; background:#e7f5ff;" onclick="hienThiChiTietDD('dunggio')">
+                    <div class="small fw-bold text-primary">ĐÚNG GIỜ</div>
+                    <div class="fs-4 fw-bold text-primary" id="ddCountDungGio">0</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="card border-0 shadow-sm text-center p-2" style="cursor:pointer; background:#fff3cd;" onclick="hienThiChiTietDD('tre')">
+                    <div class="small fw-bold text-warning">TRỄ GIỜ</div>
+                    <div class="fs-4 fw-bold text-warning" id="ddCountTre">0</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="card border-0 shadow-sm text-center p-2" style="cursor:pointer; background:#f8d7da;" onclick="hienThiChiTietDD('ngoai')">
+                    <div class="small fw-bold text-danger">NGOÀI KHO</div>
+                    <div class="fs-4 fw-bold text-danger" id="ddCountNgoai">0</div>
+                  </div>
+                </div>
+              </div>
+              <!-- CHI TIẾT KHI NHẤN Ô THẺ -->
+              <div id="chiTietDiemDanh" style="display:none; max-height:360px; overflow:auto;">
                 <table class="table table-bordered table-hover table-sm align-middle text-center mb-0" style="font-size: 0.78rem;">
                   <thead class="table-light sticky-top">
                     <tr>
@@ -877,9 +899,7 @@
                       <th style="width: 85px;">Trạng Thái</th>
                     </tr>
                   </thead>
-                  <tbody id="tbodyLichSuDiemDanh">
-                    <tr><td colspan="6" class="py-3 text-muted">Đang tải lượt điểm danh hôm nay...</td></tr>
-                  </tbody>
+                  <tbody id="tbodyChiTietDD"></tbody>
                 </table>
               </div>
             </div>
@@ -1993,20 +2013,44 @@
       loadLichSuDiemDanh(); loadCauHinhDiemDanh();
     }
 
+    let danhSachDiemDanhHomNay = [];
     async function loadLichSuDiemDanh() {
-      const tbody = document.getElementById('tbodyLichSuDiemDanh');
       try {
         const res = await fetch(`${API_BASE}/lich-su-diem-danh`); const list = await res.json();
+        danhSachDiemDanhHomNay = Array.isArray(list) ? list : [];
         const dStr = new Date().toLocaleDateString('vi-VN');
-        const lbl = document.getElementById('lblNgayDiemDanhHomNay'); if (lbl) lbl.innerText = `Ngày: ${dStr} (${list.length} lượt)`;
+        const lbl = document.getElementById('lblNgayDiemDanhHomNay'); if (lbl) lbl.innerText = `Ngày: ${dStr} (${danhSachDiemDanhHomNay.length} lượt)`;
 
-        if (!list || list.length === 0) { if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-muted">Chưa có rider nào điểm danh hôm nay (${dStr})</td></tr>`; return; }
-        let html = '';
-        list.forEach((item, idx) => {
-          html += `<tr><td class="text-muted small">${idx + 1}</td><td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td><td class="font-monospace">${item.id}</td><td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td><td><span class="badge ${item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td><td><span class="badge bg-success">Đã điểm danh</span></td></tr>`;
+        let dungGio = 0, tre = 0, ngoai = 0;
+        danhSachDiemDanhHomNay.forEach(item => {
+          const status = ((item.trangThai || '') + ' ' + (item.ghiChu || '') + ' ' + (item.viTri || '')).toLowerCase();
+          if (status.includes('trễ') || status.includes('tre')) tre++; else dungGio++;
+          if (status.includes('ngoài') || status.includes('ngoai')) ngoai++;
         });
-        if (tbody) tbody.innerHTML = html;
-      } catch (e) { if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="py-3 text-muted">Chưa có lượt điểm danh nào</td></tr>'; }
+        const elDung = document.getElementById('ddCountDungGio'); if (elDung) elDung.innerText = dungGio;
+        const elTre = document.getElementById('ddCountTre'); if (elTre) elTre.innerText = tre;
+        const elNgoai = document.getElementById('ddCountNgoai'); if (elNgoai) elNgoai.innerText = ngoai;
+      } catch (e) { console.error(e); }
+    }
+
+    function hienThiChiTietDD(loai) {
+      const panel = document.getElementById('chiTietDiemDanh');
+      const tbody = document.getElementById('tbodyChiTietDD');
+      if (!panel || !tbody) return;
+      panel.style.display = 'block';
+      let filtered = danhSachDiemDanhHomNay;
+      if (loai === 'tre') filtered = danhSachDiemDanhHomNay.filter(i => (((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('trễ') || ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('tre'));
+      if (loai === 'ngoai') filtered = danhSachDiemDanhHomNay.filter(i => (((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('ngoài') || ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase().includes('ngoai'));
+      if (loai === 'dunggio') filtered = danhSachDiemDanhHomNay.filter(i => {
+        const s = ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase();
+        return !(s.includes('trễ')||s.includes('tre')) && !(s.includes('ngoài')||s.includes('ngoai'));
+      });
+      let html = '';
+      filtered.forEach((item, idx) => {
+        html += `<tr><td class="text-muted small">${idx + 1}</td><td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td><td class="font-monospace">${item.id}</td><td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td><td><span class="badge ${item.ca && item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td><td><span class="badge bg-success">Đã điểm danh</span></td></tr>`;
+      });
+      if (filtered.length === 0) html = `<tr><td colspan="6" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
+      tbody.innerHTML = html;
     }
 
     let cauHinh2CaHienTai = null;

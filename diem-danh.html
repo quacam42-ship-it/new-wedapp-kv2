@@ -429,8 +429,11 @@
         viDo = pos.coords.latitude;
         kinhDo = pos.coords.longitude;
       } catch (err) {
-        viDo = '';
-        kinhDo = '';
+        alert("Bạn đã từ chối cung cấp vị trí. Vui lòng bật GPS/Location và cấp quyền để điểm danh!");
+        btn.disabled = true;
+        btn.className = 'btn btn-danger w-100 py-2 fw-bold shadow-sm mt-3';
+        btn.innerHTML = '<i class="bi bi-lock-fill me-1"></i> ĐIỂM DANH BỊ KHÓA (THIẾU VỊ TRÍ)';
+        return;
       }
 
       const thoiGian = new Date().toLocaleTimeString('vi-VN');
