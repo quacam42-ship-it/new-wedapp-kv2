@@ -1143,11 +1143,11 @@ app.get('/api/thong-tin-chung-rider', async (req, res) => {
 
     if (listZaloRaw.length === 0) {
       listZaloRaw = [
-        { ten: "GROUP THÔNG BÁO KV2", link: "https://zalo.me/g/zpaqsalq3rsp2ujhnupq" },
+        { ten: "group thông báo khu vậc 2", link: "https://zalo.me/g/zpaqsalq3rsp2ujhnupq" },
         { ten: "RIDER SDD KV 2 ( Quáº­n 2 - Quáº­n 4 - Quáº­n 7 - Quáº­n 9 - BÃ¬nh Tháº¡nh )", link: "https://zalo.me/g/vwcnkfxkzsipkisurqc4" },
         { ten: "RIDER BACKUP FT KV1+2", link: "https://zalo.me/g/aavbzd404" },
-        { ten: "TRUYỀN THÔNG KV2 COT1", link: "https://zalo.me/g/nnuxoghprlgkac0ubtt4" },
-        { ten: "TRUYỀN THÔNG KV2 COT2", link: "https://zalo.me/g/8u97hmugwv7tk9asf3i5" }
+        { ten: "khu vậc 2 new cot1", link: "https://zalo.me/g/nnuxoghprlgkac0ubtt4" },
+        { ten: "khu vậc 2 new cot2", link: "https://zalo.me/g/8u97hmugwv7tk9asf3i5" }
       ];
     }
 
