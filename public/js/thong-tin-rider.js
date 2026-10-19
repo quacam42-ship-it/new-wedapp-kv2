@@ -1,5 +1,6 @@
 // ================= MODULE THÔNG TIN CHUNG CHO RIDER (ĐỘC LẬP) =================
 
+if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())); }
 if (typeof API_BASE === 'undefined') {
   window.API_BASE = '/api';
 }
@@ -15,7 +16,7 @@ async function loadThongTinChungData() {
   }
 
   try {
-    const res = await fetch(`${API_BASE}/thong-tin-chung-rider`);
+    const res = await fetch(`${API_BASE}/thong-tin-chung-rider?_=${Date.now()}`, { cache: 'no-store' });
     const data = await res.json();
     cachedThongTinChung = data;
     chuyenSubTabThongTin(currentSubTabThongTin);
