@@ -220,6 +220,8 @@ app.get('/api/hang-hoa-data', async (req, res) => {
     const rows = allRows.filter(r => (r[10] || '').toString().trim() === 'LMHub_Received');
 
     let pendingMP = 0, pendingWH = 0, pendingHV = 0;
+    // Gom nhóm theo quận + phường
+    const groupMap = {};
     rows.forEach(r => {
       const whsId = (r[9] || '').toString().trim();
       if (whsId && whsId !== '0' && whsId.toLowerCase() !== 'trong' && whsId.toLowerCase() !== 'trống') {
@@ -228,21 +230,53 @@ app.get('/api/hang-hoa-data', async (req, res) => {
         pendingMP++;
       }
       if ((r[12] || '').toString().trim().toLowerCase() === 'yes') pendingHV++;
+
+      const quan = (r[13] || '').toString().trim();
+      const phuong = (r[14] || '').toString().trim();
+      const key = `${quan}||${phuong}`;
+      if (!groupMap[key]) groupMap[key] = { quan, phuong, soLuong: 0 };
+      groupMap[key].soLuong++;
     });
+
+    const groups = Object.values(groupMap);
+
+    function groupsByDistrict(keyword) {
+      return groups
+        .filter(g => (g.quan || '').toLowerCase().includes(keyword.toLowerCase()))
+        .map(g => ({ quan: g.quan, phuong: g.phuong, soLuong: g.soLuong }))
+        .sort((a, b) => b.soLuong - a.soLuong);
+    }
+
+    const phuongPhuNhuan = groupsByDistrict('quận 2');
+    const phuongTanBinh = groupsByDistrict('quận 4');
+    const phuongThuDuc = groupsByDistrict('quận 7');
+    const phuongQuan9 = groupsByDistrict('quận 9');
+    const phuongBinhThanh = groupsByDistrict('bình thạnh');
+
+    const countDistrict = (keyword) => groups.filter(g => (g.quan || '').toLowerCase().includes(keyword.toLowerCase())).reduce((s, g) => s + g.soLuong, 0);
 
     const kpi = {
       tongDon: rows.length,
-      phuNhuan: 0,
-      tanBinh: 0,
-      thuDuc: 0,
+      phuNhuan: countDistrict('quận 2'),
+      tanBinh: countDistrict('quận 4'),
+      thuDuc: countDistrict('quận 7'),
       donMp: pendingMP,
       donWh: pendingWH,
       donHv: pendingHV,
       lastUpdate: lastUpdateStr,
     };
 
+    // Top 5 phường rớt nhiều nhất
+    const sortedGroups = [...groups].sort((a, b) => b.soLuong - a.soLuong);
+    const top5Phuong = sortedGroups.slice(0, 5).map((g, idx) => ({
+      hang: `#${idx + 1}`,
+      ten: g.phuong,
+      quan: g.quan,
+      soLuong: g.soLuong,
+    }));
+
     const mapped = rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0' && r[9].toLowerCase() !== 'trong' && r[9].toLowerCase() !== 'trống') ? 'WH' : 'MP', isHv: (r[12] || '').toString().trim() }));
-    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [], cachedInboundOrders: mapped, inboundOrdersCache: mapped });
+    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong, phuongPhuNhuan, phuongTanBinh, phuongThuDuc, phuongQuan9, phuongBinhThanh, cachedInboundOrders: mapped, inboundOrdersCache: mapped });
   } catch (error) {
     console.warn('L?i d?c DATA PENDING:', error.message);
     res.json({ headers: ['Thong bao'], rows: [['Dang cap nhat du lieu...']], kpi: { tongDon: 0, donMp: 0, donWh: 0, lastUpdate: new Date().toLocaleTimeString('vi-VN') }, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [] });
