@@ -2185,12 +2185,6 @@ function moPopupXacNhanNewOff() {
     }
 
     if (dates.length > 0 || (r.isBackup && draft.tuyenBK !== "")) {
-      let oldOffDates = [];
-      weekDates.forEach(wDate => {
-        const sched = (r.dailySchedule && r.dailySchedule[wDate]) ? r.dailySchedule[wDate].toLowerCase().trim() : '';
-        if (sched.includes('off')) oldOffDates.push(wDate.substring(0, 5));
-      });
-
       const diaBanTuyen = r.quanDeli ? `${r.quanDeli} (P.${r.phuongDeli || '-'})` : (r.quanPick || '—');
 
       danhSachGui.push({
@@ -2207,9 +2201,6 @@ function moPopupXacNhanNewOff() {
         ghiChu: draft.note || ''
       });
 
-      const oldOffHtml = oldOffDates.length > 0 
-        ? `<div style="font-size: 11px;" class="text-secondary"><i class="bi bi-clock-history me-1"></i>Lịch OFF đang có trong tuần: <b class="text-dark">${oldOffDates.join(', ')}</b></div>` 
-        : '';
 
       const chiTietText = r.isBackup && dates.length === 0
         ? `BK Tuyến: <b>${draft.tuyenBK || 'Chưa xếp'}</b>` 
@@ -2220,7 +2211,6 @@ function moPopupXacNhanNewOff() {
                    <span class="fw-bold text-dark">${r.id} - ${r.name}</span>
                    <span class="badge ${r.ca.includes('1') ? 'bg-primary' : 'bg-warning text-dark'} ms-1" style="font-size:10px;">${r.ca}</span>
                    <div style="font-size: 12px; color: #1D4ED8;" class="mt-1">${chiTietText}</div>
-                   ${oldOffHtml}
                    ${draft.note ? `<div class="small text-muted fst-italic">Ghi chú: ${draft.note}</div>` : ''}
                  </div>
                  <span class="badge bg-danger rounded-pill">${dates.length} ngày</span>
