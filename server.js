@@ -217,7 +217,7 @@ app.get('/api/hang-hoa-data', async (req, res) => {
     const lastUpdateStr = new Date().toLocaleTimeString('vi-VN');
 
     // Chỉ lấy đơn pending (LMHub_Received, chưa giao)
-    const rows = allRows.filter(r => (r[10] || '').toString().trim() === 'LMHub_Received');
+    const rows = allRows.filter(r => (r[10] || '').toString().trim() === 'LMHub_Received' && ((r[4] || '').toString().trim() === '' || (r[4] || '').toString().trim() === '0'));
 
     let pendingMP = 0, pendingWH = 0, pendingHV = 0;
     // Gom nhóm theo quận + phường
