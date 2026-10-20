@@ -1980,9 +1980,9 @@ function renderTableNewOff(skipSaveCurrent) {
     const caBadgeClass = r.ca.includes("1") ? "badge-cot1" : "badge-cot2";
     if (!sessionDraftMap[r.id]) {
      const existingOff = weekDates.filter(dh => {
-       const sched = (r.dailySchedule && r.dailySchedule[dh.date]) ? r.dailySchedule[dh.date].toLowerCase().trim() : '';
+       const sched = (r.dailySchedule && r.dailySchedule[dh]) ? r.dailySchedule[dh].toLowerCase().trim() : '';
        return sched.includes('off');
-     }).map(dh => dh.date);
+     });
      sessionDraftMap[r.id] = { dates: [...existingOff], loaiOff: "OFF", tuyenBK: "", backup: "", note: "", originalOff: [...existingOff], originalTuyenBK: "" };
    }
    const draft = sessionDraftMap[r.id];
