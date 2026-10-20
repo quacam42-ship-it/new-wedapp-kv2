@@ -1980,9 +1980,9 @@ function renderTableNewOff(skipSaveCurrent) {
     const caBadgeClass = r.ca.includes("1") ? "badge-cot1" : "badge-cot2";
     if (!sessionDraftMap[r.id]) {
      const existingOff = weekDates.filter(dh => {
-       const sched = (r.dailySchedule && r.dailySchedule[dh]) ? r.dailySchedule[dh].toLowerCase().trim() : '';
+       const sched = (r.dailySchedule && r.dailySchedule[dh.date]) ? r.dailySchedule[dh.date].toLowerCase().trim() : '';
        return sched.includes('off');
-     });
+     }).map(dh => dh.date);
      sessionDraftMap[r.id] = { dates: [...existingOff], loaiOff: "OFF", tuyenBK: "", backup: "", note: "", originalOff: [...existingOff], originalTuyenBK: "" };
    }
    const draft = sessionDraftMap[r.id];
@@ -2011,13 +2011,12 @@ function renderTableNewOff(skipSaveCurrent) {
 
     let dateTogglesHtml = '<div class="d-flex flex-wrap gap-1">';
     weekDates.forEach(dh => {
-      const dateStr = dh;
-      const dateObj = (dateHeadersGlobal || []).find(x => x.date === dh);
-      const thuVal = dateObj ? (dateObj.thu || '') : '';
+      const dateStr = String(dh && dh.date ? dh.date : dh);
+      const thuVal = (dh && dh.thu) ? dh.thu : '';
       const isSelected = draft.dates && draft.dates.includes(dateStr);
       const btnClass = isSelected ? 'btn-danger text-white' : 'btn-outline-secondary bg-light text-dark';
       const thuGoc = (thuVal || '').replace('Th\u1ee9 ', 'T').replace('Ch\u1ee7 nh\u1eadt', 'CN');
-      const ngayNgan = (dateStr || '').substring(0, 5); 
+      const ngayNgan = String(dateStr || '').substring(0, 5); 
       
       dateTogglesHtml += `
         <button type="button" class="btn ${btnClass} p-1 text-center border" 
