@@ -1979,7 +1979,11 @@ function renderTableNewOff(skipSaveCurrent) {
     let trClass = r.isBackup ? "bk-highlight" : "";
     const caBadgeClass = r.ca.includes("1") ? "badge-cot1" : "badge-cot2";
     if (!sessionDraftMap[r.id]) {
-     sessionDraftMap[r.id] = { dates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "", originalOff: [] };
+     const existingOff = weekDates.filter(dh => {
+       const sched = (r.dailySchedule && r.dailySchedule[dh.date]) ? r.dailySchedule[dh.date].toLowerCase().trim() : '';
+       return sched.includes('off');
+     }).map(dh => dh.date);
+     sessionDraftMap[r.id] = { dates: [...existingOff], loaiOff: "OFF", tuyenBK: "", backup: "", note: "", originalOff: [...existingOff], originalTuyenBK: "" };
    }
    const draft = sessionDraftMap[r.id];
 
@@ -2180,6 +2184,10 @@ function moPopupXacNhanNewOff() {
       }).join(", "); 
     }
 
+    const newDates = (draft.dates || []).filter(d => !(draft.originalOff || []).includes(d));
+    const hasNewSelection = newDates.length > 0;
+    const hasBackupChange = r.isBackup && draft.tuyenBK !== "" && draft.tuyenBK !== (draft.originalTuyenBK || "");
+    if (!(hasNewSelection || hasBackupChange)) continue;
     if (dates.length > 0 || (r.isBackup && draft.tuyenBK !== "")) {
       const diaBanTuyen = r.quanDeli ? `${r.quanDeli} (P.${r.phuongDeli || '-'})` : (r.quanPick || '—');
 
