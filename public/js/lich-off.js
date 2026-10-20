@@ -2185,9 +2185,11 @@ function moPopupXacNhanNewOff() {
     }
 
     const newDates = (draft.dates || []).filter(d => !(draft.originalOff || []).includes(d));
+    const removedDates = (draft.originalOff || []).filter(d => !(draft.dates || []).includes(d));
     const hasNewSelection = newDates.length > 0;
+    const hasRemoval = removedDates.length > 0;
     const hasBackupChange = r.isBackup && draft.tuyenBK !== "" && draft.tuyenBK !== (draft.originalTuyenBK || "");
-    if (!(hasNewSelection || hasBackupChange)) continue;
+    if (!(hasNewSelection || hasRemoval || hasBackupChange)) continue;
     if (dates.length > 0 || (r.isBackup && draft.tuyenBK !== "")) {
       const diaBanTuyen = r.quanDeli ? `${r.quanDeli} (P.${r.phuongDeli || '-'})` : (r.quanPick || '—');
 
