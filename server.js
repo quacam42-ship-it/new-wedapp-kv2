@@ -244,7 +244,12 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       return groups
         .filter(g => (g.quan || '').toLowerCase().includes(keyword.toLowerCase()))
         .map(g => ({ quan: g.quan, phuong: g.phuong, soLuong: g.soLuong }))
-        .sort((a, b) => (a.phuong || '').localeCompare(b.phuong || '', 'vi'));
+        .sort((a, b) => {
+          const numA = parseInt(((a.phuong || '').match(/\\d+/) || [])[0], 10);
+          const numB = parseInt(((b.phuong || '').match(/\\d+/) || [])[0], 10);
+          if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+          return (a.phuong || '').localeCompare(b.phuong || '', 'vi');
+        });
     }
 
     const phuongPhuNhuan = groupsByDistrict('quận 2');
