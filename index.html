@@ -466,6 +466,7 @@
           <span class="fw-bold text-dark me-1">Tự động đồng bộ Inbound:</span>
           <span class="text-muted">Nạp lúc: <strong class="text-primary font-monospace" id="hangLastFetchTime">—</strong></span>
           <span class="text-secondary small ms-1" id="hangSheetTimeLabel"></span>
+          <span class="badge bg-info text-dark ms-2" id="nextUpdateCountdown">30s</span>
         </div>
         <div class="d-flex align-items-center gap-2">
         </div>
@@ -1880,9 +1881,18 @@
     function getGioVietNamHienTai() { return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
 
     function startAutoRefreshCountdown() {
-      // Tắt tự động cập nhật 30s cho inbound
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-      autoRefreshTimer = null;
+      countdownSec = REFRESH_INTERVAL_SEC;
+      capNhatGiaoDienDongHo(countdownSec);
+      autoRefreshTimer = setInterval(() => {
+        countdownSec--;
+        if (countdownSec <= 0) {
+          countdownSec = REFRESH_INTERVAL_SEC;
+          if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
+          else loadHangHoaData(true);
+        }
+        capNhatGiaoDienDongHo(countdownSec);
+      }, 1000);
     }
 
     function capNhatGiaoDienDongHo(sec) { const el = document.getElementById('nextUpdateCountdown'); if (el) el.innerText = `${sec}s`; }
