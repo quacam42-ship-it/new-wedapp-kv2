@@ -210,20 +210,24 @@ app.get('/api/hang-hoa-data', async (req, res) => {
   try {
     const resSummary = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'DATA PENDING'!A2:O",
+      range: "'DATA INBOUND'!A2:O",
     });
 
-    const rows = resSummary.data.values || [];
+    const allRows = resSummary.data.values || [];
     const lastUpdateStr = new Date().toLocaleTimeString('vi-VN');
 
-    let pendingMP = 0, pendingWH = 0;
+    // Chỉ lấy đơn pending (LMHub_Received, chưa giao)
+    const rows = allRows.filter(r => (r[10] || '').toString().trim() === 'LMHub_Received');
+
+    let pendingMP = 0, pendingWH = 0, pendingHV = 0;
     rows.forEach(r => {
       const whsId = (r[9] || '').toString().trim();
-      if (whsId && whsId !== '0' && whsId.toLowerCase() !== 'trong' && whsId.toLowerCase() !== 'trá»‘ng') {
+      if (whsId && whsId !== '0' && whsId.toLowerCase() !== 'trong' && whsId.toLowerCase() !== 'trống') {
         pendingWH++;
       } else {
         pendingMP++;
       }
+      if ((r[12] || '').toString().trim().toLowerCase() === 'yes') pendingHV++;
     });
 
     const kpi = {
@@ -233,11 +237,12 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       thuDuc: 0,
       donMp: pendingMP,
       donWh: pendingWH,
-      donHv: 0,
+      donHv: pendingHV,
       lastUpdate: lastUpdateStr,
     };
 
-    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [], cachedInboundOrders: rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0') ? 'WH' : 'MP' })), inboundOrdersCache: rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0') ? 'WH' : 'MP' })) });
+    const mapped = rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0' && r[9].toLowerCase() !== 'trong' && r[9].toLowerCase() !== 'trống') ? 'WH' : 'MP', isHv: (r[12] || '').toString().trim() }));
+    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [], cachedInboundOrders: mapped, inboundOrdersCache: mapped });
   } catch (error) {
     console.warn('L?i d?c DATA PENDING:', error.message);
     res.json({ headers: ['Thong bao'], rows: [['Dang cap nhat du lieu...']], kpi: { tongDon: 0, donMp: 0, donWh: 0, lastUpdate: new Date().toLocaleTimeString('vi-VN') }, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [] });
