@@ -2011,15 +2011,18 @@ function renderTableNewOff(skipSaveCurrent) {
 
     let dateTogglesHtml = '<div class="d-flex flex-wrap gap-1">';
     weekDates.forEach(dh => {
-      const isSelected = draft.dates && draft.dates.includes(dh.date);
+      const dateStr = dh;
+      const dateObj = (dateHeadersGlobal || []).find(x => x.date === dh);
+      const thuVal = dateObj ? (dateObj.thu || '') : '';
+      const isSelected = draft.dates && draft.dates.includes(dateStr);
       const btnClass = isSelected ? 'btn-danger text-white' : 'btn-outline-secondary bg-light text-dark';
-      const thuGoc = (dh.thu || '').replace('Thứ ', 'T').replace('Chủ nhật', 'CN');
-      const ngayNgan = (dh.date || '').substring(0, 5); 
+      const thuGoc = (thuVal || '').replace('Th\u1ee9 ', 'T').replace('Ch\u1ee7 nh\u1eadt', 'CN');
+      const ngayNgan = (dateStr || '').substring(0, 5); 
       
       dateTogglesHtml += `
         <button type="button" class="btn ${btnClass} p-1 text-center border" 
                 style="font-size: 11px; min-width: 38px; line-height: 1.2;" 
-                onclick="toggleDayOffBtn('${r.id}', '${dh.date}', '${dh.thu}', this)">
+                onclick="toggleDayOffBtn('${r.id}', '${dateStr}', '${thuVal}', this)">
           ${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>
         </button>`;
     });
