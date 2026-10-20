@@ -244,7 +244,7 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       return groups
         .filter(g => (g.quan || '').toLowerCase().includes(keyword.toLowerCase()))
         .map(g => ({ quan: g.quan, phuong: g.phuong, soLuong: g.soLuong }))
-        .sort((a, b) => b.soLuong - a.soLuong);
+        .sort((a, b) => (a.phuong || '').localeCompare(b.phuong || '', 'vi'));
     }
 
     const phuongPhuNhuan = groupsByDistrict('quận 2');
@@ -260,6 +260,8 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       phuNhuan: countDistrict('quận 2'),
       tanBinh: countDistrict('quận 4'),
       thuDuc: countDistrict('quận 7'),
+      q9: countDistrict('quận 9'),
+      bt: countDistrict('bình thạnh'),
       donMp: pendingMP,
       donWh: pendingWH,
       donHv: pendingHV,

@@ -1978,7 +1978,14 @@ function renderTableNewOff(skipSaveCurrent) {
   filtered.forEach(r => {
     let trClass = r.isBackup ? "bk-highlight" : "";
     const caBadgeClass = r.ca.includes("1") ? "badge-cot1" : "badge-cot2";
-    const draft = sessionDraftMap[r.id] || { dates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
+    if (!sessionDraftMap[r.id]) {
+     const existingOff = weekDates.filter(dh => {
+       const sched = (r.dailySchedule && r.dailySchedule[dh.date]) ? r.dailySchedule[dh.date].toLowerCase().trim() : '';
+       return sched.includes('off');
+     }).map(dh => dh.date);
+     sessionDraftMap[r.id] = { dates: [...existingOff], loaiOff: "OFF", tuyenBK: "", backup: "", note: "", originalOff: [...existingOff] };
+   }
+   const draft = sessionDraftMap[r.id];
 
     let hasOff = draft.dates && draft.dates.length > 0;
     if (hasOff) trClass += " has-off-highlight";
@@ -2050,6 +2057,9 @@ function toggleDayOffBtn(id, dateStr, thuStr, btnEl) {
   const idx = draft.dates.indexOf(dateStr);
   
   if (idx > -1) {
+    if (draft.originalOff && draft.originalOff.includes(dateStr)) {
+      if (!confirm(`Ngày ${dateStr} đã có lịch OFF. Bạn có chắc muốn xóa lịch OFF ngày này?`)) return;
+    }
     draft.dates.splice(idx, 1);
     btnEl.classList.remove('btn-danger', 'text-white');
     btnEl.classList.add('btn-outline-secondary', 'bg-light', 'text-dark');
@@ -2231,8 +2241,18 @@ function moPopupXacNhanNewOff() {
   const listEl = document.getElementById('modalRiderListNewOff');
   if (listEl) listEl.innerHTML = html;
 
-  const radNew = document.getElementById('radLuuMoi');
-  if (radNew) radNew.checked = true;
+  let hasRemoved = false;
+  Object.keys(sessionDraftMap).forEach(function(id){
+    var d = sessionDraftMap[id];
+    if (d.originalOff && d.originalOff.length > 0) {
+      var removed = d.originalOff.filter(function(x){ return (d.dates||[]).indexOf(x) === -1; });
+      if (removed.length > 0) hasRemoved = true;
+    }
+  });
+  var radReplace = document.getElementById('radThayThe');
+  var radNew = document.getElementById('radLuuMoi');
+  if (hasRemoved && radReplace) radReplace.checked = true;
+  else if (radNew) radNew.checked = true;
 
   cachedPayloadNewOff = { 
     ridersData: danhSachGui, 

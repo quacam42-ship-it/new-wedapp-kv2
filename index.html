@@ -1916,6 +1916,8 @@
         document.getElementById('kpiPhuNhuan').innerText = k.phuNhuan || '0';
         document.getElementById('kpiTanBinh').innerText = k.tanBinh || '0';
         document.getElementById('kpiThuDuc').innerText = k.thuDuc || '0';
+        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = k.q9 || '0';
+        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = k.bt || '0';
         document.getElementById('kpiMp').innerText = k.donMp || '0';
         document.getElementById('kpiWh').innerText = k.donWh || '0';
         document.getElementById('kpiHv').innerText = k.donHv || '0';
