@@ -918,7 +918,16 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
     return !isBK && !isPick && isCa && !sched.includes('off');
   });
 
-  const predefinedWards = {};
+  const predefinedWards = {
+    'Phú Nhuận': ['1', '2', '3', '4', '5', '7', '8', '9', '10', '11', '13', '15', '17'],
+    'Tân Bình': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'],
+    'Thủ Đức': ['Hiệp Bình Chánh', 'Hiệp Bình Phước', 'Linh Đông', 'Bình Chiểu', 'Tam Bình', 'Tam Phú', 'Linh Chiểu', 'Bình Thọ', 'Trường Thọ', 'Linh Trung', 'Linh Xuân', 'Linh Tây'],
+    'Quận 2': ['An Khánh', 'An Lợi Đông', 'An Phú', 'Bình An', 'Bình Khánh', 'Bình Trưng Đông', 'Bình Trưng Tây', 'Cát Lái', 'Thạnh Mỹ Lợi', 'Thảo Điền', 'Thủ Thiêm'],
+    'Quận 4': ['1', '2', '3', '4', '6', '8', '9', '10', '13', '14', '15', '16', '18'],
+    'Quận 7': ['Bình Thuận', 'Phú Mỹ', 'Phú Thuận', 'Tân Hưng', 'Tân Kiểng', 'Tân Phong', 'Tân Phú', 'Tân Quy', 'Tân Thuận Đông', 'Tân Thuận Tây'],
+    'Quận 9': ['Hiệp Phú', 'Long Bình', 'Long Phước', 'Long Thạnh Mỹ', 'Long Trường', 'Phú Hữu', 'Phước Bình', 'Phước Long A', 'Phước Long B', 'Tân Phú', 'Tăng Nhơn Phú A', 'Tăng Nhơn Phú B', 'Trường Thạnh'],
+    'Bình Thạnh': ['1', '2', '3', '5', '6', '7', '11', '12', '13', '14', '15', '17', '19', '21', '22', '24', '25', '26', '27', '28']
+  };
 
   const listBkDiLam = ridersData.filter(rd => {
     const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
@@ -1019,7 +1028,14 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
 
     Object.keys(predefinedWards).forEach(quanName => {
       const wards = predefinedWards[quanName];
-      const quanCode = quanName === 'Phú Nhuận' ? 'PN' : (quanName === 'Tân Bình' ? 'TB' : 'TD');
+      let quanCode = 'TD';
+      if (quanName === 'Phú Nhuận') quanCode = 'PN';
+      else if (quanName === 'Tân Bình') quanCode = 'TB';
+      else if (quanName === 'Quận 2') quanCode = 'Q2';
+      else if (quanName === 'Quận 4') quanCode = 'Q4';
+      else if (quanName === 'Quận 7') quanCode = 'Q7';
+      else if (quanName === 'Quận 9') quanCode = 'Q9';
+      else if (quanName === 'Bình Thạnh') quanCode = 'BT';
       const targetClass = `collapse-ward-${quanCode}-${caFilter}`;
 
       htmlOff += `
