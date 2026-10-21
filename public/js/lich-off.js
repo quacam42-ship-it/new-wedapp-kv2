@@ -1897,8 +1897,54 @@ function xemDanhSachOff(ngay, quanFilter, caFilter, title, isBKDiLam = false) {
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietRiderOff')).show();
 }
 // =======================================================================
-// ==================== HỆ THỐNG ĐIỀN OFF MỚI (7 NÚT) ====================
+// ==================== HỆ THỐNG ĐIỀN OFF MỚI (2 PHIÊN ĐỘC LẬP) ==========
 // =======================================================================
+
+// PHIÊN 1: Lưu ngầm dữ liệu CHỈ ĐỌC từ Sheet (Dùng để tô màu các RD đã điền OFF trước đó)
+let sheetReadOffSession = {};
+
+// PHIÊN 2: Lưu ngầm dữ liệu CHỈ ĐĂNG KÝ MỚI / THAY ĐỔI trong lần mở bảng này (Dùng để đẩy đồng bộ)
+let newOffSyncSession = {};
+
+function luuNgamHaiPhienOff() {
+  try {
+    sessionStorage.setItem('KV2_SHEET_READ_OFF_SESSION', JSON.stringify(sheetReadOffSession));
+    sessionStorage.setItem('KV2_NEW_SYNC_OFF_SESSION', JSON.stringify(newOffSyncSession));
+  } catch (e) {}
+}
+
+// KHỞI TẠO PHIÊN 1 (CHỈ ĐỌC TỪ SHEET) & LÀM SẠCH PHIÊN 2 (ĐĂNG KÝ MỚI) THEO TUẦN
+function khoiTaoHaiPhienTheoTuan() {
+  sheetReadOffSession = {};
+  newOffSyncSession = {};
+  sessionDraftMap = {}; // Giữ tương thích với các hàm cũ
+
+  const selWeek = document.getElementById("selWeekNewOff");
+  const startIdx = parseInt(selWeek ? selWeek.value : 0, 10);
+  const weekDates = (dateHeadersGlobal || []).slice(startIdx, startIdx + 7);
+
+  (ridersData || []).forEach(r => {
+    const existingOff = [];
+    const loaiTheoNgay = {};
+
+    weekDates.forEach(dh => {
+      const dateStr = String(dh && dh.date ? dh.date : dh);
+      const sched = (r.dailySchedule && r.dailySchedule[dateStr]) ? r.dailySchedule[dateStr].toString().trim() : '';
+      if (sched.toLowerCase().includes('off')) {
+        existingOff.push(dateStr);
+        loaiTheoNgay[dateStr] = sched;
+      }
+    });
+
+    // Ghi vào Phiên 1 (Chỉ đọc để tô màu)
+    sheetReadOffSession[r.id] = {
+      dates: existingOff,
+      loaiTheoNgay: loaiTheoNgay
+    };
+  });
+
+  luuNgamHaiPhienOff();
+}
 
 // MỞ MODAL VÀ TỰ ĐỘNG CHỌN TUẦN HIỆN TẠI
 function moBangDangKyAllRider() {
@@ -1906,8 +1952,6 @@ function moBangDangKyAllRider() {
     alert("Đang tải dữ liệu Rider từ hệ thống, vui lòng chờ!");
     return;
   }
-  
-  sessionDraftMap = {}; 
 
   const selWeek = document.getElementById("selWeekNewOff");
   if (selWeek && dateHeadersGlobal.length > 0) {
@@ -1936,18 +1980,19 @@ function moBangDangKyAllRider() {
     selWeek.value = selectedIndexToSet;
   }
 
+  // Khởi tạo Phiên 1 (tô màu từ Sheet) và Phiên 2 (chờ đăng ký mới)
+  khoiTaoHaiPhienTheoTuan();
   renderTableNewOff(true);
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDangKyAllRider')).show();
 }
 
-// CHUYỂN TUẦN KHÁC THÌ RENDER LẠI VÀ XÓA BẢN NHÁP
+// CHUYỂN TUẦN KHÁC THÌ NẠP LẠI PHIÊN ĐỌC SHEET CỦA TUẦN ĐÓ VÀ RESET PHIÊN ĐĂNG KÝ MỚI
 function doiTuanNewOff() {
-  sessionDraftMap = {};
+  khoiTaoHaiPhienTheoTuan();
   renderTableNewOff(true);
 }
 
-// RENDER BẢNG CHÍNH MƯỢT MÀ BẰNG CHUỖI HTML VÀ 7 NÚT BẤM
-// RENDER BẢNG CHÍNH MƯỢT MÀ BẰNG CHUỖI HTML VÀ 7 NÚT BẤM
+// RENDER BẢNG: TÔ MÀU RIDER ĐÃ OFF TỪ PHIÊN 1 & ĐÁNH DẤU RIDER ĐĂNG KÝ MỚI TỪ PHIÊN 2
 function renderTableNewOff(skipSaveCurrent) {
   if (!skipSaveCurrent) {
     const visibleRows = document.querySelectorAll("#riderTableBodyNewOff tr[id^='row_']");
@@ -1994,51 +2039,46 @@ function renderTableNewOff(skipSaveCurrent) {
   filtered.forEach(r => {
     let trClass = r.isBackup ? "bk-highlight" : "";
     const caBadgeClass = r.ca.includes("1") ? "badge-cot1" : "badge-cot2";
-    if (!sessionDraftMap[r.id]) {
-     const existingOff = weekDates.filter(dh => {
-       const sched = (r.dailySchedule && r.dailySchedule[dh.date]) ? r.dailySchedule[dh.date].toLowerCase().trim() : '';
-       return sched.includes('off');
-     }).map(dh => dh.date);
-     sessionDraftMap[r.id] = { dates: [...existingOff], loaiOff: "OFF", tuyenBK: "", backup: "", note: "", originalOff: [...existingOff], originalTuyenBK: "" };
-   }
-   const draft = sessionDraftMap[r.id];
 
-    let hasOff = draft.dates && draft.dates.length > 0;
-    if (hasOff) trClass += " has-off-highlight";
+    // Lấy dữ liệu từ Phiên 1 (Sheet) và Phiên 2 (Mới chọn)
+    const sheetRead = sheetReadOffSession[r.id] || { dates: [] };
+    const newDraft = newOffSyncSession[r.id] || { addedDates: [], removedDates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
 
-    let cotTuyens = "";
-    if (r.isBackup) {
-      cotTuyens = `
-        <select id="tuyenBK_${r.id}" class="form-select form-select-sm border-success fw-bold text-success" onchange="luuThongTinOff('${r.id}')">
-          <option value="" ${draft.tuyenBK === '' ? 'selected' : ''}>-- Chọn tuyến --</option>
-          <option value="Tân Bình" ${draft.tuyenBK === 'Tân Bình' ? 'selected' : ''}>📍 Tân Bình</option>
-          <option value="Phú Nhuận" ${draft.tuyenBK === 'Phú Nhuận' ? 'selected' : ''}>📍 Phú Nhuận</option>
-          <option value="Thủ Đức" ${draft.tuyenBK === 'Thủ Đức' ? 'selected' : ''}>📍 Thủ Đức</option>
-        </select>
-      `;
-    } else {
-      cotTuyens = `
-        <select id="bk_${r.id}" class="form-select form-select-sm" onchange="luuThongTinOff('${r.id}')">
-          <option value="">-- Trực bù --</option>
-          ${backupOptions.map(b => `<option value="${b}" ${draft.backup === b ? 'selected' : ''}>${b}</option>`).join("")}
-        </select>
-      `;
-    }
+    const activeSheetDates = sheetRead.dates.filter(d => !newDraft.removedDates.includes(d));
+    const hasAnyOff = activeSheetDates.length > 0 || newDraft.addedDates.length > 0;
+    const hasNewChange = newDraft.addedDates.length > 0 || newDraft.removedDates.length > 0;
+
+    if (hasAnyOff) trClass += " has-off-highlight";
+    if (hasNewChange) trClass += " border-start border-primary border-3";
 
     let dateTogglesHtml = '<div class="d-flex flex-wrap gap-1">';
     weekDates.forEach(dh => {
       const dateStr = String(dh && dh.date ? dh.date : dh);
       const thuVal = (dh && dh.thu) ? dh.thu : '';
-      const isSelected = draft.dates && draft.dates.includes(dateStr);
-      const btnClass = isSelected ? 'btn-danger text-white' : 'btn-outline-secondary bg-light text-dark';
-      const thuGoc = (thuVal || '').replace('Th\u1ee9 ', 'T').replace('Ch\u1ee7 nh\u1eadt', 'CN');
+      const isFromSheet = activeSheetDates.includes(dateStr);
+      const isNewAdded = newDraft.addedDates.includes(dateStr);
+
+      let btnClass = 'btn-outline-secondary bg-light text-dark';
+      let titleHint = 'Chưa đăng ký OFF';
+      if (isNewAdded) {
+        // Nút mới bấm chọn trong Phiên 2: Đỏ đậm kèm viền xanh nổi bật
+        btnClass = 'btn-danger text-white border-primary border-2 shadow-sm';
+        titleHint = 'Mới chọn trong phiên này (Sẵn sàng đồng bộ)';
+      } else if (isFromSheet) {
+        // Nút đọc từ Phiên 1 (Đã có trên Sheet trước đó): Tô đỏ chuẩn
+        btnClass = 'btn-danger text-white opacity-75';
+        titleHint = 'Đã điền OFF trước đó trên Sheet';
+      }
+
+      const thuGoc = (thuVal || '').replace('Thứ ', 'T').replace('Chủ nhật', 'CN');
       const ngayNgan = String(dateStr || '').substring(0, 5); 
       
       dateTogglesHtml += `
-        <button type="button" class="btn ${btnClass} p-1 text-center border" 
+        <button type="button" class="btn ${btnClass} p-1 text-center" 
                 style="font-size: 11px; min-width: 38px; line-height: 1.2;" 
+                title="${titleHint}"
                 onclick="toggleDayOffBtn('${r.id}', '${dateStr}', '${thuVal}', this)">
-          ${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>
+          ${thuGoc}<br><span class="fw-bold">${ngayNgan}${isNewAdded ? ' *' : ''}</span>
         </button>`;
     });
     dateTogglesHtml += '</div>';
@@ -2046,93 +2086,126 @@ function renderTableNewOff(skipSaveCurrent) {
     html += `
     <tr id="row_${r.id}" class="${trClass}">
       <td class="fw-bold text-secondary font-monospace">${r.id}</td>
-      <td class="fw-bold">${r.name}${r.isBackup ? '<span class="badge bg-success" style="font-size: 10px;">BK</span>' : ''}</td>
+      <td class="fw-bold">${r.name}${r.isBackup ? '<span class="badge bg-success ms-1" style="font-size: 10px;">BK</span>' : ''}</td>
       <td class="text-center"><span class="badge ${caBadgeClass}">${r.ca}</span></td>
       <td class="small fw-semibold text-primary">${r.quanDeli} (P.${r.phuongDeli || '-'})</td>
       <td>${dateTogglesHtml}</td>
       <td>
         <select id="loai_${r.id}" class="form-select form-select-sm fw-bold" onchange="luuThongTinOff('${r.id}')">
-          <option value="OFF" ${draft.loaiOff === 'OFF' ? 'selected' : ''}>OFF</option>
-          <option value="OFF PICK" ${draft.loaiOff === 'OFF PICK' ? 'selected' : ''}>OFF PICK</option>
-          <option value="OFF DELI" ${draft.loaiOff === 'OFF DELI' ? 'selected' : ''}>OFF DELI</option>
-          <option value="OFF đột xuất" ${draft.loaiOff === 'OFF đột xuất' ? 'selected' : ''}>OFF đột xuất</option>
+          <option value="OFF" ${newDraft.loaiOff === 'OFF' ? 'selected' : ''}>OFF</option>
+          <option value="OFF PICK" ${newDraft.loaiOff === 'OFF PICK' ? 'selected' : ''}>OFF PICK</option>
+          <option value="OFF DELI" ${newDraft.loaiOff === 'OFF DELI' ? 'selected' : ''}>OFF DELI</option>
+          <option value="OFF đột xuất" ${newDraft.loaiOff === 'OFF đột xuất' ? 'selected' : ''}>OFF đột xuất</option>
         </select>
       </td>
-      <td><input type="text" id="note_${r.id}" value="${draft.note}" class="form-control form-control-sm" placeholder="Ghi chú..." oninput="luuThongTinOff('${r.id}', true)"></td>
+      <td><input type="text" id="note_${r.id}" value="${newDraft.note || ''}" class="form-control form-control-sm" placeholder="Ghi chú..." oninput="luuThongTinOff('${r.id}', true)"></td>
     </tr>`;
   });
 
   tbody.innerHTML = html;
   capNhatDemOFF();
 }
-// CLICK ĐỔI MÀU NÚT CHỌN NGÀY VÀ CẢNH BÁO NGÀY ĐẶC BIỆT
+
+// CLICK CHỌN NGÀY: PHÂN BIỆT RÕ PHIÊN 1 (TRÊN SHEET) VÀ PHIÊN 2 (ĐĂNG KÝ MỚI)
 function toggleDayOffBtn(id, dateStr, thuStr, btnEl) {
-  if (!sessionDraftMap[id]) {
-    sessionDraftMap[id] = { dates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
+  if (!newOffSyncSession[id]) {
+    newOffSyncSession[id] = { addedDates: [], removedDates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
   }
-  
-  const draft = sessionDraftMap[id];
-  const idx = draft.dates.indexOf(dateStr);
-  
-  if (idx > -1) {
-    if (draft.originalOff && draft.originalOff.includes(dateStr)) {
-      if (!confirm(`Ngày ${dateStr} đã có lịch OFF. Bạn có chắc muốn xóa lịch OFF ngày này?`)) return;
-    }
-    draft.dates.splice(idx, 1);
-    btnEl.classList.remove('btn-danger', 'text-white');
-    btnEl.classList.add('btn-outline-secondary', 'bg-light', 'text-dark');
-  } else {
-    // Kiểm tra xem có phải là ngày đặc biệt không
+  const sheetRead = sheetReadOffSession[id] || { dates: [] };
+  const newDraft = newOffSyncSession[id];
+
+  const isOriginallyOnSheet = sheetRead.dates.includes(dateStr);
+  const isRemovedFromSheet = newDraft.removedDates.includes(dateStr);
+  const isNewlyAdded = newDraft.addedDates.includes(dateStr);
+
+  const thuGoc = (thuStr || '').replace('Thứ ', 'T').replace('Chủ nhật', 'CN');
+  const ngayNgan = String(dateStr || '').substring(0, 5);
+
+  // TRƯỜNG HỢP 1: Ngày này đã có sẵn trên Sheet (Phiên 1) và đang hiển thị đỏ
+  if (isOriginallyOnSheet && !isRemovedFromSheet) {
+    if (!confirm(`Ngày ${dateStr} đã có lịch OFF trên Sheet.\nBạn có muốn gỡ ngày OFF này (chuyển sang chế độ Thay đổi ngày OFF) không?`)) return;
+    newDraft.removedDates.push(dateStr);
+    btnEl.className = 'btn btn-outline-secondary bg-light text-dark p-1 text-center';
+    btnEl.innerHTML = `${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>`;
+  } 
+  // TRƯỜNG HỢP 2: Ngày này vốn trên Sheet, vừa bị bấm gỡ nhưng bấm lại lần nữa -> Khôi phục về trạng thái Phiên 1
+  else if (isOriginallyOnSheet && isRemovedFromSheet) {
+    newDraft.removedDates = newDraft.removedDates.filter(d => d !== dateStr);
+    btnEl.className = 'btn btn-danger text-white opacity-75 p-1 text-center';
+    btnEl.innerHTML = `${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>`;
+  }
+  // TRƯỜNG HỢP 3: Ngày này vừa được đăng ký mới ở Phiên 2, bấm lại để bỏ chọn
+  else if (isNewlyAdded) {
+    newDraft.addedDates = newDraft.addedDates.filter(d => d !== dateStr);
+    btnEl.className = 'btn btn-outline-secondary bg-light text-dark p-1 text-center';
+    btnEl.innerHTML = `${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>`;
+  }
+  // TRƯỜNG HỢP 4: Ngày trống -> Bấm chọn đưa vào Phiên 2 (Đăng ký OFF mới)
+  else {
     const dacBiet = kiemTraNgayDacBiet(dateStr, thuStr);
     if (dacBiet) {
       alert(`⚠️ CẢNH BÁO HẠN CHẾ OFF:\nNgày ${dateStr} là ngày ${dacBiet.label}.\n\nYêu cầu: Bạn bắt buộc phải ghi rõ lý do vào cột "Ghi chú" trên bảng mới có thể Lưu và Đồng bộ!`);
     }
-
-    draft.dates.push(dateStr);
-    btnEl.classList.remove('btn-outline-secondary', 'bg-light', 'text-dark');
-    btnEl.classList.add('btn-danger', 'text-white');
+    newDraft.addedDates.push(dateStr);
+    btnEl.className = 'btn btn-danger text-white border-primary border-2 shadow-sm p-1 text-center';
+    btnEl.innerHTML = `${thuGoc}<br><span class="fw-bold">${ngayNgan} *</span>`;
   }
-  
-  capNhatDemOFF();
+
+  luuThongTinOff(id, false);
+  luuNgamHaiPhienOff();
 }
 
-// LƯU CÁC THÔNG TIN PHỤ TỪ SELECT VÀ INPUT VÀO NHÁP
+// LƯU THÔNG TIN LOẠI OFF & GHI CHÚ VÀO PHIÊN 2
 function luuThongTinOff(id, skipUpdateUI = false) {
-  if (!sessionDraftMap[id]) {
-    sessionDraftMap[id] = { dates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
+  if (!newOffSyncSession[id]) {
+    newOffSyncSession[id] = { addedDates: [], removedDates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
   }
-  const draft = sessionDraftMap[id];
-  
-  draft.loaiOff = document.getElementById("loai_" + id)?.value || "OFF";
-  draft.tuyenBK = document.getElementById("tuyenBK_" + id)?.value || "";
-  draft.backup = document.getElementById("bk_" + id)?.value || "";
-  draft.note = document.getElementById("note_" + id)?.value || "";
-  
+  const newDraft = newOffSyncSession[id];
+  newDraft.loaiOff = document.getElementById("loai_" + id)?.value || "OFF";
+  newDraft.tuyenBK = document.getElementById("tuyenBK_" + id)?.value || "";
+  newDraft.backup = document.getElementById("bk_" + id)?.value || "";
+  newDraft.note = document.getElementById("note_" + id)?.value || "";
+
+  luuNgamHaiPhienOff();
   if (!skipUpdateUI) capNhatDemOFF();
 }
 
-// ĐẾM SỐ LƯỢNG RIDER ĐÃ ĐƯỢC CHỌN VÀ HIỂN THỊ
+// ĐẾM TÁCH BIỆT:
+// - txtOffCountNewOff (Trên đầu bảng): Tổng số RD đã có OFF (Phiên 1 + Phiên 2)
+// - btnOffCountFooter (Nút Lưu dưới đáy): CHỈ ĐẾM số RD có đăng ký mới / thay đổi trong Phiên 2
 function capNhatDemOFF() {
-  let dem = 0;
-  Object.keys(sessionDraftMap).forEach(id => {
-    const d = sessionDraftMap[id];
-    let hasOff = d.dates && d.dates.length > 0;
-    if (hasOff) dem++;
-    
+  let demTongDaCoOff = 0;
+  let demPhienMoi = 0;
+
+  (ridersData || []).forEach(r => {
+    const id = r.id;
+    const sheetRead = sheetReadOffSession[id] || { dates: [] };
+    const newDraft = newOffSyncSession[id] || { addedDates: [], removedDates: [] };
+
+    const activeSheetDates = sheetRead.dates.filter(d => !newDraft.removedDates.includes(d));
+    const hasAnyOff = activeSheetDates.length > 0 || newDraft.addedDates.length > 0;
+    const hasNewAction = newDraft.addedDates.length > 0 || newDraft.removedDates.length > 0;
+
+    if (hasAnyOff) demTongDaCoOff++;
+    if (hasNewAction) demPhienMoi++;
+
     const row = document.getElementById("row_" + id);
     if (row) {
-      if (hasOff) row.classList.add("has-off-highlight");
+      if (hasAnyOff) row.classList.add("has-off-highlight");
       else row.classList.remove("has-off-highlight");
+
+      if (hasNewAction) row.classList.add("border-start", "border-primary", "border-3");
+      else row.classList.remove("border-start", "border-primary", "border-3");
     }
   });
 
   const txtOffCount = document.getElementById("txtOffCountNewOff");
   const btnOffCount = document.getElementById("btnOffCountFooter");
-  if (txtOffCount) txtOffCount.textContent = dem;
-  if (btnOffCount) btnOffCount.textContent = dem;
+  if (txtOffCount) txtOffCount.textContent = demTongDaCoOff;
+  if (btnOffCount) btnOffCount.textContent = demPhienMoi;
 }
 
-// HÀM LẤY TÊN FTE / ADMIN ĐANG ĐĂNG NHẬP (GIỐNG XẾP BACKUP PICK & DELI)
+// HÀM LẤY TÊN FTE / ADMIN ĐANG ĐĂNG NHẬP
 function layTenNguoiThaoTac() {
   let nguoiThaoTac = 'FTE / Admin';
   try {
@@ -2153,7 +2226,7 @@ function layTenNguoiThaoTac() {
   return nguoiThaoTac;
 }
 
-// MỞ BẢNG XÁC NHẬN GỬI DỮ LIỆU & KIỂM TRA ĐIỀU KIỆN
+// MỞ BẢNG XÁC NHẬN: CHỈ ĐỒNG BỘ NHỮNG RIDER TRONG PHIÊN 2 (ĐĂNG KÝ MỚI / THAY ĐỔI)
 function moPopupXacNhanNewOff() {
   const visibleRows = document.querySelectorAll("#riderTableBodyNewOff tr[id^='row_']");
   visibleRows.forEach(row => luuThongTinOff(row.id.replace("row_", ""), true));
@@ -2166,19 +2239,28 @@ function moPopupXacNhanNewOff() {
   const danhSachGui = [];
   let html = '<ul class="list-group list-group-flush">';
   let hasValidationError = false;
+  let coXoaNgayCu = false;
 
   for (let i = 0; i < ridersData.length; i++) {
     const r = ridersData[i];
-    const draft = sessionDraftMap[r.id];
-    if (!draft) continue;
-    
-    let dates = [], moTa = "";
+    const sheetRead = sheetReadOffSession[r.id] || { dates: [] };
+    const newDraft = newOffSyncSession[r.id];
+    if (!newDraft) continue;
 
-    if (draft.dates && draft.dates.length > 0) {
+    const addedDates = newDraft.addedDates || [];
+    const removedDates = newDraft.removedDates || [];
+    const hasBackupChange = r.isBackup && newDraft.tuyenBK && newDraft.tuyenBK !== "";
+
+    // BỎ QUA HOÀN TOÀN NHỮNG RIDER CHỈ CÓ DỮ LIỆU CŨ Ở PHIÊN 1 MÀ KHÔNG CÓ THAO TÁC MỚI Ở PHIÊN 2
+    if (addedDates.length === 0 && removedDates.length === 0 && !hasBackupChange) continue;
+
+    if (removedDates.length > 0) coXoaNgayCu = true;
+
+    // Kiểm tra bắt buộc ghi chú nếu ngày ĐĂNG KÝ MỚI rơi vào ngày đặc biệt
+    if (addedDates.length > 0) {
       let needNote = false;
       let specialLabel = "";
-      
-      for (let d of draft.dates) {
+      for (let d of addedDates) {
         let dh = dateHeadersGlobal.find(x => x.date === d);
         let dacBiet = kiemTraNgayDacBiet(d, dh ? dh.thu : '');
         if (dacBiet) {
@@ -2187,85 +2269,80 @@ function moPopupXacNhanNewOff() {
           break;
         }
       }
-
-      if (needNote && (!draft.note || draft.note.trim() === '')) {
-        alert(`❌ LỖI THIẾU GHI CHÚ:\nRider ${r.id} - ${r.name} xin OFF vào ngày đặc biệt (${specialLabel}).\nVui lòng điền rõ lý do vào ô "Ghi chú" trên bảng trước khi Lưu!`);
+      if (needNote && (!newDraft.note || newDraft.note.trim() === '')) {
+        alert(`❌ LỖI THIẾU GHI CHÚ:\nRider ${r.id} - ${r.name} xin OFF mới vào ngày đặc biệt (${specialLabel}).\nVui lòng điền rõ lý do vào ô "Ghi chú" trên bảng trước khi Lưu!`);
         hasValidationError = true;
-        break; 
+        break;
       }
-
-      dates = [...draft.dates];
-      moTa = dates.map(d => {
-        let dh = dateHeadersGlobal.find(x => x.date === d);
-        let thuStr = dh && dh.thu ? dh.thu.replace('Thứ ', 'T').replace('Chủ nhật', 'CN') + ' ' : '';
-        return `${thuStr}(${d.substring(0, 5)})`;
-      }).join(", "); 
     }
 
-    const newDates = (draft.dates || []).filter(d => !(draft.originalOff || []).includes(d));
-    const removedDates = (draft.originalOff || []).filter(d => !(draft.dates || []).includes(d));
-    const hasNewSelection = newDates.length > 0;
-    const hasRemoval = removedDates.length > 0;
-    const hasBackupChange = r.isBackup && draft.tuyenBK !== "" && draft.tuyenBK !== (draft.originalTuyenBK || "");
-    if (!(hasNewSelection || hasRemoval || hasBackupChange)) continue;
-    if (dates.length > 0 || (r.isBackup && draft.tuyenBK !== "")) {
-      const diaBanTuyen = r.quanDeli ? `${r.quanDeli} (P.${r.phuongDeli || '-'})` : (r.quanPick || '—');
+    const formatNgayMoTa = (arrDates) => arrDates.map(d => {
+      let dh = dateHeadersGlobal.find(x => x.date === d);
+      let thuStr = dh && dh.thu ? dh.thu.replace('Thứ ', 'T').replace('Chủ nhật', 'CN') + ' ' : '';
+      return `${thuStr}(${d.substring(0, 5)})`;
+    }).join(", ");
 
-      danhSachGui.push({
-        id: r.id, 
-        ten: r.name, 
-        ca: r.ca || '—',
-        diaBan: diaBanTuyen,
-        tuanLamViec: weekName,
-        dates: dates,
-        chiTietNgayOff: dates.length > 0 ? `${draft.loaiOff} (${dates.map(d => d.substring(0, 5)).join(', ')})` : `BK Tuyến: ${draft.tuyenBK}`,
-        tongNgayOff: dates.length,
-        weekDates: weekDates,
-        loaiOff: draft.loaiOff, 
-        ghiChu: draft.note || ''
-      });
+    // Tổng hợp danh sách ngày sau khi gộp (dùng cho chế độ REPLACE) và danh sách chỉ ngày mới (dùng cho chế độ NEW)
+    const finalDatesForReplace = sheetRead.dates.filter(d => !removedDates.includes(d)).concat(addedDates);
+    const diaBanTuyen = r.quanDeli ? `${r.quanDeli} (P.${r.phuongDeli || '-'})` : (r.quanPick || '—');
 
+    danhSachGui.push({
+      id: r.id,
+      ten: r.name,
+      ca: r.ca || '—',
+      diaBan: diaBanTuyen,
+      tuanLamViec: weekName,
+      addedDates: addedDates,
+      removedDates: removedDates,
+      finalDates: finalDatesForReplace,
+      dates: addedDates, // Mặc định gửi ngày mới (sẽ tự động chuyển sang finalDates nếu chọn REPLACE)
+      chiTietNgayOff: addedDates.length > 0 
+        ? `${newDraft.loaiOff} (${addedDates.map(d => d.substring(0, 5)).join(', ')})` 
+        : `Xóa OFF (${removedDates.map(d => d.substring(0, 5)).join(', ')})`,
+      tongNgayOff: addedDates.length,
+      weekDates: weekDates,
+      loaiOff: newDraft.loaiOff,
+      ghiChu: newDraft.note || ''
+    });
 
-      const chiTietText = r.isBackup && dates.length === 0
-        ? `BK Tuyến: <b>${draft.tuyenBK || 'Chưa xếp'}</b>` 
-        : `Ngày chọn: <b class="text-danger">${moTa}</b> — Loại: <b>${draft.loaiOff}</b>`;
-
-      html += `<li class="list-group-item d-flex justify-content-between align-items-center py-2 px-2">
-                 <div>
-                   <span class="fw-bold text-dark">${r.id} - ${r.name}</span>
-                   <span class="badge ${r.ca.includes('1') ? 'bg-primary' : 'bg-warning text-dark'} ms-1" style="font-size:10px;">${r.ca}</span>
-                   <div style="font-size: 12px; color: #1D4ED8;" class="mt-1">${chiTietText}</div>
-                   ${draft.note ? `<div class="small text-muted fst-italic">Ghi chú: ${draft.note}</div>` : ''}
-                 </div>
-                 <span class="badge bg-danger rounded-pill">${dates.length} ngày</span>
-               </li>`;
+    let dongMoTaHtml = '';
+    if (addedDates.length > 0) {
+      dongMoTaHtml += `<div style="font-size: 12px;" class="text-danger fw-bold">➕ Đăng ký mới: ${formatNgayMoTa(addedDates)} — Loại: ${newDraft.loaiOff}</div>`;
     }
+    if (removedDates.length > 0) {
+      dongMoTaHtml += `<div style="font-size: 12px;" class="text-secondary">❌ Gỡ ngày OFF cũ: <b>${formatNgayMoTa(removedDates)}</b></div>`;
+    }
+    if (sheetRead.dates.length > 0) {
+      dongMoTaHtml += `<div style="font-size: 11px;" class="text-muted"><i class="bi bi-check2-circle me-1"></i>Đã có trên Sheet trước đó: ${sheetRead.dates.map(d => d.substring(0, 5)).join(', ')}</div>`;
+    }
+
+    html += `<li class="list-group-item d-flex justify-content-between align-items-center py-2 px-2">
+               <div>
+                 <span class="fw-bold text-dark">${r.id} - ${r.name}</span>
+                 <span class="badge ${r.ca.includes('1') ? 'bg-primary' : 'bg-warning text-dark'} ms-1" style="font-size:10px;">${r.ca}</span>
+                 <div class="mt-1">${dongMoTaHtml}</div>
+                 ${newDraft.note ? `<div class="small text-muted fst-italic">Ghi chú: ${newDraft.note}</div>` : ''}
+               </div>
+               <span class="badge bg-primary rounded-pill">${addedDates.length} ngày mới</span>
+             </li>`;
   }
   html += '</ul>';
 
   if (hasValidationError) return;
 
   if (danhSachGui.length === 0) {
-    alert("⚠️ Bạn chưa chọn ngày OFF hoặc xếp tuyến cho bất kỳ Rider nào!");
+    alert("⚠️ Chưa có lượt đăng ký OFF mới nào trong phiên này để đồng bộ!\n(Các ô tô đỏ sẵn là lịch đã có trên Sheet từ trước).");
     return;
   }
 
   const promptEl = document.getElementById('modalPromptTextNewOff');
-  if (promptEl) promptEl.innerText = `📋 Xác nhận cập nhật cho ${danhSachGui.length} Rider (${weekName}):`;
+  if (promptEl) promptEl.innerText = `📋 Xác nhận đồng bộ ${danhSachGui.length} Rider mới thay đổi (${weekName}):`;
   const listEl = document.getElementById('modalRiderListNewOff');
   if (listEl) listEl.innerHTML = html;
 
-  let hasRemoved = false;
-  Object.keys(sessionDraftMap).forEach(function(id){
-    var d = sessionDraftMap[id];
-    if (d.originalOff && d.originalOff.length > 0) {
-      var removed = d.originalOff.filter(function(x){ return (d.dates||[]).indexOf(x) === -1; });
-      if (removed.length > 0) hasRemoved = true;
-    }
-  });
-  var radReplace = document.getElementById('radThayThe');
-  var radNew = document.getElementById('radLuuMoi');
-  if (hasRemoved && radReplace) radReplace.checked = true;
+  const radReplace = document.getElementById('radThayThe');
+  const radNew = document.getElementById('radLuuMoi');
+  if (coXoaNgayCu && radReplace) radReplace.checked = true;
   else if (radNew) radNew.checked = true;
 
   cachedPayloadNewOff = { 
@@ -2279,13 +2356,28 @@ function moPopupXacNhanNewOff() {
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalConfirmNewOff')).show();
 }
 
-// BẤM GỬI LÊN SERVER
+// BẤM GỬI LÊN SERVER (CHỈ ĐẨY DỮ LIỆU CỦA PHIÊN 2)
 async function thucHienLuuDongBoNewOff() {
   if (!cachedPayloadNewOff) return;
 
   const isReplace = document.getElementById('radThayThe')?.checked || false;
   cachedPayloadNewOff.mode = isReplace ? 'REPLACE' : 'NEW';
   cachedPayloadNewOff.nguoiGan = layTenNguoiThaoTac();
+
+  // Tùy theo chế độ NEW hay REPLACE mà gán đúng mảng ngày cần ghi lên Sheet
+  cachedPayloadNewOff.ridersData.forEach(item => {
+    if (isReplace) {
+      item.dates = item.finalDates;
+      item.chiTietNgayOff = item.finalDates.length > 0 
+        ? `${item.loaiOff} (${item.finalDates.map(d => d.substring(0, 5)).join(', ')})` 
+        : `Xóa lịch OFF tuần`;
+      item.tongNgayOff = item.finalDates.length;
+    } else {
+      item.dates = item.addedDates;
+      item.chiTietNgayOff = `${item.loaiOff} (${item.addedDates.map(d => d.substring(0, 5)).join(', ')})`;
+      item.tongNgayOff = item.addedDates.length;
+    }
+  });
 
   const btnConfirm = document.getElementById("btnConfirmActionNewOff");
   btnConfirm.disabled = true; 
@@ -2303,7 +2395,8 @@ async function thucHienLuuDongBoNewOff() {
       alert("✅ " + data.message);
       bootstrap.Modal.getInstance(document.getElementById('modalConfirmNewOff')).hide();
       bootstrap.Modal.getInstance(document.getElementById('modalDangKyAllRider')).hide();
-      sessionDraftMap = {};
+      newOffSyncSession = {};
+      luuNgamHaiPhienOff();
       lamMoiDuLieu();
     } else {
       alert("❌ Lỗi: " + (data.error || data.message));
