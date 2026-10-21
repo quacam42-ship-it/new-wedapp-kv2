@@ -240,15 +240,48 @@ app.get('/api/hang-hoa-data', async (req, res) => {
 
     const groups = Object.values(groupMap);
 
+    // Định nghĩa thứ tự ưu tiên hiển thị thủ công cho các Quận dùng chữ
+    const orderQ2 = ['an khánh', 'an lợi đông', 'an phú', 'thảo điền', 'thủ thiêm', 'bình trưng đông', 'bình trưng tây', 'thạnh mỹ lợi', 'cát lái'];
+    const orderQ7 = ['phú thuận', 'tân hưng', 'tân kiểng', 'tân phong', 'tân quy', 'tân phú', 'tân thuận đông', 'tân thuận tây', 'bình thuận', 'phú mỹ'];
+    const orderQ9 = ['phước bình', 'phước long a', 'phước long b'];
+
     function groupsByDistrict(keyword) {
       return groups
         .filter(g => (g.quan || '').toLowerCase().includes(keyword.toLowerCase()))
         .map(g => ({ quan: g.quan, phuong: g.phuong, soLuong: g.soLuong }))
         .sort((a, b) => {
-          const numA = parseInt(((a.phuong || '').match(/\\d+/) || [])[0], 10);
-          const numB = parseInt(((b.phuong || '').match(/\\d+/) || [])[0], 10);
+          const kw = keyword.toLowerCase();
+          const pA = (a.phuong || '').toLowerCase();
+          const pB = (b.phuong || '').toLowerCase();
+
+          // 1. Xử lý sắp xếp theo thứ tự ưu tiên của Q2, Q7, Q9
+          let idxA = 999, idxB = 999;
+          if (kw.includes('quận 2')) {
+             idxA = orderQ2.findIndex(item => pA.includes(item));
+             idxB = orderQ2.findIndex(item => pB.includes(item));
+          } else if (kw.includes('quận 7')) {
+             idxA = orderQ7.findIndex(item => pA.includes(item));
+             idxB = orderQ7.findIndex(item => pB.includes(item));
+          } else if (kw.includes('quận 9')) {
+             idxA = orderQ9.findIndex(item => pA.includes(item));
+             idxB = orderQ9.findIndex(item => pB.includes(item));
+          }
+
+          if (idxA === -1) idxA = 999;
+          if (idxB === -1) idxB = 999;
+
+          if (idxA !== 999 || idxB !== 999) {
+             if (idxA !== idxB) return idxA - idxB;
+          }
+
+          // 2. Xử lý sắp xếp theo số đếm cho Q4, Bình Thạnh (P.1 -> P.2 -> P.10)
+          // Sửa lỗi Regex bằng /\d+/ thay vì /\\d+/
+          const numA = parseInt((pA.match(/\d+/) || [])[0], 10);
+          const numB = parseInt((pB.match(/\d+/) || [])[0], 10);
           if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
-          return (a.phuong || '').localeCompare(b.phuong || '', 'vi');
+          
+          // 3. Dự phòng xếp theo A-Z nếu không thỏa 2 điều kiện trên
+          return pA.localeCompare(pB, 'vi');
         });
     }
 
