@@ -1114,7 +1114,6 @@ window.filterRightList = function(val, caFilter) {
 window.toggleLeftList = function(type, ca) {
   document.querySelectorAll(`.tr-left-OFF-${ca}, .tr-left-WORK-${ca}, .tr-left-WARD-${ca}`).forEach(el => {
     el.classList.add('d-none');
-    if (type === 'WARD' && el.classList.contains(`tr-left-WARD-${ca}`) && !el.hasAttribute('data-bs-toggle')) el.classList.remove('show'); 
   });
   const searchInput = document.getElementById(`searchLeft_${ca}`);
   if (searchInput) searchInput.value = ''; 
