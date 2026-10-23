@@ -38,10 +38,10 @@ function parseDateToISO(dateStr) {
   if (!dateStr) return '';
   const parts = dateStr.split('/');
   if (parts.length >= 2) {
-     let d = parts[0].padStart(2, '0');
-     let m = parts[1].padStart(2, '0');
-     let y = parts.length === 3 ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : new Date().getFullYear();
-     return `${y}-${m}-${d}`;
+    let d = parts[0].padStart(2, '0');
+    let m = parts[1].padStart(2, '0');
+    let y = parts.length === 3 ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : new Date().getFullYear();
+    return `${y}-${m}-${d}`;
   }
   return dateStr;
 }
@@ -60,7 +60,6 @@ function taoDropdownTuanOff(dateHeaders) {
   let startIdx = dateHeaders.findIndex(d => (d.thu || '').includes('Thứ 2') || (d.thu || '').includes('T2'));
   if (startIdx === -1) startIdx = 0;
 
-  // Lấy ngày hôm nay định dạng DD/MM
   let today = new Date();
   let todayStr = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}`;
   let selectedWeekIdx = startIdx;
@@ -72,19 +71,18 @@ function taoDropdownTuanOff(dateHeaders) {
     const start = dateHeaders[i];
     const end = dateHeaders[Math.min(i + 6, dateHeaders.length - 1)];
     
-    // Kiểm tra tuần này có chứa ngày hôm nay không
     const weekSlice = dateHeaders.slice(i, i + 7);
     const todayObj = weekSlice.find(d => d.date.includes(todayStr));
     if (todayObj) {
-       selectedWeekIdx = i;
-       todayFullDateStr = todayObj.date; // Lưu lại để set dropdown Ngày
+      selectedWeekIdx = i;
+      todayFullDateStr = todayObj.date;
     }
 
     optionsTuanHtml += `<option value="${i}">Tuần ${weekCount}: ${start.date} (${start.thu || 'T2'}) ➔ ${end.date} (${end.thu || 'CN'})</option>`;
     weekCount++;
   }
   selectMain.innerHTML = optionsTuanHtml;
-  selectMain.value = selectedWeekIdx; // Set tuần chứa ngày hôm nay
+  selectMain.value = selectedWeekIdx;
 
   if (selectNgay) {
     let optionsNgayHtml = '';
@@ -94,7 +92,6 @@ function taoDropdownTuanOff(dateHeaders) {
       optionsNgayHtml += `<option value="${dh.date}" data-thu="${dh.thu || ''}">${icon}${dh.thu || ''} (${dh.date})</option>`;
     });
     selectNgay.innerHTML = optionsNgayHtml;
-    // Set ngày hôm nay nếu có, không có thì lấy ngày đầu tiên
     selectNgay.value = todayFullDateStr || dateHeaders[0].date;
   }
 }
@@ -113,331 +110,318 @@ function toggleMatrixColumns() {
 
 // ================= HÀM XEM TỔNG HỢP ĐIỀU PHỐI (CHIA 2 CỘT OFF VÀ BK) =================
 function xemTongHopCa(ngay, caFilter, title) {
-      if (!ngay || !ridersData) return;
+  if (!ngay || !ridersData) return;
 
-      let listOff = ridersData.filter(rd => {
-        const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
-        if (isBK) return false; 
-        const c = (rd.ca || '').toLowerCase();
-        const sched = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay].toLowerCase().trim() : '';
-        const matchCa = caFilter === '' || c.includes(caFilter.toLowerCase());
-        return matchCa && sched.includes('off');
-      });
+  let listOff = ridersData.filter(rd => {
+    const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
+    if (isBK) return false; 
+    const c = (rd.ca || '').toLowerCase();
+    const sched = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay].toLowerCase().trim() : '';
+    const matchCa = caFilter === '' || c.includes(caFilter.toLowerCase());
+    return matchCa && sched.includes('off');
+  });
 
-      let listBk = ridersData.filter(rd => {
-        const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
-        const c = (rd.ca || '').toLowerCase();
-        const sched = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay].toLowerCase().trim() : '';
-        const matchCa = caFilter === '' || c.includes(caFilter.toLowerCase());
-        return isBK && matchCa && !sched.includes('off');
-      });
+  let listBk = ridersData.filter(rd => {
+    const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
+    const c = (rd.ca || '').toLowerCase();
+    const sched = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay].toLowerCase().trim() : '';
+    const matchCa = caFilter === '' || c.includes(caFilter.toLowerCase());
+    return isBK && matchCa && !sched.includes('off');
+  });
 
-      // Tự động đếm chi tiết số người OFF theo Quận
-      let countQ2 = 0, countQ4 = 0, countQ7 = 0, countQ9 = 0, countBT = 0;
-      listOff.forEach(rd => {
-         const q = (rd.quanDeli || '').toLowerCase();
-         if (q.includes('quận 2')) countQ2++;
-         else if (q.includes('quận 4')) countQ4++;
-         else if (q.includes('quận 7')) countQ7++;
-         else if (q.includes('quận 9')) countQ9++;
-         else if (q.includes('bình thạnh')) countBT++;
-      });
-      
-      const titleEl = document.getElementById('titleModalTongHopCa');
-      if (titleEl) {
-        titleEl.innerHTML = `<i class="bi bi-layout-split me-1"></i>${title} (Q2: [${countQ2}] | Q4: [${countQ4}] | Q7: [${countQ7}] | Q9: [${countQ9}] | BT: [${countBT}])`;
-        //Đ: [${countTD}])`;
-      }
-      
-      document.getElementById('countOffCa').innerText = listOff.length;
-      document.getElementById('countBkCa').innerText = listBk.length;
+  let countQ2 = 0, countQ4 = 0, countQ7 = 0, countQ9 = 0, countBT = 0;
+  listOff.forEach(rd => {
+    const q = (rd.quanDeli || '').toLowerCase();
+    if (q.includes('quận 2')) countQ2++;
+    else if (q.includes('quận 4')) countQ4++;
+    else if (q.includes('quận 7')) countQ7++;
+    else if (q.includes('quận 9')) countQ9++;
+    else if (q.includes('bình thạnh')) countBT++;
+  });
+  
+  const titleEl = document.getElementById('titleModalTongHopCa');
+  if (titleEl) {
+    titleEl.innerHTML = `<i class="bi bi-layout-split me-1"></i>${title} (Q2: [${countQ2}] | Q4: [${countQ4}] | Q7: [${countQ7}] | Q9: [${countQ9}] | BT: [${countBT}])`;
+  }
+  
+  document.getElementById('countOffCa').innerText = listOff.length;
+  document.getElementById('countBkCa').innerText = listBk.length;
 
-      const tbodyOff = document.getElementById('tbodyTongHopOff');
-      if (listOff.length === 0) {
-        tbodyOff.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Không có Rider nào OFF</td></tr>`;
-      } else {
-        let htmlOff = '';
-        listOff.forEach((rd, idx) => {
-          const deliDisplay = rd.quanDeli ? `${rd.quanDeli} (P.${rd.phuongDeli || '-'})` : '—';
-          const ghiChu = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay] : '';
-          const caBadge = `<span class="badge ${rd.ca.includes('1')?'bg-primary':'bg-warning text-dark'} ms-2" style="font-size:10px;">${rd.ca}</span>`;
-          htmlOff += `
-            <tr>
-              <td class="text-muted small">${idx + 1}</td>
-              <td class="fw-bold font-monospace text-primary">${rd.id}</td>
-              <td class="fw-bold text-start text-dark">${rd.name}${caBadge}</td>
-              <td class="text-start text-secondary fw-semibold small">${deliDisplay}</td>
-              <td class="text-start text-danger small">${ghiChu}</td>
-            </tr>`;
-        });
-        tbodyOff.innerHTML = htmlOff;
-      }
+  const tbodyOff = document.getElementById('tbodyTongHopOff');
+  if (listOff.length === 0) {
+    tbodyOff.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Không có Rider nào OFF</td></tr>`;
+  } else {
+    let htmlOff = '';
+    listOff.forEach((rd, idx) => {
+      const deliDisplay = rd.quanDeli ? `${rd.quanDeli} (P.${rd.phuongDeli || '-'})` : '—';
+      const ghiChu = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay] : '';
+      const caBadge = `<span class="badge ${rd.ca.includes('1')?'bg-primary':'bg-warning text-dark'} ms-2" style="font-size:10px;">${rd.ca}</span>`;
+      htmlOff += `
+        <tr>
+          <td class="text-muted small">${idx + 1}</td>
+          <td class="fw-bold font-monospace text-primary">${rd.id}</td>
+          <td class="fw-bold text-start text-dark">${rd.name}${caBadge}</td>
+          <td class="text-start text-secondary fw-semibold small">${deliDisplay}</td>
+          <td class="text-start text-danger small">${ghiChu}</td>
+        </tr>`;
+    });
+    tbodyOff.innerHTML = htmlOff;
+  }
 
-      const tbodyBk = document.getElementById('tbodyTongHopBk');
-      if (listBk.length === 0) {
-        tbodyBk.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Không có Backup khả dụng</td></tr>`;
-      } else {
-        let htmlBk = '';
-        listBk.forEach((rd, idx) => {
-          const caBadge = `<span class="badge ${rd.ca.includes('1')?'bg-primary':'bg-warning text-dark'} ms-2" style="font-size:10px;">${rd.ca}</span>`;
-          htmlBk += `
-            <tr>
-              <td class="text-muted small">${idx + 1}</td>
-              <td class="fw-bold font-monospace text-success">${rd.id}</td>
-              <td class="fw-bold text-start text-dark">${rd.name}${caBadge} <span class="badge bg-success ms-1">BK</span></td>
-            </tr>`;
-        });
-        tbodyBk.innerHTML = htmlBk;
-      }
+  const tbodyBk = document.getElementById('tbodyTongHopBk');
+  if (listBk.length === 0) {
+    tbodyBk.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Không có Backup khả dụng</td></tr>`;
+  } else {
+    let htmlBk = '';
+    listBk.forEach((rd, idx) => {
+      const caBadge = `<span class="badge ${rd.ca.includes('1')?'bg-primary':'bg-warning text-dark'} ms-2" style="font-size:10px;">${rd.ca}</span>`;
+      htmlBk += `
+        <tr>
+          <td class="text-muted small">${idx + 1}</td>
+          <td class="fw-bold font-monospace text-success">${rd.id}</td>
+          <td class="fw-bold text-start text-dark">${rd.name}${caBadge} <span class="badge bg-success ms-1">BK</span></td>
+        </tr>`;
+    });
+    tbodyBk.innerHTML = htmlBk;
+  }
 
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTongHopCa')).show();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTongHopCa')).show();
+}
+
+// --- HÀM XỬ LÝ XIN OFF VÀ DUYỆT OFF ---
+function moBangXinOff() {
+  let user = window.currentUser;
+  if (!user) { const saved = localStorage.getItem('KV2_LOGGED_USER'); if (saved) user = JSON.parse(saved); }
+  if (!user || user.role !== 'RIDER') { alert("Chỉ Rider mới có thể sử dụng chức năng này!"); return; }
+
+  const modalEl = document.getElementById('modalRiderXinOff');
+  if (!modalEl) return;
+
+  window.editingOffRowIndex = null;
+
+  document.getElementById('nghi1Ngay').checked = true;
+  if (typeof window.toggleKieuNghi === 'function') window.toggleKieuNghi();
+  document.getElementById('txtNgayXinOff').value = '';
+  document.getElementById('txtLyDoXinOff').value = '';
+  document.getElementById('khungTaiAnhMinhChung').classList.add('d-none');
+  document.getElementById('fileAnhMinhChung').value = '';
+  
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+window.toggleKieuNghi = function() {
+  const isNhieuNgay = document.getElementById('nghiNhieuNgay').checked;
+  const colStart = document.getElementById('colNgayBatDau');
+  const colEnd = document.getElementById('colNgayKetThuc');
+  const lblStart = document.getElementById('lblNgayXinOff');
+  const boxTong = document.getElementById('tongSoNgayNghiBox');
+
+  if (isNhieuNgay) {
+    if (colStart) colStart.className = 'col-6';
+    if (colEnd) colEnd.classList.remove('d-none');
+    if (lblStart) lblStart.innerText = 'Từ ngày:';
+    if (boxTong) boxTong.classList.remove('d-none');
+  } else {
+    if (colStart) colStart.className = 'col-12';
+    if (colEnd) colEnd.classList.add('d-none');
+    if (lblStart) lblStart.innerText = 'Ngày Xin OFF:';
+    if (boxTong) boxTong.classList.add('d-none');
+    const endInput = document.getElementById('txtNgayKetThuc');
+    if (endInput) endInput.value = '';
+  }
+  kiemTraNgayXinOff();
+};
+
+function kiemTraNgayXinOff() {
+  const startDateVal = document.getElementById('txtNgayXinOff').value;
+  const endDateVal = document.getElementById('txtNgayKetThuc').value;
+  const isNhieuNgay = document.getElementById('nghiNhieuNgay').checked;
+  
+  const khungAnh = document.getElementById('khungTaiAnhMinhChung');
+  const tongSoNgayEl = document.getElementById('tongSoNgayNghiVal');
+  
+  if (!startDateVal) {
+    khungAnh.classList.add('d-none');
+    if (tongSoNgayEl) tongSoNgayEl.innerText = '0';
+    return;
+  }
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const startDate = new Date(startDateVal); startDate.setHours(0, 0, 0, 0);
+  const diffDaysStart = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
+  
+  if (diffDaysStart <= 0) khungAnh.classList.remove('d-none');
+  else khungAnh.classList.add('d-none');
+
+  let totalDays = 1;
+  if (isNhieuNgay && endDateVal) {
+    const endDate = new Date(endDateVal); endDate.setHours(0, 0, 0, 0);
+    if (endDate >= startDate) {
+      totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    } else {
+      totalDays = 0; 
     }
+  }
+  if (tongSoNgayEl) tongSoNgayEl.innerText = totalDays;
+}
 
-// --- THÊM HÀM XỬ LÝ XIN OFF VÀ DUYỆT OFF XUỐNG DƯỚI CÙNG ---
-    function moBangXinOff() {
-        let user = window.currentUser;
-        if (!user) { const saved = localStorage.getItem('KV2_LOGGED_USER'); if (saved) user = JSON.parse(saved); }
-        if (!user || user.role !== 'RIDER') { alert("Chỉ Rider mới có thể sử dụng chức năng này!"); return; }
+async function guiDonXinOff() {
+  let user = window.currentUser;
+  if (!user) { const saved = localStorage.getItem('KV2_LOGGED_USER'); if (saved) user = JSON.parse(saved); }
+  if (!user) return alert("Lỗi: Không tìm thấy thông tin tài khoản!");
 
-        const modalEl = document.getElementById('modalRiderXinOff');
-        if (!modalEl) return;
+  const ngayBatDau = document.getElementById('txtNgayXinOff').value;
+  const ngayKetThuc = document.getElementById('txtNgayKetThuc').value;
+  const isNhieuNgay = document.getElementById('nghiNhieuNgay').checked;
+  let lydo = document.getElementById('txtLyDoXinOff').value;
+  const loaiOffRider = document.getElementById('selLoaiNghiOffRider')?.value || 'OFF';
+  const tongSoNgayEl = document.getElementById('tongSoNgayNghiVal');
+  const totalDays = tongSoNgayEl ? parseInt(tongSoNgayEl.innerText) : 0;
 
-        window.editingOffRowIndex = null; // Xóa trạng thái Edit để hệ thống hiểu đây là Tạo mới
-
-        document.getElementById('nghi1Ngay').checked = true;
-        if (typeof window.toggleKieuNghi === 'function') window.toggleKieuNghi();
-        document.getElementById('txtNgayXinOff').value = '';
-        document.getElementById('txtLyDoXinOff').value = '';
-        document.getElementById('khungTaiAnhMinhChung').classList.add('d-none');
-        document.getElementById('fileAnhMinhChung').value = '';
-        
-        bootstrap.Modal.getOrCreateInstance(modalEl).show();
-    }
-
-    // ẨN / HIỆN NGÀY KẾT THÚC
-    window.toggleKieuNghi = function() {
-        const isNhieuNgay = document.getElementById('nghiNhieuNgay').checked;
-        const colStart = document.getElementById('colNgayBatDau');
-        const colEnd = document.getElementById('colNgayKetThuc');
-        const lblStart = document.getElementById('lblNgayXinOff');
-        const boxTong = document.getElementById('tongSoNgayNghiBox');
-
-        if (isNhieuNgay) {
-            if(colStart) colStart.className = 'col-6';
-            if(colEnd) colEnd.classList.remove('d-none');
-            if(lblStart) lblStart.innerText = 'Từ ngày:';
-            if(boxTong) boxTong.classList.remove('d-none');
-        } else {
-            if(colStart) colStart.className = 'col-12';
-            if(colEnd) colEnd.classList.add('d-none');
-            if(lblStart) lblStart.innerText = 'Ngày Xin OFF:';
-            if(boxTong) boxTong.classList.add('d-none');
-            const endInput = document.getElementById('txtNgayKetThuc');
-            if(endInput) endInput.value = '';
-        }
-        kiemTraNgayXinOff();
-    }
-
-    function kiemTraNgayXinOff() {
-        const startDateVal = document.getElementById('txtNgayXinOff').value;
-        const endDateVal = document.getElementById('txtNgayKetThuc').value;
-        const isNhieuNgay = document.getElementById('nghiNhieuNgay').checked;
-        
-        const khungAnh = document.getElementById('khungTaiAnhMinhChung');
-        const tongSoNgayEl = document.getElementById('tongSoNgayNghiVal');
-        
-        if (!startDateVal) {
-            khungAnh.classList.add('d-none');
-            if(tongSoNgayEl) tongSoNgayEl.innerText = '0';
-            return;
-        }
-
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const startDate = new Date(startDateVal); startDate.setHours(0, 0, 0, 0);
-        const diffDaysStart = Math.ceil((startDate - today) / (1000 * 60 * 60 * 24));
-        
-        if (diffDaysStart <= 0) khungAnh.classList.remove('d-none');
-        else khungAnh.classList.add('d-none');
-
-        let totalDays = 1;
-        if (isNhieuNgay && endDateVal) {
-            const endDate = new Date(endDateVal); endDate.setHours(0, 0, 0, 0);
-            if (endDate >= startDate) {
-                totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  if (!ngayBatDau || !lydo) { alert("Vui lòng nhập Ngày và Lý do!"); return; }
+  
+  if (isNhieuNgay) {
+    if (!ngayKetThuc) { alert("Vui lòng chọn ngày kết thúc!"); return; }
+    if (totalDays <= 0) { alert("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu!"); return; }
+  }
+  
+  const khungAnh = document.getElementById('khungTaiAnhMinhChung');
+  let base64Img = '';
+  if (!khungAnh.classList.contains('d-none')) {
+    const file = document.getElementById('fileAnhMinhChung').files[0];
+    if (!file && !window.editingOffRowIndex) { alert("Bạn xin OFF gấp, bắt buộc phải chọn tải lên Ảnh minh chứng!"); return; }
+    if (file) {
+      base64Img = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width, height = img.height;
+            const MAX_SIZE = 400;
+            if (width > height) {
+              if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
             } else {
-                totalDays = 0; 
+              if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
             }
-        }
-        if(tongSoNgayEl) tongSoNgayEl.innerText = totalDays;
-    }
-
-    async function guiDonXinOff() {
-        let user = window.currentUser;
-        if (!user) { const saved = localStorage.getItem('KV2_LOGGED_USER'); if (saved) user = JSON.parse(saved); }
-        if (!user) return alert("Lỗi: Không tìm thấy thông tin tài khoản!");
-
-        const ngayBatDau = document.getElementById('txtNgayXinOff').value;
-        const ngayKetThuc = document.getElementById('txtNgayKetThuc').value;
-        const isNhieuNgay = document.getElementById('nghiNhieuNgay').checked;
-        let lydo = document.getElementById('txtLyDoXinOff').value;
-        const loaiOffRider = document.getElementById('selLoaiNghiOffRider')?.value || 'OFF';
-        const tongSoNgayEl = document.getElementById('tongSoNgayNghiVal');
-        const totalDays = tongSoNgayEl ? parseInt(tongSoNgayEl.innerText) : 0;
-
-        if (!ngayBatDau || !lydo) { alert("Vui lòng nhập Ngày và Lý do!"); return; }
-        
-        if (isNhieuNgay) {
-            if (!ngayKetThuc) { alert("Vui lòng chọn ngày kết thúc!"); return; }
-            if (totalDays <= 0) { alert("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu!"); return; }
-        }
-        
-       const khungAnh = document.getElementById('khungTaiAnhMinhChung');
-        let base64Img = '';
-        if (!khungAnh.classList.contains('d-none')) {
-            const file = document.getElementById('fileAnhMinhChung').files[0];
-            // Yêu cầu ảnh nếu xin gấp VÀ là đơn tạo mới
-            if (!file && !window.editingOffRowIndex) { alert("Bạn xin OFF gấp, bắt buộc phải chọn tải lên Ảnh minh chứng!"); return; }
-            if (file) {
-                // TỰ ĐỘNG NÉN ẢNH CHỐNG LỖI 50.000 KÝ TỰ CỦA GOOGLE SHEET
-                base64Img = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = new Image();
-                        img.onload = function() {
-                            const canvas = document.createElement('canvas');
-                            let width = img.width, height = img.height;
-                            const MAX_SIZE = 400; // Ép ảnh về kích thước nhỏ để chuỗi cực ngắn
-                            if (width > height) {
-                                if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
-                            } else {
-                                if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
-                            }
-                            canvas.width = width; canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-                            // Nén sang định dạng JPEG với chất lượng 40%
-                            resolve(canvas.toDataURL('image/jpeg', 0.4)); 
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-        }
-        
-        const btnGui = document.getElementById('btnGuiDonXinOff');
-        btnGui.disabled = true;
-        btnGui.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
-
-        // TỰ ĐỘNG PHÂN LUỒNG: CÓ ID DÒNG THÌ GỌI API UPDATE, KHÔNG CÓ THÌ GỌI API CREATE
-        const endpoint = window.editingOffRowIndex ? `${window.API_BASE}/xin-off/update` : `${window.API_BASE}/xin-off/create`;
-        const bodyData = {
-            riderId: user.id, riderName: user.name,
-            ngayBatDau: ngayBatDau, ngayKetThuc: isNhieuNgay ? ngayKetThuc : '',
-            tongNgay: isNhieuNgay ? totalDays : 1, lyDo: "[" + loaiOffRider + "] " + lydo, hinhAnhBase64: base64Img
+            canvas.width = width; canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.4)); 
+          };
+          img.src = e.target.result;
         };
-        if (window.editingOffRowIndex) bodyData.rowIndex = window.editingOffRowIndex;
-
-        try {
-            const res = await fetch(endpoint, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bodyData)
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert("✅ " + data.message);
-                bootstrap.Modal.getInstance(document.getElementById('modalRiderXinOff')).hide();
-                window.editingOffRowIndex = null;
-                // Cập nhật lại lịch sử Profile nếu có
-                if (typeof loadLichSuCuaRider === 'function') {
-                    loadLichSuCuaRider(user.id);
-                }
-            } else alert("❌ Lỗi: " + data.message);
-        } catch (e) { alert("Lỗi mạng! Không thể kết nối tới máy chủ."); }
-        
-        btnGui.disabled = false;
-        btnGui.innerHTML = '<i class="bi bi-send-fill me-1"></i> Gửi Đơn';
+        reader.readAsDataURL(file);
+      });
     }
+  }
+  
+  const btnGui = document.getElementById('btnGuiDonXinOff');
+  btnGui.disabled = true;
+  btnGui.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang gửi...';
 
-    async function moBangDuyetOff() {
-        const modalEl = document.getElementById('modalDuyetOff');
-        if (!modalEl) return;
-        bootstrap.Modal.getOrCreateInstance(modalEl).show();
-        
-        const tbody = document.getElementById('tbodyDanhSachXinOff');
-        if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-warning me-1"></div> Đang tải danh sách...</td></tr>';
-        
-        try {
-            const res = await fetch(`${API_BASE}/xin-off/list`);
-            const data = await res.json();
-            if (data.success && data.data.length > 0) {
-                let html = '';
-                let pendingCount = data.data.length; // Vì server đã lọc sẵn, tất cả đều là chờ duyệt
-                
-                data.data.forEach(item => {
-                    const anhHtml = item.hinhAnh ? `<button type="button" class="btn btn-xs btn-primary py-0 px-2 fw-bold" onclick="window.xemAnhMinhChung('${item.hinhAnh}')">Xem Ảnh</button>` : '<span class="text-muted small">Không</span>';
-                    const hopLeBadge = item.hopLe.includes('Hợp lệ') ? 'bg-success' : (item.hopLe.includes('Gấp') ? 'bg-danger' : 'bg-warning text-dark');
-                    
-                    // Giao diện: Luôn luôn hiện nút Bấm Xanh / Đỏ
-                    let statusHtml = `
-                      <div class="btn-group w-100 shadow-sm">
-                        <button class="btn btn-sm btn-success py-0 px-2 fw-bold" onclick="chotDuyetOff(${item.rowIndex}, 'Đã duyệt')" title="Duyệt đơn"><i class="bi bi-check-lg"></i></button>
-                        <button class="btn btn-sm btn-danger py-0 px-2 fw-bold" onclick="chotDuyetOff(${item.rowIndex}, 'Từ chối')" title="Từ chối đơn"><i class="bi bi-x-lg"></i></button>
-                      </div>
-                    `;
-                    
-                    html += `<tr><td class="small text-muted">${item.timestamp}</td><td class="fw-bold font-monospace">${item.riderId}</td><td class="text-start fw-bold text-dark">${item.riderName}</td><td class="fw-bold text-danger">${item.ngayNghi}</td><td class="fw-bold text-primary">${item.tongNgay}</td><td class="text-start small">${item.lyDo}</td><td><span class="badge ${hopLeBadge}">${item.hopLe}</span></td><td>${statusHtml}</td><td>${anhHtml}</td></tr>`;
-                });
-                tbody.innerHTML = html;
-                
-                // Cập nhật thẻ đếm số lượng đỏ ở ngoài nút
-                const badge = document.getElementById('badgePendingOff');
-                if (badge) {
-                    badge.innerText = pendingCount;
-                    badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
-                }
-            } else {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Tuyệt vời! Không còn đơn nào chờ duyệt.</td></tr>';
-                const badge = document.getElementById('badgePendingOff');
-                if (badge) badge.style.display = 'none';
-            }
-        } catch (e) { tbody.innerHTML = '<tr><td colspan="9" class="text-danger py-4">Lỗi kết nối máy chủ!</td></tr>'; }
-    }
+  const endpoint = window.editingOffRowIndex ? `${window.API_BASE}/xin-off/update` : `${window.API_BASE}/xin-off/create`;
+  const bodyData = {
+    riderId: user.id, riderName: user.name,
+    ngayBatDau: ngayBatDau, ngayKetThuc: isNhieuNgay ? ngayKetThuc : '',
+    tongNgay: isNhieuNgay ? totalDays : 1, lyDo: "[" + loaiOffRider + "] " + lydo, hinhAnhBase64: base64Img
+  };
+  if (window.editingOffRowIndex) bodyData.rowIndex = window.editingOffRowIndex;
 
-    // HÀM PUSH TRẠNG THÁI LÊN SHEET & TỰ ĐỘNG ĐIỀN VÀO TỔNG QUAN + OPS 1-2 + GHI LOG
-    async function chotDuyetOff(rowIndex, trangThaiMoi) {
-        const msgConfirm = trangThaiMoi === 'Đã duyệt' 
-            ? `Xác nhận [DUYỆT] đơn này?\n(Hệ thống sẽ tự động điền vào TỔNG QUAN RD, Lịch Ops 1-2 và lưu Log)`
-            : `Bạn chắc chắn muốn [${trangThaiMoi.toUpperCase()}] đơn này?`;
-        if (!confirm(msgConfirm)) return;
-        try {
-            const nguoiDuyet = typeof layTenNguoiThaoTac === 'function' ? layTenNguoiThaoTac() : 'FTE / Admin';
-            const res = await fetch(`${API_BASE}/xin-off/update-status`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ rowIndex: rowIndex, newStatus: trangThaiMoi, nguoiDuyet: nguoiDuyet })
-            });
-            const data = await res.json();
-            if (data.success) {
-                if (data.message) alert("✅ " + data.message);
-                moBangDuyetOff(); 
-                if (typeof loadRiderData === 'function') loadRiderData();
-            } else alert("Lỗi: " + data.message);
-        } catch(e) { alert("Lỗi kết nối mạng!"); }
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bodyData)
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("✅ " + data.message);
+      bootstrap.Modal.getInstance(document.getElementById('modalRiderXinOff')).hide();
+      window.editingOffRowIndex = null;
+      if (typeof loadLichSuCuaRider === 'function') {
+        loadLichSuCuaRider(user.id);
+      }
+    } else alert("❌ Lỗi: " + data.message);
+  } catch (e) { alert("Lỗi mạng! Không thể kết nối tới máy chủ."); }
+  
+  btnGui.disabled = false;
+  btnGui.innerHTML = '<i class="bi bi-send-fill me-1"></i> Gửi Đơn';
+}
+
+async function moBangDuyetOff() {
+  const modalEl = document.getElementById('modalDuyetOff');
+  if (!modalEl) return;
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  
+  const tbody = document.getElementById('tbodyDanhSachXinOff');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-warning me-1"></div> Đang tải danh sách...</td></tr>';
+  
+  try {
+    const res = await fetch(`${API_BASE}/xin-off/list`);
+    const data = await res.json();
+    if (data.success && data.data.length > 0) {
+      let html = '';
+      let pendingCount = data.data.length;
+      
+      data.data.forEach(item => {
+        const anhHtml = item.hinhAnh ? `<button type="button" class="btn btn-xs btn-primary py-0 px-2 fw-bold" onclick="window.xemAnhMinhChung('${item.hinhAnh}')">Xem Ảnh</button>` : '<span class="text-muted small">Không</span>';
+        const hopLeBadge = item.hopLe.includes('Hợp lệ') ? 'bg-success' : (item.hopLe.includes('Gấp') ? 'bg-danger' : 'bg-warning text-dark');
+        
+        let statusHtml = `
+          <div class="btn-group w-100 shadow-sm">
+            <button class="btn btn-sm btn-success py-0 px-2 fw-bold" onclick="chotDuyetOff(${item.rowIndex}, 'Đã duyệt')" title="Duyệt đơn"><i class="bi bi-check-lg"></i></button>
+            <button class="btn btn-sm btn-danger py-0 px-2 fw-bold" onclick="chotDuyetOff(${item.rowIndex}, 'Từ chối')" title="Từ chối đơn"><i class="bi bi-x-lg"></i></button>
+          </div>
+        `;
+        
+        html += `<tr><td class="small text-muted">${item.timestamp}</td><td class="fw-bold font-monospace">${item.riderId}</td><td class="text-start fw-bold text-dark">${item.riderName}</td><td class="fw-bold text-danger">${item.ngayNghi}</td><td class="fw-bold text-primary">${item.tongNgay}</td><td class="text-start small">${item.lyDo}</td><td><span class="badge ${hopLeBadge}">${item.hopLe}</span></td><td>${statusHtml}</td><td>${anhHtml}</td></tr>`;
+      });
+      tbody.innerHTML = html;
+      
+      const badge = document.getElementById('badgePendingOff');
+      if (badge) {
+        badge.innerText = pendingCount;
+        badge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+      }
+    } else {
+      tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Tuyệt vời! Không còn đơn nào chờ duyệt.</td></tr>';
+      const badge = document.getElementById('badgePendingOff');
+      if (badge) badge.style.display = 'none';
     }
+  } catch (e) { tbody.innerHTML = '<tr><td colspan="9" class="text-danger py-4">Lỗi kết nối máy chủ!</td></tr>'; }
+}
+
+async function chotDuyetOff(rowIndex, trangThaiMoi) {
+  const msgConfirm = trangThaiMoi === 'Đã duyệt' 
+    ? `Xác nhận [DUYỆT] đơn này?\n(Hệ thống sẽ tự động điền vào TỔNG QUAN RD, Lịch Ops 1-2 và lưu Log)`
+    : `Bạn chắc chắn muốn [${trangThaiMoi.toUpperCase()}] đơn này?`;
+  if (!confirm(msgConfirm)) return;
+  try {
+    const nguoiDuyet = typeof layTenNguoiThaoTac === 'function' ? layTenNguoiThaoTac() : 'FTE / Admin';
+    const res = await fetch(`${API_BASE}/xin-off/update-status`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rowIndex: rowIndex, newStatus: trangThaiMoi, nguoiDuyet: nguoiDuyet })
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (data.message) alert("✅ " + data.message);
+      moBangDuyetOff(); 
+      if (typeof loadRiderData === 'function') loadRiderData();
+    } else alert("Lỗi: " + data.message);
+  } catch(e) { alert("Lỗi kết nối mạng!"); }
+}
 
 function xemDanhSachOffTuan(quanFilter, caFilter, title) {
   const selWeek = document.getElementById("selectTuanOff");
   const startIdx = parseInt(selWeek ? selWeek.value : 0, 10);
   const weekDates = dateHeadersGlobal.slice(startIdx, startIdx + 7);
-  const _today = new Date();
-  const todayStr = String(_today.getDate()).padStart(2,'0') + '/' + String(_today.getMonth()+1).padStart(2,'0');
   
   let filteredList = [];
   
   ridersData.forEach(rd => {
     const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
-    if (isBK) return; // Không lấy BK vào danh sách OFF thường
+    if (isBK) return;
     
     const q = (rd.quanDeli || '').toLowerCase();
     const c = (rd.ca || '').toLowerCase();
@@ -446,15 +430,15 @@ function xemDanhSachOffTuan(quanFilter, caFilter, title) {
     const matchCa = caFilter === '' || c.includes(caFilter.toLowerCase());
     
     if (matchQuan && matchCa) {
-       let offDays = [];
-       weekDates.forEach(dh => {
-         const sched = (rd.dailySchedule && rd.dailySchedule[dh.date]) ? rd.dailySchedule[dh.date].toLowerCase().trim() : '';
-         if (sched.includes('off')) offDays.push(dh.date);
-       });
-       
-       if (offDays.length > 0) {
-          filteredList.push({ ...rd, offDaysStr: offDays.join(', ') });
-       }
+      let offDays = [];
+      weekDates.forEach(dh => {
+        const sched = (rd.dailySchedule && rd.dailySchedule[dh.date]) ? rd.dailySchedule[dh.date].toLowerCase().trim() : '';
+        if (sched.includes('off')) offDays.push(dh.date);
+      });
+      
+      if (offDays.length > 0) {
+        filteredList.push({ ...rd, offDaysStr: offDays.join(', ') });
+      }
     }
   });
 
@@ -493,7 +477,13 @@ function xemDanhSachOffTuan(quanFilter, caFilter, title) {
 // 2. VẼ MA TRẬN OFF (CÓ TÍNH NĂNG THU / MỞ VÀ XEM CHI TIẾT)
 function renderMaTranOff() {
   if (!dateHeadersGlobal || dateHeadersGlobal.length === 0) return;
-  const startIdx = parseInt(document.getElementById('selectTuanOff')?.value || 0, 10);
+
+  const selectMain = document.getElementById('selectTuanOff');
+  if (selectMain && selectMain.options.length === 0) {
+    taoDropdownTuanOff(dateHeadersGlobal);
+  }
+
+  const startIdx = parseInt(selectMain?.value || 0, 10);
   const weekDates = dateHeadersGlobal.slice(startIdx, startIdx + 7);
   const _today = new Date();
   const todayStr = String(_today.getDate()).padStart(2,'0') + '/' + String(_today.getMonth()+1).padStart(2,'0');
@@ -502,7 +492,6 @@ function renderMaTranOff() {
   const tbody = document.getElementById('tbodyMaTranOff');
   if (!thead || !tbody) return;
 
-  // Render Header
   let thHtml = `<tr>
     <th style="min-width: 170px;" class="align-middle">
       Địa Bàn / Ca 
@@ -540,7 +529,6 @@ function renderMaTranOff() {
 
   let tbHtml = '';
   
-  // Render Rows Từng COT
   categoriesOff.forEach(cat => {
     tbHtml += `<tr>
       <td class="text-start fw-bold" style="cursor:pointer; transition: 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor=''" onclick="xemDanhSachOffTuan('${cat.quan}', '${cat.ca}', '${cat.label}')" title="Xem chi tiết tổng OFF tuần">
@@ -563,21 +551,20 @@ function renderMaTranOff() {
       const isTodayCol = (dh.date === todayStr);
       const todayCellStyle = isTodayCol ? 'background-color:#cfe2ff;' : '';
       if (countOff > 0) {
-         colsHtml += `<td style="cursor:pointer; transition: 0.2s; ${todayCellStyle}" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor='${isTodayCol ? '#cfe2ff' : ''}'" onclick="xemDanhSachOff('${dh.date}', '${cat.quan}', '${cat.ca}', '${cat.label}')"><span class="badge bg-danger shadow-sm">${countOff}</span></td>`;
+        colsHtml += `<td style="cursor:pointer; transition: 0.2s; ${todayCellStyle}" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor='${isTodayCol ? '#cfe2ff' : ''}'" onclick="xemDanhSachOff('${dh.date}', '${cat.quan}', '${cat.ca}', '${cat.label}')"><span class="badge bg-danger shadow-sm">${countOff}</span></td>`;
       } else {
-         colsHtml += `<td style="${todayCellStyle}"><span class="text-muted">0</span></td>`;
+        colsHtml += `<td style="${todayCellStyle}"><span class="text-muted">0</span></td>`;
       }
     });
 
     if (matrixCollapsed) {
-       tbHtml += `<td><span class="badge bg-danger fs-6">${sumTuan}</span></td>`;
+      tbHtml += `<td><span class="badge bg-danger fs-6">${sumTuan}</span></td>`;
     } else {
-       tbHtml += colsHtml;
+      tbHtml += colsHtml;
     }
     tbHtml += `</tr>`;
   });
 
-  // Render Row TỔNG KV2
   tbHtml += `<tr class="table-light fw-bold"><td class="text-start text-danger">TỔNG KHU VỰC 2 OFF</td>`;
   
   if (matrixCollapsed) {
@@ -589,7 +576,6 @@ function renderMaTranOff() {
         return !isBK && sched.includes('off');
       }).length;
     });
-    // Hàng thu gọn chưa cần click
     tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace">${globalSum}</td>`;
   } else {
     weekDates.forEach(dh => {
@@ -599,13 +585,12 @@ function renderMaTranOff() {
         return !isBK && sched.includes('off');
       }).length;
       
-      // Thêm sự kiện onclick và đổi màu rê chuột cho Hàng TỔNG KV 2 OFF
       const isTodayTotal = (dh.date === todayStr);
-    const todayTotalStyle = isTodayTotal ? 'background-color:#cfe2ff;' : '';
-    if (totalOffDay > 0) {
-         tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace" style="cursor:pointer; transition: 0.2s; ${todayTotalStyle}" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor='${isTodayTotal ? '#cfe2ff' : ''}'" onclick="xemDanhSachOff('${dh.date}', '', '', 'TỔNG KHU VỰC 2')">${totalOffDay}</td>`;
+      const todayTotalStyle = isTodayTotal ? 'background-color:#cfe2ff;' : '';
+      if (totalOffDay > 0) {
+        tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace" style="cursor:pointer; transition: 0.2s; ${todayTotalStyle}" onmouseover="this.style.backgroundColor='#ffe4e6'" onmouseout="this.style.backgroundColor='${isTodayTotal ? '#cfe2ff' : ''}'" onclick="xemDanhSachOff('${dh.date}', '', '', 'TỔNG KHU VỰC 2')">${totalOffDay}</td>`;
       } else {
-         tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace" style="${todayTotalStyle}">0</td>`;
+        tbHtml += `<td class="text-danger fw-bold fs-6 font-monospace" style="${todayTotalStyle}">0</td>`;
       }
     });
   }
@@ -632,13 +617,13 @@ function thayDoiNgayTongQuanOff() {
 }
 
 function capNhatTongQuanOffTheoQuan(ngayXem, thuXem) {
-  // Fix lỗi undefined 'getAttribute' khi tải trang
   if (!ridersData) return;
   if (!ngayXem) {
     const selectEl = document.getElementById('selectNgayTongQuanOff');
     if (selectEl && selectEl.options.length > 0) {
       ngayXem = selectEl.value;
-      thuXem = selectEl.options[selectEl.selectedIndex].getAttribute('data-thu') || '';
+      const opt = selectEl.options[selectEl.selectedIndex];
+      thuXem = opt ? (opt.getAttribute('data-thu') || '') : '';
     } else {
       return; 
     }
@@ -681,7 +666,7 @@ function capNhatTongQuanOffTheoQuan(ngayXem, thuXem) {
     }).length;
   };
 
-    const q2_1 = demOff('quận 2', 'cot 1'), q2_2 = demOff('quận 2', 'cot 2');
+  const q2_1 = demOff('quận 2', 'cot 1'), q2_2 = demOff('quận 2', 'cot 2');
   const q4_1 = demOff('quận 4', 'cot 1'), q4_2 = demOff('quận 4', 'cot 2');
   const q7_1 = demOff('quận 7', 'cot 1'), q7_2 = demOff('quận 7', 'cot 2');
   const q9_1 = demOff('quận 9', 'cot 1'), q9_2 = demOff('quận 9', 'cot 2');
@@ -705,24 +690,20 @@ function capNhatTongQuanOffTheoQuan(ngayXem, thuXem) {
   if (document.getElementById('offCountQ9')) document.getElementById('offCountQ9').innerText = (q9_1+q9_2);
   if (document.getElementById('offCountBT')) document.getElementById('offCountBT').innerText = (bt_1+bt_2);
   
-  // Update 3 thẻ mới
   if (document.getElementById('offCountCOT1')) document.getElementById('offCountCOT1').innerText = cot1;
   if (document.getElementById('offCountCOT2')) document.getElementById('offCountCOT2').innerText = cot2;
   if (document.getElementById('offCountKV2')) document.getElementById('offCountKV2').innerText = tongToanKV;
 
-// ================= TỰ ĐỘNG LỌC DỮ LIỆU BACKUP ẨN & CẬP NHẬT SỐ ĐẾM NGOÀI THẺ =================
   if (typeof ridersData !== 'undefined' && ridersData.length > 0) {
     let pickC1 = 0, pickC2 = 0;
     let deliC1 = 0, deliC2 = 0;
     
-    // Lưu tạm dữ liệu vào biến toàn cục để khi click mở modal sẽ xài tới
     window.dataBackupPickCot1 = []; window.dataBackupPickCot2 = [];
     window.dataBackupDeliCot1 = []; window.dataBackupDeliCot2 = [];
 
     ridersData.forEach(rd => {
       const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
       
-      // SỬA LỖI PICK: Nhận diện Pick qua cả Tuyến Pick và Quận Pick
       const isPick = (rd.tuyenPick && rd.tuyenPick.trim() !== '') || 
                      (rd.quanPick && rd.quanPick.trim() !== '') || 
                      (rd.quanDeli || '').toLowerCase().includes('pick') || 
@@ -732,14 +713,11 @@ function capNhatTongQuanOffTheoQuan(ngayXem, thuXem) {
       const isOff = sched.includes('off');
       const isCot2 = rd.ca.includes('2');
 
-      // BACKUP PICK: Người này có làm Pick và đang OFF
       if (isOff && isPick) {
         if (isCot2) { pickC2++; window.dataBackupPickCot2.push(rd); } 
         else { pickC1++; window.dataBackupPickCot1.push(rd); }
       }
       
-      // BACKUP DELI: Người này làm Deli và đang OFF 
-      // (Bao gồm cả người làm song song Pick & Deli, họ sẽ hiện ở CẢ 2 BẢNG)
       const isDeli = (rd.quanDeli && rd.quanDeli.trim() !== '' && !rd.quanDeli.toLowerCase().includes('pick')) || 
                      (rd.phuongDeli && rd.phuongDeli.trim() !== '') || 
                      (!isPick);
@@ -755,8 +733,7 @@ function capNhatTongQuanOffTheoQuan(ngayXem, thuXem) {
     if (badgePick) badgePick.innerText = pickC1 + pickC2;
     if (badgeDeli) badgeDeli.innerText = deliC1 + deliC2;
   }
-} // <--- ĐÓNG HÀM capNhatTongQuanOffTheoQuan CHUẨN
-
+}
 
 // ================= CÁC BIẾN QUẢN LÝ GIỎ GÁN TUYẾN =================
 window.cartGhepTuyen = window.cartGhepTuyen || {}; 
@@ -768,57 +745,56 @@ window.danhSachTuyenDaGanGlobal = [];
 
 // ================= HÀM LƯU / PHỤC HỒI SESSION GIỎ GÁN NGẦM =================
 function luuSessionGioGanNgam() {
-    if (!window.loaiBackupHienTai) return;
-    const sessionKey = `KV2_DRAFT_BACKUP_${window.loaiBackupHienTai}`;
-    if (Object.keys(window.cartGhepTuyen).length > 0 || window.pendingLeftRoutes.length > 0) {
-        sessionStorage.setItem(sessionKey, JSON.stringify({
-            cart: window.cartGhepTuyen,
-            pendingLeft: window.pendingLeftRoutes
-        }));
-    } else {
-        sessionStorage.removeItem(sessionKey);
-    }
+  if (!window.loaiBackupHienTai) return;
+  const sessionKey = `KV2_DRAFT_BACKUP_${window.loaiBackupHienTai}`;
+  if (Object.keys(window.cartGhepTuyen).length > 0 || window.pendingLeftRoutes.length > 0) {
+    sessionStorage.setItem(sessionKey, JSON.stringify({
+      cart: window.cartGhepTuyen,
+      pendingLeft: window.pendingLeftRoutes
+    }));
+  } else {
+    sessionStorage.removeItem(sessionKey);
+  }
 }
 
 function phucHoiSessionGioGanNgam(loaiBackup) {
-    const sessionKey = `KV2_DRAFT_BACKUP_${loaiBackup}`;
-    const saved = sessionStorage.getItem(sessionKey);
-    if (saved) {
-        try {
-            const parsed = JSON.parse(saved);
-            window.cartGhepTuyen = parsed.cart || {};
-            window.pendingLeftRoutes = parsed.pendingLeft || [];
-        } catch (e) {
-            window.cartGhepTuyen = {}; window.pendingLeftRoutes = [];
-        }
-    } else {
-        window.cartGhepTuyen = {}; window.pendingLeftRoutes = [];
+  const sessionKey = `KV2_DRAFT_BACKUP_${loaiBackup}`;
+  const saved = sessionStorage.getItem(sessionKey);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      window.cartGhepTuyen = parsed.cart || {};
+      window.pendingLeftRoutes = parsed.pendingLeft || [];
+    } catch (e) {
+      window.cartGhepTuyen = {}; window.pendingLeftRoutes = [];
     }
+  } else {
+    window.cartGhepTuyen = {}; window.pendingLeftRoutes = [];
+  }
 }
 
 // ================= CẢNH BÁO KHI TẮT TRANG NẾU CÓ DỮ LIỆU ĐANG XẾP =================
 window.addEventListener('beforeunload', function (e) {
-    const isCartActive = Object.keys(window.cartGhepTuyen).some(k => window.cartGhepTuyen[k].routes && window.cartGhepTuyen[k].routes.length > 0);
-    if (isCartActive || window.pendingLeftRoutes.length > 0) {
-        e.preventDefault();
-        e.returnValue = 'Bạn có giỏ gán tuyến chưa được lưu lên Sheet! Bạn chắc chắn muốn thoát?';
-        return e.returnValue;
-    }
+  const isCartActive = Object.keys(window.cartGhepTuyen).some(k => window.cartGhepTuyen[k].routes && window.cartGhepTuyen[k].routes.length > 0);
+  if (isCartActive || window.pendingLeftRoutes.length > 0) {
+    e.preventDefault();
+    e.returnValue = 'Bạn có giỏ gán tuyến chưa được lưu lên Sheet! Bạn chắc chắn muốn thoát?';
+    return e.returnValue;
+  }
 });
 
-// Chặn tắt Modal khi bấm ra ngoài hoặc bấm nút X nếu đang xếp dở
 document.addEventListener('DOMContentLoaded', () => {
-    const modalEl = document.getElementById('modalChiTietBackup');
-    if (modalEl) {
-        modalEl.addEventListener('hide.bs.modal', function(e) {
-            const isCartActive = Object.keys(window.cartGhepTuyen).some(k => window.cartGhepTuyen[k].routes && window.cartGhepTuyen[k].routes.length > 0);
-            if (isCartActive || window.pendingLeftRoutes.length > 0) {
-                if (!confirm("⚠️ CẢNH BÁO:\nBạn đang có tuyến chưa được xác nhận Lưu lên Sheet!\nNếu đóng bảng này, dữ liệu sẽ được lưu ngầm, bạn có thể mở lại để làm tiếp.\n\nBạn vẫn muốn đóng?")) {
-                    e.preventDefault();
-                }
-            }
-        });
-    }
+  const modalEl = document.getElementById('modalChiTietBackup');
+  if (modalEl) {
+    modalEl.addEventListener('hide.bs.modal', function(e) {
+      const isCartActive = Object.keys(window.cartGhepTuyen).some(k => window.cartGhepTuyen[k].routes && window.cartGhepTuyen[k].routes.length > 0);
+      if (isCartActive || window.pendingLeftRoutes.length > 0) {
+        if (!confirm("⚠️ CẢNH BÁO:\nBạn đang có tuyến chưa được xác nhận Lưu lên Sheet!\nNếu đóng bảng này, dữ liệu sẽ được lưu ngầm, bạn có thể mở lại để làm tiếp.\n\nBạn vẫn muốn đóng?")) {
+          e.preventDefault();
+        }
+      }
+    });
+  }
 });
 
 // ================= HÀM MỞ MODAL XẾP BACKUP (BẢNG TO & GIỎ HÀNG) =================
@@ -829,7 +805,6 @@ async function moModalBackup(loaiBackup) {
   const ngayXem = document.getElementById('selectNgayTongQuanOff')?.value || '';
   
   window.loaiBackupHienTai = loaiBackup;
-  // Phục hồi dữ liệu nếu vừa F5 hoặc tắt nhầm
   phucHoiSessionGioGanNgam(loaiBackup);
   
   window.activeBkId = null;
@@ -840,17 +815,16 @@ async function moModalBackup(loaiBackup) {
   
   const dialog = document.querySelector('#modalChiTietBackup .modal-dialog');
   if (dialog) {
-     dialog.classList.remove('modal-xl');
-     dialog.style.width = '98vw';
-     dialog.style.maxWidth = '1800px';
+    dialog.classList.remove('modal-xl');
+    dialog.style.width = '98vw';
+    dialog.style.maxWidth = '1800px';
   }
 
   vungGhep.classList.remove('d-none');
   vungGhep.classList.add('d-flex');
   vungGhep.innerHTML = `<div class="text-muted small py-1"><span class="spinner-border spinner-border-sm me-2 text-primary"></span>Đang tải dữ liệu giỏ gán ${loaiBackup}...</div>`;
 
-  // Ép Bootstrap Modal không tự động đóng khi click ra ngoài nền đen (phải bấm nút X)
-  const myModal = new bootstrap.Modal(document.getElementById('modalChiTietBackup'), { backdrop: 'static', keyboard: false });
+  const myModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietBackup'), { backdrop: 'static', keyboard: false });
   myModal.show();
 
   let danhSachBkDaGan = [];
@@ -883,10 +857,10 @@ async function moModalBackup(loaiBackup) {
   capNhatGiaoDienGhepCap();
 
   setTimeout(() => {
-      window.capNhatTrangThaiCotTrai('COT1');
-      window.capNhatTrangThaiCotTrai('COT2');
-      window.capNhatTrangThaiCotPhai('COT1');
-      window.capNhatTrangThaiCotPhai('COT2');
+    window.capNhatTrangThaiCotTrai('COT1');
+    window.capNhatTrangThaiCotTrai('COT2');
+    window.capNhatTrangThaiCotPhai('COT1');
+    window.capNhatTrangThaiCotPhai('COT2');
   }, 100);
 }
 
@@ -899,6 +873,17 @@ window.timNguoiDangGanhTuyen = function(routeId) {
     }
   }
   return null;
+};
+
+window.timDanhSachNguoiDangGanhTuyen = function(routeId) {
+  const list = [];
+  for (const bkId of Object.keys(window.cartGhepTuyen)) {
+    const cart = window.cartGhepTuyen[bkId];
+    if (cart && cart.routes && cart.routes.some(r => String(r.id) === String(routeId))) {
+      list.push(cart);
+    }
+  }
+  return list;
 };
 
 // ================= HÀM VẼ GIAO DIỆN BẢNG TRÁI (RD OFF/ĐI LÀM) & BẢNG PHẢI (BK SẴN SÀNG) =================
@@ -974,14 +959,10 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
     htmlOff += `<tr class="tr-left-OFF-${caFilter} search-row"><td class="text-center py-3 text-muted">Không có người OFF</td></tr>`;
   } else {
     listOff.forEach(rd => {
-      // 1. Label để hiển thị mượt mà trên giao diện (Vẫn giữ nguyên Quận - Tuyến)
       const labelHienThi = loaiBackup === 'DELI' ? `${rd.quanDeli} (P.${rd.phuongDeli || '-'})` : `${rd.quanPick || 'Chưa phân Quận'} - ${rd.tuyenPick || 'Chưa phân Tuyến'}`;
       const safeName = (rd.name || '').replace(/'/g, "\\'");
-      
-      // 2. TÁCH RIÊNG DỮ LIỆU ĐẨY LÊN SHEET: Nếu là PICK thì chỉ lấy đúng Tuyến, bỏ Quận
       const routeChuan = loaiBackup === 'DELI' ? labelHienThi : (rd.tuyenPick || 'Chưa phân Tuyến');
       const safeRoute = routeChuan.replace(/'/g, "\\'");
-      
       const searchTxt = `${rd.name} ${rd.id} ${labelHienThi}`.toLowerCase();
       const isLocked = window.danhSachTuyenDaGanGlobal.includes(rd.id);
       const lockedClass = isLocked ? 'locked-route d-none' : '';
@@ -1008,8 +989,7 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
       const safeName = (rd.name || '').replace(/'/g, "\\'");
       const safeRoute = (labelDeli || '').replace(/'/g, "\\'");
       const searchTxt = `${rd.name} ${rd.id} ${labelDeli}`.toLowerCase();
-      const searchTxt = `${rd.name} ${rd.id} ${labelDeli}`.toLowerCase();
-      const lockedClass = 'd-none'; // Luôn cho phép hiển thị để gán nhiều BK hỗ trợ
+      const lockedClass = 'd-none';
 
       htmlOff += `
         <tr id="tr_left_${rd.id}" class="tr-left-WORK-${caFilter} search-row ${lockedClass}" data-search="${searchTxt}" style="cursor:pointer;" onclick="chonRiderGhep('${rd.id}', '${safeName}', '${safeRoute}', 'WORK', '${caFilter}')">
@@ -1072,7 +1052,6 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
   }
   htmlOff += `</tbody></table></div></div></div>`;
 
-  // ================= CỘT PHẢI: HIỂN THỊ RÕ 1 NGƯỜI GÁNH BAO NHIÊU TUYẾN =================
   let htmlBk = `
       <div class="col-12 col-lg-5">
         <div class="card border-0 shadow-sm border-success h-100">
@@ -1119,16 +1098,16 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
 window.filterRightList = function(val, caFilter) {
   const kw = val.toLowerCase().trim();
   document.querySelectorAll(`#tbody_${caFilter}_BK .tr-bk-item`).forEach(tr => {
-      const rdId = tr.id.replace('tr_bk_', '');
-      const isDangChon = String(rdId) === String(window.activeBkId);
-      if (window.isIsolationMode && !isDangChon) return; 
-      
-      const txt = tr.getAttribute('data-search') || '';
-      if (kw === '' || txt.includes(kw)) {
-          tr.classList.remove('d-none');
-      } else {
-          tr.classList.add('d-none');
-      }
+    const rdId = tr.id.replace('tr_bk_', '');
+    const isDangChon = String(rdId) === String(window.activeBkId);
+    if (window.isIsolationMode && !isDangChon) return; 
+    
+    const txt = tr.getAttribute('data-search') || '';
+    if (kw === '' || txt.includes(kw)) {
+      tr.classList.remove('d-none');
+    } else {
+      tr.classList.add('d-none');
+    }
   });
 };
 
@@ -1138,7 +1117,7 @@ window.toggleLeftList = function(type, ca) {
     if (type === 'WARD' && el.classList.contains(`tr-left-WARD-${ca}`) && !el.hasAttribute('data-bs-toggle')) el.classList.remove('show'); 
   });
   const searchInput = document.getElementById(`searchLeft_${ca}`);
-  if(searchInput) searchInput.value = ''; 
+  if (searchInput) searchInput.value = ''; 
   document.querySelectorAll(`.tr-left-${type}-${ca}:not(.locked-route):not(.temp-hidden)`).forEach(el => el.classList.remove('d-none'));
 };
 
@@ -1146,8 +1125,8 @@ window.filterLeftList = function(val, ca) {
   const kw = val.toLowerCase().trim();
   let activeType = 'OFF';
   if (window.loaiBackupHienTai !== 'PICK') {
-      if (document.getElementById(`btnWork_${ca}`)?.checked) activeType = 'WORK';
-      else if (document.getElementById(`btnWard_${ca}`)?.checked) activeType = 'WARD';
+    if (document.getElementById(`btnWork_${ca}`)?.checked) activeType = 'WORK';
+    else if (document.getElementById(`btnWard_${ca}`)?.checked) activeType = 'WARD';
   }
 
   if (kw === '') {
@@ -1165,22 +1144,9 @@ window.filterLeftList = function(val, ca) {
   });
 };
 
-// Hàm phụ: Lấy danh sách TẤT CẢ những người BK đang cùng gánh 1 tuyến
-window.timDanhSachNguoiDangGanhTuyen = function(routeId) {
-  const list = [];
-  for (const bkId of Object.keys(window.cartGhepTuyen)) {
-    const cart = window.cartGhepTuyen[bkId];
-    if (cart && cart.routes && cart.routes.some(r => String(r.id) === String(routeId))) {
-      list.push(cart);
-    }
-  }
-  return list;
-};
-
 // ================= HÀM CHỌN GHÉP TUYẾN (HỖ TRỢ NHIỀU BK CÙNG GÁNH RD ĐI LÀM / PHƯỜNG) =================
 function chonRiderGhep(id, name, route, type, caFilter) {
   if (type === 'BK') {
-    // KHI CHỌN NGƯỜI BACKUP BÊN PHẢI
     if (window.isIsolationMode && String(id) !== String(window.activeBkId)) return;
 
     if (window.pendingLeftRoutes && window.pendingLeftRoutes.length > 0) {
@@ -1200,22 +1166,20 @@ function chonRiderGhep(id, name, route, type, caFilter) {
     } else {
       const hasHistory = window.lichSuGanGlobal && window.lichSuGanGlobal.find(l => String(l.idBk) === String(id));
       if (hasHistory && !window.cartGhepTuyen[id]) {
-          window.suaLichSuGhepTuyen(id);
-          return;
+        window.suaLichSuGhepTuyen(id);
+        return;
       }
       if (String(window.activeBkId) === String(id) && !window.isIsolationMode) {
-          window.activeBkId = null;
+        window.activeBkId = null;
       } else {
-          window.activeBkId = id; 
-          if (!window.cartGhepTuyen[id]) window.cartGhepTuyen[id] = { bkId: id, bkName: name, routes: [] };
+        window.activeBkId = id; 
+        if (!window.cartGhepTuyen[id]) window.cartGhepTuyen[id] = { bkId: id, bkName: name, routes: [] };
       }
     }
   } else {
-    // KHI CLICK VÀO TUYẾN BÊN CỘT TRÁI
     const isMultiAssignAllowed = (type === 'WORK' || type === 'WARD');
 
     if (isMultiAssignAllowed) {
-      // ĐỐI VỚI RD ĐI LÀM & QUẬN/PHƯỜNG: Cho phép nhiều người BK cùng tích chọn
       if (window.activeBkId) {
         if (!window.cartGhepTuyen[window.activeBkId]) {
           window.cartGhepTuyen[window.activeBkId] = { bkId: window.activeBkId, bkName: '', routes: [] };
@@ -1224,13 +1188,11 @@ function chonRiderGhep(id, name, route, type, caFilter) {
         const idxInActive = activeCart.routes.findIndex(r => String(r.id) === String(id));
 
         if (idxInActive > -1) {
-          // Nếu người BK đang chọn đã có tuyến này -> Bấm vào sẽ gỡ khỏi giỏ của người đang chọn
           activeCart.routes.splice(idxInActive, 1);
           if (activeCart.routes.length === 0 && !window.isIsolationMode) {
             delete window.cartGhepTuyen[window.activeBkId];
           }
         } else {
-          // Nếu người BK đang chọn CHƯA có tuyến này -> Tích gán thêm cho người đang chọn!
           activeCart.routes.push({ id, name, route, type });
           const btnThucHien = document.getElementById('btnThucHienGhep');
           if (btnThucHien) {
@@ -1239,7 +1201,6 @@ function chonRiderGhep(id, name, route, type, caFilter) {
           }
         }
       } else {
-        // Nếu chưa chọn người BK bên phải -> Cho phép chọn tạm bên trái (hoặc gỡ nếu chỉ có 1 người đang giữ)
         const pIdx = window.pendingLeftRoutes.findIndex(r => String(r.id) === String(id));
         if (pIdx > -1) {
           window.pendingLeftRoutes.splice(pIdx, 1);
@@ -1248,7 +1209,6 @@ function chonRiderGhep(id, name, route, type, caFilter) {
         }
       }
     } else {
-      // ĐỐI VỚI RD OFF (Mỗi tuyến OFF chỉ 1 người gánh): Giữ nguyên logic cũ
       const assignedCart = window.timNguoiDangGanhTuyen(id);
       if (assignedCart) {
         const idx = assignedCart.routes.findIndex(r => String(r.id) === String(id));
@@ -1287,608 +1247,599 @@ function chonRiderGhep(id, name, route, type, caFilter) {
 
 // CẬP NHẬT CỘT PHẢI: HIỂN THỊ RÕ 1 NGƯỜI ĐANG GÁNH BAO NHIÊU TUYẾN & CHI TIẾT TUYẾN
 window.capNhatTrangThaiCotPhai = function(caFilter) {
-    let visibleCount = 0; 
-    document.querySelectorAll(`#tbody_${caFilter}_BK .tr-bk-item`).forEach(tr => {
-        const rdId = tr.id.replace('tr_bk_', '');
-        tr.classList.remove('table-success', 'table-warning');
-        const icon = tr.querySelector('.check-icon-bk');
-        const countBadgeEl = tr.querySelector('.bk-route-count-badge');
-        const detailEl = tr.querySelector('.bk-assigned-routes-detail');
-        
-        const isDangChon = String(rdId) === String(window.activeBkId);
-        const cartObj = window.cartGhepTuyen[rdId];
-        const routesInCart = (cartObj && cartObj.routes) ? cartObj.routes : [];
-        const lsObj = (window.lichSuGanGlobal || []).find(l => String(l.idBk) === String(rdId));
-        const routesInHistory = (lsObj && lsObj.routes) ? lsObj.routes : [];
-        const totalGanh = routesInCart.length + routesInHistory.length;
+  let visibleCount = 0; 
+  document.querySelectorAll(`#tbody_${caFilter}_BK .tr-bk-item`).forEach(tr => {
+    const rdId = tr.id.replace('tr_bk_', '');
+    tr.classList.remove('table-success', 'table-warning');
+    const icon = tr.querySelector('.check-icon-bk');
+    const countBadgeEl = tr.querySelector('.bk-route-count-badge');
+    const detailEl = tr.querySelector('.bk-assigned-routes-detail');
+    
+    const isDangChon = String(rdId) === String(window.activeBkId);
+    const cartObj = window.cartGhepTuyen[rdId];
+    const routesInCart = (cartObj && cartObj.routes) ? cartObj.routes : [];
+    const lsObj = (window.lichSuGanGlobal || []).find(l => String(l.idBk) === String(rdId));
+    const routesInHistory = (lsObj && lsObj.routes) ? lsObj.routes : [];
+    const totalGanh = routesInCart.length + routesInHistory.length;
 
-        if (countBadgeEl) {
-            if (totalGanh > 0) {
-                countBadgeEl.innerHTML = `<span class="badge bg-danger ms-1 shadow-sm">🔥 Gánh ${totalGanh} tuyến</span>`;
-            } else if (window.pendingLeftRoutes && window.pendingLeftRoutes.length > 0) {
-                countBadgeEl.innerHTML = `<span class="badge bg-warning text-dark ms-1">👈 Bấm để nhận ${window.pendingLeftRoutes.length} tuyến</span>`;
-            } else {
-                countBadgeEl.innerHTML = '';
-            }
-        }
-
-        if (detailEl) {
-            let detailHtml = '';
-            if (routesInCart.length > 0) {
-                const listStr = routesInCart.map(r => r.type === 'WARD' ? r.route : `${r.name} (${r.route})`).join('<br>• ');
-                detailHtml += `<div class="text-primary fw-bold" style="font-size:11px;">📌 Đang chọn gánh:<br>• ${listStr}</div>`;
-            }
-            if (routesInHistory.length > 0) {
-                detailHtml += `<div class="text-secondary fst-italic" style="font-size:11px;">🔒 Đã lưu: ${routesInHistory.join(', ')}</div>`;
-            }
-            detailEl.innerHTML = detailHtml;
-        }
-
-        if (window.isIsolationMode) {
-            if (isDangChon) tr.classList.remove('d-none');
-            else tr.classList.add('d-none');
-        } else {
-            if (window.loaiBackupHienTai === 'DELI' && !isDangChon && routesInCart.length > 0 && (!window.pendingLeftRoutes || window.pendingLeftRoutes.length === 0)) {
-                tr.classList.add('d-none');
-            } else {
-                tr.classList.remove('d-none');
-                visibleCount++; 
-            }
-        }
-
-        if (isDangChon) {
-            tr.classList.add('table-success');
-            if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-bk';
-        } else if (routesInCart.length > 0) {
-            if (icon) icon.className = 'bi bi-check2-all text-primary fs-5 check-icon-bk';
-        } else {
-            if (icon) icon.className = 'bi bi-circle text-muted fs-5 check-icon-bk';
-        }
-    });
-
-    if (!window.isIsolationMode) {
-        const countBadge = document.getElementById(`countBkReady_${caFilter}`);
-        if (countBadge) countBadge.innerText = `Khả dụng: ${visibleCount}`;
+    if (countBadgeEl) {
+      if (totalGanh > 0) {
+        countBadgeEl.innerHTML = `<span class="badge bg-danger ms-1 shadow-sm">🔥 Gánh ${totalGanh} tuyến</span>`;
+      } else if (window.pendingLeftRoutes && window.pendingLeftRoutes.length > 0) {
+        countBadgeEl.innerHTML = `<span class="badge bg-warning text-dark ms-1">👈 Bấm để nhận ${window.pendingLeftRoutes.length} tuyến</span>`;
+      } else {
+        countBadgeEl.innerHTML = '';
+      }
     }
-    const kw = document.getElementById(`searchRight_${caFilter}`)?.value || '';
-    if (kw !== '') {
-        if (typeof window.filterRightList === 'function') window.filterRightList(kw, caFilter);
+
+    if (detailEl) {
+      let detailHtml = '';
+      if (routesInCart.length > 0) {
+        const listStr = routesInCart.map(r => r.type === 'WARD' ? r.route : `${r.name} (${r.route})`).join('<br>• ');
+        detailHtml += `<div class="text-primary fw-bold" style="font-size:11px;">📌 Đang chọn gánh:<br>• ${listStr}</div>`;
+      }
+      if (routesInHistory.length > 0) {
+        detailHtml += `<div class="text-secondary fst-italic" style="font-size:11px;">🔒 Đã lưu: ${routesInHistory.join(', ')}</div>`;
+      }
+      detailEl.innerHTML = detailHtml;
     }
+
+    if (window.isIsolationMode) {
+      if (isDangChon) tr.classList.remove('d-none');
+      else tr.classList.add('d-none');
+    } else {
+      if (window.loaiBackupHienTai === 'DELI' && !isDangChon && routesInCart.length > 0 && (!window.pendingLeftRoutes || window.pendingLeftRoutes.length === 0)) {
+        tr.classList.add('d-none');
+      } else {
+        tr.classList.remove('d-none');
+        visibleCount++; 
+      }
+    }
+
+    if (isDangChon) {
+      tr.classList.add('table-success');
+      if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-bk';
+    } else if (routesInCart.length > 0) {
+      if (icon) icon.className = 'bi bi-check2-all text-primary fs-5 check-icon-bk';
+    } else {
+      if (icon) icon.className = 'bi bi-circle text-muted fs-5 check-icon-bk';
+    }
+  });
+
+  if (!window.isIsolationMode) {
+    const countBadge = document.getElementById(`countBkReady_${caFilter}`);
+    if (countBadge) countBadge.innerText = `Khả dụng: ${visibleCount}`;
+  }
+  const kw = document.getElementById(`searchRight_${caFilter}`)?.value || '';
+  if (kw !== '') {
+    if (typeof window.filterRightList === 'function') window.filterRightList(kw, caFilter);
+  }
 };
 
 // CẬP NHẬT CỘT TRÁI: RD ĐI LÀM & PHƯỜNG HIỆN LẠI Ô TRỐNG KHI CHỌN BK MỚI ĐỂ TÍCH THÊM NGƯỜI
 window.capNhatTrangThaiCotTrai = function(caFilter) {
-    const tuyenDaCoChu = [];
-    Object.values(window.cartGhepTuyen).forEach(cart => {
-        cart.routes.forEach(rt => tuyenDaCoChu.push(String(rt.id)));
-    });
+  const tuyenDaCoChu = [];
+  Object.values(window.cartGhepTuyen).forEach(cart => {
+    cart.routes.forEach(rt => tuyenDaCoChu.push(String(rt.id)));
+  });
 
-    let countCanBk = 0;
+  let countCanBk = 0;
 
-    if (!document.getElementById('cssBlinkingTick')) {
-        const style = document.createElement('style');
-        style.id = 'cssBlinkingTick';
-        style.innerHTML = `
-          @keyframes flashGreen { 0% { background-color: #d1e7dd; } 100% { background-color: transparent; } }
-          .flash-tick { animation: flashGreen 0.6s ease-out; }
-          .icon-pulse { transform: scale(1.3); transition: 0.2s ease; }
-        `;
-        document.head.appendChild(style);
+  if (!document.getElementById('cssBlinkingTick')) {
+    const style = document.createElement('style');
+    style.id = 'cssBlinkingTick';
+    style.innerHTML = `
+      @keyframes flashGreen { 0% { background-color: #d1e7dd; } 100% { background-color: transparent; } }
+      .flash-tick { animation: flashGreen 0.6s ease-out; }
+      .icon-pulse { transform: scale(1.3); transition: 0.2s ease; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.querySelectorAll(`#tbody_${caFilter}_LEFT tr`).forEach(tr => {
+    if (tr.hasAttribute('data-bs-toggle')) return; 
+
+    tr.classList.remove('table-danger', 'table-primary', 'table-secondary', 'table-warning', 'table-success', 'flash-tick');
+    const icon = tr.querySelector('.check-icon-left');
+    const assignedLbl = tr.querySelector('.assigned-to-label');
+    if (assignedLbl) assignedLbl.innerHTML = '';
+    if (icon) {
+      icon.className = tr.classList.contains(`tr-left-WARD-${caFilter}`) ? 'bi bi-square text-muted fs-5 check-icon-left' : 'bi bi-circle text-muted fs-5 check-icon-left';
+      icon.classList.remove('icon-pulse', 'text-success');
     }
 
-    document.querySelectorAll(`#tbody_${caFilter}_LEFT tr`).forEach(tr => {
-        if (tr.hasAttribute('data-bs-toggle')) return; 
+    let rtId = tr.id.replace('tr_left_', '');
 
-        tr.classList.remove('table-danger', 'table-primary', 'table-secondary', 'table-warning', 'table-success', 'flash-tick');
-        const icon = tr.querySelector('.check-icon-left');
-        const assignedLbl = tr.querySelector('.assigned-to-label');
-        if (assignedLbl) assignedLbl.innerHTML = '';
-        if (icon) {
-            icon.className = tr.classList.contains(`tr-left-WARD-${caFilter}`) ? 'bi bi-square text-muted fs-5 check-icon-left' : 'bi bi-circle text-muted fs-5 check-icon-left';
-            icon.classList.remove('icon-pulse', 'text-success');
-        }
+    if (tr.id && tr.id.startsWith('tr_left_') && tr.classList.contains(`tr-left-OFF-${caFilter}`)) {
+      if (!window.danhSachTuyenDaGanGlobal.includes(rtId) && !tuyenDaCoChu.includes(rtId)) {
+        countCanBk++;
+      }
+    }
 
-        let rtId = tr.id.replace('tr_left_', '');
+    const isPendingLeft = (window.pendingLeftRoutes || []).some(r => String(r.id) === String(rtId));
+    const allOwners = window.timDanhSachNguoiDangGanhTuyen(rtId);
+    const typeRoute = tr.classList.contains(`tr-left-OFF-${caFilter}`) ? 'OFF' : (tr.classList.contains(`tr-left-WORK-${caFilter}`) ? 'WORK' : 'WARD');
 
-        if (tr.id && tr.id.startsWith('tr_left_') && tr.classList.contains(`tr-left-OFF-${caFilter}`)) {
-            if (!window.danhSachTuyenDaGanGlobal.includes(rtId) && !tuyenDaCoChu.includes(rtId)) {
-                countCanBk++;
-            }
-        }
+    if (isPendingLeft) {
+      tr.classList.remove('temp-hidden', 'd-none');
+      tr.classList.add('table-warning');
+      if (icon) icon.className = 'bi bi-check-square-fill text-warning fs-5 check-icon-left';
+      if (assignedLbl) {
+        assignedLbl.innerHTML = `<span class="badge bg-warning text-dark"><i class="bi bi-hand-index-thumb me-1"></i>Đang chọn chờ gán</span>`;
+      }
+    } else if (allOwners.length > 0) {
+      const isCurrentActiveOwner = window.activeBkId && allOwners.some(c => String(c.bkId) === String(window.activeBkId));
+      const ownerNames = allOwners.map(c => c.bkName).join(', ');
 
-        const isPendingLeft = (window.pendingLeftRoutes || []).some(r => String(r.id) === String(rtId));
-        const allOwners = window.timDanhSachNguoiDangGanhTuyen(rtId);
-        const typeRoute = tr.classList.contains(`tr-left-OFF-${caFilter}`) ? 'OFF' : (tr.classList.contains(`tr-left-WORK-${caFilter}`) ? 'WORK' : 'WARD');
-
-        if (isPendingLeft) {
-            tr.classList.remove('temp-hidden', 'd-none');
-            tr.classList.add('table-warning');
-            if (icon) icon.className = 'bi bi-check-square-fill text-warning fs-5 check-icon-left';
-            if (assignedLbl) {
-                assignedLbl.innerHTML = `<span class="badge bg-warning text-dark"><i class="bi bi-hand-index-thumb me-1"></i>Đang chọn chờ gán</span>`;
-            }
-        } else if (allOwners.length > 0) {
-            const isCurrentActiveOwner = window.activeBkId && allOwners.some(c => String(c.bkId) === String(window.activeBkId));
-            const ownerNames = allOwners.map(c => c.bkName).join(', ');
-
-            if (typeRoute === 'OFF') {
-                // ĐỐI VỚI RD OFF: Ẩn khi đã gán, chỉ hiện lại khi bấm Sửa đúng người đang gánh
-                if (isCurrentActiveOwner) {
-                    tr.classList.remove('temp-hidden', 'd-none');
-                    tr.classList.add('table-success');
-                    if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-left';
-                    if (assignedLbl) assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đang gán cho: ${ownerNames} (Bấm để gỡ)</span>`;
-                } else {
-                    tr.classList.add('d-none', 'temp-hidden');
-                }
-            } else {
-                // ĐỐI VỚI RD ĐI LÀM & QUẬN/PHƯỜNG:
-                tr.classList.remove('temp-hidden', 'd-none');
-                if (isCurrentActiveOwner) {
-                    // Nếu chính BK đang chọn đã tích tuyến này -> Hiện dấu Tick Xanh
-                    tr.classList.add('table-success', 'flash-tick');
-                    if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-left icon-pulse';
-                    if (assignedLbl) {
-                        assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đã gán (${allOwners.length} BK): ${ownerNames} (Bấm để gỡ)</span>`;
-                    }
-                } else {
-                    // Nếu chọn sang BK mới (hoặc chưa chọn BK nào) -> Hiện lại Ô TRỐNG để tích thêm người!
-                    if (icon) {
-                        icon.className = typeRoute === 'WARD' 
-                            ? 'bi bi-square text-primary fs-5 check-icon-left' 
-                            : 'bi bi-circle text-primary fs-5 check-icon-left';
-                    }
-                    if (assignedLbl) {
-                        assignedLbl.innerHTML = `<span class="badge bg-info text-dark border border-info shadow-sm mt-1"><i class="bi bi-people-fill me-1"></i>Đã có ${allOwners.length} BK: ${ownerNames} (Bấm để gán thêm)</span>`;
-                    }
-                }
-            }
+      if (typeRoute === 'OFF') {
+        if (isCurrentActiveOwner) {
+          tr.classList.remove('temp-hidden', 'd-none');
+          tr.classList.add('table-success');
+          if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-left';
+          if (assignedLbl) assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đang gán cho: ${ownerNames} (Bấm để gỡ)</span>`;
         } else {
-            tr.classList.remove('temp-hidden');
+          tr.classList.add('d-none', 'temp-hidden');
         }
-    });
-
-    const container = document.getElementById(`vungBang${caFilter === 'COT1' ? 'Cot1' : 'Cot2'}`);
-    if (container) {
-        const redBadge = container.closest('.accordion-item')?.querySelector('.accordion-button .badge');
-        if (redBadge) {
-            redBadge.innerText = `${countCanBk} Cần BK`;
-            redBadge.className = countCanBk === 0 ? 'badge bg-secondary ms-auto me-3 px-3 shadow-sm rounded-pill' : 'badge bg-danger ms-auto me-3 px-3 shadow-sm rounded-pill';
+      } else {
+        tr.classList.remove('temp-hidden', 'd-none');
+        if (isCurrentActiveOwner) {
+          tr.classList.add('table-success', 'flash-tick');
+          if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-left icon-pulse';
+          if (assignedLbl) {
+            assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đã gán (${allOwners.length} BK): ${ownerNames} (Bấm để gỡ)</span>`;
+          }
+        } else {
+          if (icon) {
+            icon.className = typeRoute === 'WARD' 
+              ? 'bi bi-square text-primary fs-5 check-icon-left' 
+              : 'bi bi-circle text-primary fs-5 check-icon-left';
+          }
+          if (assignedLbl) {
+            assignedLbl.innerHTML = `<span class="badge bg-info text-dark border border-info shadow-sm mt-1"><i class="bi bi-people-fill me-1"></i>Đã có ${allOwners.length} BK: ${ownerNames} (Bấm để gán thêm)</span>`;
+          }
         }
-    }
-
-    const searchInput = document.getElementById(`searchLeft_${caFilter}`);
-    if (searchInput && searchInput.value.trim() !== '') {
-        window.filterLeftList(searchInput.value, caFilter);
+      }
     } else {
-        let activeType = 'OFF';
-        if (window.loaiBackupHienTai !== 'PICK') {
-            if (document.getElementById(`btnWork_${caFilter}`)?.checked) activeType = 'WORK';
-            else if (document.getElementById(`btnWard_${caFilter}`)?.checked) activeType = 'WARD';
-        }
-        window.toggleLeftList(activeType, caFilter);
+      tr.classList.remove('temp-hidden');
     }
+  });
+
+  const container = document.getElementById(`vungBang${caFilter === 'COT1' ? 'Cot1' : 'Cot2'}`);
+  if (container) {
+    const redBadge = container.closest('.accordion-item')?.querySelector('.accordion-button .badge');
+    if (redBadge) {
+      redBadge.innerText = `${countCanBk} Cần BK`;
+      redBadge.className = countCanBk === 0 ? 'badge bg-secondary ms-auto me-3 px-3 shadow-sm rounded-pill' : 'badge bg-danger ms-auto me-3 px-3 shadow-sm rounded-pill';
+    }
+  }
+
+  const searchInput = document.getElementById(`searchLeft_${caFilter}`);
+  if (searchInput && searchInput.value.trim() !== '') {
+    window.filterLeftList(searchInput.value, caFilter);
+  } else {
+    let activeType = 'OFF';
+    if (window.loaiBackupHienTai !== 'PICK') {
+      if (document.getElementById(`btnWork_${caFilter}`)?.checked) activeType = 'WORK';
+      else if (document.getElementById(`btnWard_${caFilter}`)?.checked) activeType = 'WARD';
+    }
+    window.toggleLeftList(activeType, caFilter);
+  }
 };
 
 window.xoaKhoiGioGhep = function(bkId, e) {
-    if (e) e.stopPropagation();
-    delete window.cartGhepTuyen[bkId];
-    if (String(window.activeBkId) === String(bkId)) window.activeBkId = null;
-    ['COT1', 'COT2'].forEach(ca => {
-        window.capNhatTrangThaiCotPhai(ca);
-        window.capNhatTrangThaiCotTrai(ca);
-    });
-    capNhatGiaoDienGhepCap();
+  if (e) e.stopPropagation();
+  delete window.cartGhepTuyen[bkId];
+  if (String(window.activeBkId) === String(bkId)) window.activeBkId = null;
+  luuSessionGioGanNgam();
+  ['COT1', 'COT2'].forEach(ca => {
+    window.capNhatTrangThaiCotPhai(ca);
+    window.capNhatTrangThaiCotTrai(ca);
+  });
+  capNhatGiaoDienGhepCap();
 };
 
 window.suaLichSuGhepTuyen = function(bkId) {
-    if (!window.lichSuGanGlobal) return;
-    const lsIndex = window.lichSuGanGlobal.findIndex(l => String(l.idBk) === String(bkId));
-    if (lsIndex === -1) return;
-    const lsItem = window.lichSuGanGlobal[lsIndex];
-    window.lichSuGanGlobal.splice(lsIndex, 1);
-    
-    if (lsItem.originalIds) {
-        lsItem.originalIds.forEach(idGoc => {
-            if (idGoc !== 'TUYẾN TỔNG') {
-                window.danhSachTuyenDaGanGlobal = window.danhSachTuyenDaGanGlobal.filter(id => String(id) !== String(idGoc));
-                const tr = document.getElementById(`tr_left_${idGoc}`);
-                if (tr) tr.classList.remove('locked-route', 'd-none');
-            }
-        });
-    }
-    
-    const restoredRoutes = lsItem.routes.map((rName, idx) => {
-        let rType = 'OFF';
-        if (window.loaiBackupHienTai === 'DELI') {
-            if (rName.includes('Phú Nhuận') || rName.includes('Tân Bình') || rName.includes('Thủ Đức')) {
-                if (rName.includes('P.')) rType = 'WARD'; 
-            }
-        }
-        const idGoc = (lsItem.originalIds && lsItem.originalIds[idx]) ? lsItem.originalIds[idx] : rName;
-        const foundRd = (typeof ridersData !== 'undefined') ? ridersData.find(r => String(r.id) === String(idGoc)) : null;
-        return { 
-            id: idGoc, 
-            name: foundRd ? foundRd.name : rName, 
-            route: rName, 
-            type: rType 
-        };
+  if (!window.lichSuGanGlobal) return;
+  const lsIndex = window.lichSuGanGlobal.findIndex(l => String(l.idBk) === String(bkId));
+  if (lsIndex === -1) return;
+  const lsItem = window.lichSuGanGlobal[lsIndex];
+  window.lichSuGanGlobal.splice(lsIndex, 1);
+  
+  if (lsItem.originalIds) {
+    lsItem.originalIds.forEach(idGoc => {
+      if (idGoc !== 'TUYẾN TỔNG') {
+        window.danhSachTuyenDaGanGlobal = window.danhSachTuyenDaGanGlobal.filter(id => String(id) !== String(idGoc));
+        const tr = document.getElementById(`tr_left_${idGoc}`);
+        if (tr) tr.classList.remove('locked-route', 'd-none');
+      }
     });
+  }
+  
+  const restoredRoutes = lsItem.routes.map((rName, idx) => {
+    let rType = 'OFF';
+    if (window.loaiBackupHienTai === 'DELI') {
+      if (rName.includes('Phú Nhuận') || rName.includes('Tân Bình') || rName.includes('Thủ Đức') || rName.includes('Quận') || rName.includes('Bình Thạnh')) {
+        if (rName.includes('P.')) rType = 'WARD'; 
+      }
+    }
+    const idGoc = (lsItem.originalIds && lsItem.originalIds[idx]) ? lsItem.originalIds[idx] : rName;
+    const foundRd = (typeof ridersData !== 'undefined') ? ridersData.find(r => String(r.id) === String(idGoc)) : null;
+    return { 
+      id: idGoc, 
+      name: foundRd ? foundRd.name : rName, 
+      route: rName, 
+      type: rType 
+    };
+  });
 
-    window.cartGhepTuyen[bkId] = { bkId: lsItem.idBk, bkName: lsItem.tenBk, routes: restoredRoutes };
-    window.editCartItem(bkId);
+  window.cartGhepTuyen[bkId] = { bkId: lsItem.idBk, bkName: lsItem.tenBk, routes: restoredRoutes };
+  window.editCartItem(bkId);
 };
 
 window.editCartItem = function(bkId) {
-    window.activeBkId = bkId;
-    window.isIsolationMode = true; 
-    ['COT1', 'COT2'].forEach(ca => {
-        const vung = document.getElementById(`vungExitIsolation_${ca}`);
-        if (vung) vung.innerHTML = `<button class="btn btn-sm btn-danger py-0 px-2 shadow-sm fw-bold" onclick="window.exitIsolationMode(event)"><i class="bi bi-check2-circle me-1"></i>Hoàn tất sửa</button>`;
-    });
-    window.capNhatTrangThaiCotPhai('COT1');
-    window.capNhatTrangThaiCotPhai('COT2');
-    window.capNhatTrangThaiCotTrai('COT1');
-    window.capNhatTrangThaiCotTrai('COT2');
-    capNhatGiaoDienGhepCap();
+  window.activeBkId = bkId;
+  window.isIsolationMode = true; 
+  ['COT1', 'COT2'].forEach(ca => {
+    const vung = document.getElementById(`vungExitIsolation_${ca}`);
+    if (vung) vung.innerHTML = `<button class="btn btn-sm btn-danger py-0 px-2 shadow-sm fw-bold" onclick="window.exitIsolationMode(event)"><i class="bi bi-check2-circle me-1"></i>Hoàn tất sửa</button>`;
+  });
+  window.capNhatTrangThaiCotPhai('COT1');
+  window.capNhatTrangThaiCotPhai('COT2');
+  window.capNhatTrangThaiCotTrai('COT1');
+  window.capNhatTrangThaiCotTrai('COT2');
+  capNhatGiaoDienGhepCap();
 };
 
 window.exitIsolationMode = async function(e) {
-    if (e) e.stopPropagation();
-    
-    let nguoiThaoTac = typeof layTenNguoiThaoTac === 'function' ? layTenNguoiThaoTac() : 'FTE / Admin';
-    const ngayXem = document.getElementById('selectNgayTongQuanOff')?.value || '';
-    const bkIdsToDelete = [];
-    const backupMatchesHuy = [];
+  if (e) e.stopPropagation();
+  
+  let nguoiThaoTac = typeof layTenNguoiThaoTac === 'function' ? layTenNguoiThaoTac() : 'FTE / Admin';
+  const ngayXem = document.getElementById('selectNgayTongQuanOff')?.value || '';
+  const bkIdsToDelete = [];
+  const backupMatchesHuy = [];
 
-    Object.keys(window.cartGhepTuyen).forEach(bkId => {
-        if (window.cartGhepTuyen[bkId].routes.length === 0) {
-            bkIdsToDelete.push(bkId);
-            backupMatchesHuy.push({
-                ngay: ngayXem, idGoc: 'HỦY GÁN', tenGoc: 'Đã xóa khỏi danh sách',
-                tuyenGan: 'HỦY GÁN', idBk: bkId, tenBk: window.cartGhepTuyen[bkId].bkName, nguoiGan: nguoiThaoTac
-            });
-        }
-    });
-
-    if (backupMatchesHuy.length > 0) {
-        try {
-            await fetch(`${API_BASE}/luu-backup-ghep`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ backupMatches: backupMatchesHuy, loai: window.loaiBackupHienTai })
-            });
-        } catch(error) {}
+  Object.keys(window.cartGhepTuyen).forEach(bkId => {
+    if (window.cartGhepTuyen[bkId].routes.length === 0) {
+      bkIdsToDelete.push(bkId);
+      backupMatchesHuy.push({
+        ngay: ngayXem, idGoc: 'HỦY GÁN', tenGoc: 'Đã xóa khỏi danh sách',
+        tuyenGan: 'HỦY GÁN', idBk: bkId, tenBk: window.cartGhepTuyen[bkId].bkName, nguoiGan: nguoiThaoTac
+      });
     }
+  });
 
-    bkIdsToDelete.forEach(id => delete window.cartGhepTuyen[id]);
+  if (backupMatchesHuy.length > 0) {
+    try {
+      await fetch(`${API_BASE}/luu-backup-ghep`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ backupMatches: backupMatchesHuy, loai: window.loaiBackupHienTai })
+      });
+    } catch(error) {}
+  }
 
-    window.isIsolationMode = false;
-    window.activeBkId = null; 
+  bkIdsToDelete.forEach(id => delete window.cartGhepTuyen[id]);
+
+  window.isIsolationMode = false;
+  window.activeBkId = null; 
+  luuSessionGioGanNgam();
+  
+  ['COT1', 'COT2'].forEach(ca => {
+    const vung = document.getElementById(`vungExitIsolation_${ca}`);
+    if (vung) vung.innerHTML = '';
     
-    ['COT1', 'COT2'].forEach(ca => {
-        const vung = document.getElementById(`vungExitIsolation_${ca}`);
-        if (vung) vung.innerHTML = '';
-        
-        let activeType = 'OFF';
-        if (window.loaiBackupHienTai !== 'PICK') {
-            if (document.getElementById(`btnWork_${ca}`)?.checked) activeType = 'WORK';
-            else if (document.getElementById(`btnWard_${ca}`)?.checked) activeType = 'WARD';
-        }
-        window.toggleLeftList(activeType, ca);
-    });
-    
-    window.capNhatTrangThaiCotPhai('COT1');
-    window.capNhatTrangThaiCotPhai('COT2');
-    window.capNhatTrangThaiCotTrai('COT1'); 
-    window.capNhatTrangThaiCotTrai('COT2');
-    capNhatGiaoDienGhepCap();
+    let activeType = 'OFF';
+    if (window.loaiBackupHienTai !== 'PICK') {
+      if (document.getElementById(`btnWork_${ca}`)?.checked) activeType = 'WORK';
+      else if (document.getElementById(`btnWard_${ca}`)?.checked) activeType = 'WARD';
+    }
+    window.toggleLeftList(activeType, ca);
+  });
+  
+  window.capNhatTrangThaiCotPhai('COT1');
+  window.capNhatTrangThaiCotPhai('COT2');
+  window.capNhatTrangThaiCotTrai('COT1'); 
+  window.capNhatTrangThaiCotTrai('COT2');
+  capNhatGiaoDienGhepCap();
 };
 
 function capNhatGiaoDienGhepCap() {
-    const vungGhep = document.getElementById('vungGhepCapBackup');
-    if (!vungGhep) return;
+  const vungGhep = document.getElementById('vungGhepCapBackup');
+  if (!vungGhep) return;
 
-    let hasMatches = false;
-    let cartHtml = `<div class="d-flex flex-wrap gap-2 align-items-center" style="flex:1;">
-       <span class="fw-bold text-dark me-1"><i class="bi bi-cart-check-fill text-warning me-1 fs-5"></i>Giỏ Gán (${window.loaiBackupHienTai}):</span>`;
+  let hasMatches = false;
+  let cartHtml = `<div class="d-flex flex-wrap gap-2 align-items-center" style="flex:1;">
+     <span class="fw-bold text-dark me-1"><i class="bi bi-cart-check-fill text-warning me-1 fs-5"></i>Giỏ Gán (${window.loaiBackupHienTai}):</span>`;
 
-    // Hiển thị các tuyến đang chọn tạm bên trái (nếu chọn trái trước)
-    if (window.pendingLeftRoutes && window.pendingLeftRoutes.length > 0) {
-        const pNames = window.pendingLeftRoutes.map(r => `${r.name} (${r.route})`).join(', ');
-        cartHtml += `
-          <div class="badge bg-warning text-dark border border-dark p-2 d-flex align-items-center gap-2 shadow-sm" style="font-size:12px;">
-             <span><i class="bi bi-hand-index-thumb-fill me-1"></i>Đang chọn ${window.pendingLeftRoutes.length} tuyến: ${pNames} <i class="bi bi-arrow-right mx-1"></i> <b>Hãy bấm chọn 1 Rider bên phải để gán!</b></span>
-          </div>`;
+  if (window.pendingLeftRoutes && window.pendingLeftRoutes.length > 0) {
+    const pNames = window.pendingLeftRoutes.map(r => `${r.name} (${r.route})`).join(', ');
+    cartHtml += `
+      <div class="badge bg-warning text-dark border border-dark p-2 d-flex align-items-center gap-2 shadow-sm" style="font-size:12px;">
+         <span><i class="bi bi-hand-index-thumb-fill me-1"></i>Đang chọn ${window.pendingLeftRoutes.length} tuyến: ${pNames} <i class="bi bi-arrow-right mx-1"></i> <b>Hãy bấm chọn 1 Rider bên phải để gán!</b></span>
+      </div>`;
+  }
+  
+  Object.values(window.cartGhepTuyen).forEach(cartItem => {
+    if (cartItem.routes.length > 0) {
+      hasMatches = true;
+      const isActive = (String(cartItem.bkId) === String(window.activeBkId));
+      const badgeBg = isActive ? 'bg-primary' : 'bg-success';
+      const borderCls = isActive ? 'border border-2 border-dark shadow' : 'shadow-sm';
+      
+      const routeDetails = cartItem.routes.map(r => r.type === 'WARD' ? r.route : `${r.name} [${r.route}]`).join(' | ');
+      const shortRoutes = routeDetails.length > 55 ? routeDetails.substring(0, 55) + '...' : routeDetails;
+
+      cartHtml += `
+        <div class="badge ${badgeBg} ${borderCls} p-2 d-flex align-items-center gap-2" style="font-size:12px; cursor:pointer; transition: 0.2s;" onclick="window.editCartItem('${cartItem.bkId}')" title="Người gánh: ${cartItem.bkName}\nSố tuyến: ${cartItem.routes.length}\nChi tiết: ${routeDetails}">
+           <span><b>${cartItem.bkName}</b> <span class="badge bg-warning text-dark mx-1">Gánh ${cartItem.routes.length} tuyến</span> (${shortRoutes})</span>
+           <i class="bi bi-pencil-square ms-1 fs-6 ${isActive ? 'text-warning' : 'text-white'}" title="Sửa ghép tuyến này"></i>
+           <i class="bi bi-x-circle-fill ms-1 fs-6 text-light" onclick="window.xoaKhoiGioGhep('${cartItem.bkId}', event)" title="Xóa khỏi giỏ"></i>
+        </div>`;
     }
-    
-    Object.values(window.cartGhepTuyen).forEach(cartItem => {
-        if (cartItem.routes.length > 0) {
-            hasMatches = true;
-            const isActive = (String(cartItem.bkId) === String(window.activeBkId));
-            const badgeBg = isActive ? 'bg-primary' : 'bg-success';
-            const borderCls = isActive ? 'border border-2 border-dark shadow' : 'shadow-sm';
-            
-            const routeDetails = cartItem.routes.map(r => r.type === 'WARD' ? r.route : `${r.name} [${r.route}]`).join(' | ');
-            const shortRoutes = routeDetails.length > 55 ? routeDetails.substring(0, 55) + '...' : routeDetails;
+  });
 
-            cartHtml += `
-              <div class="badge ${badgeBg} ${borderCls} p-2 d-flex align-items-center gap-2" style="font-size:12px; cursor:pointer; transition: 0.2s;" onclick="window.editCartItem('${cartItem.bkId}')" title="Người gánh: ${cartItem.bkName}\nSố tuyến: ${cartItem.routes.length}\nChi tiết: ${routeDetails}">
-                 <span><b>${cartItem.bkName}</b> <span class="badge bg-warning text-dark mx-1">Gánh ${cartItem.routes.length} tuyến</span> (${shortRoutes})</span>
-                 <i class="bi bi-pencil-square ms-1 fs-6 ${isActive ? 'text-warning' : 'text-white'}" title="Sửa ghép tuyến này"></i>
-                 <i class="bi bi-x-circle-fill ms-1 fs-6 text-light" onclick="window.xoaKhoiGioGhep('${cartItem.bkId}', event)" title="Xóa khỏi giỏ"></i>
-              </div>`;
-        }
+  if (window.lichSuGanGlobal && window.lichSuGanGlobal.length > 0) {
+    window.lichSuGanGlobal.forEach(ls => {
+      const routeStr = ls.routes.join(', ');
+      const shortRoutes = routeStr.length > 45 ? routeStr.substring(0, 45) + '...' : routeStr;
+      cartHtml += `
+        <div class="badge bg-secondary border border-secondary p-2 d-flex align-items-center gap-2 shadow-sm opacity-75" style="font-size:11px; cursor:pointer;" title="Đã lưu trên Sheet ${window.loaiBackupHienTai}\nTuyến gán: ${routeStr}\nThao tác bởi: ${ls.nguoiGan}" onclick="window.suaLichSuGhepTuyen('${ls.idBk}')">
+           <span><i class="bi bi-lock-fill text-warning me-1"></i>${ls.tenBk} <span class="badge bg-dark mx-1">${ls.routes.length} Tuyến</span> (${shortRoutes})</span>
+           <span class="ms-1 fst-italic fw-normal text-light border-start border-light ps-2">👤 ${ls.nguoiGan}</span>
+           <i class="bi bi-pencil-square ms-1 fs-6 text-light" title="Bấm để sửa hoặc gán thêm tuyến"></i>
+        </div>`;
     });
+  }
 
-    if (window.lichSuGanGlobal && window.lichSuGanGlobal.length > 0) {
-        window.lichSuGanGlobal.forEach(ls => {
-            const routeStr = ls.routes.join(', ');
-            const shortRoutes = routeStr.length > 45 ? routeStr.substring(0, 45) + '...' : routeStr;
-            cartHtml += `
-              <div class="badge bg-secondary border border-secondary p-2 d-flex align-items-center gap-2 shadow-sm opacity-75" style="font-size:11px; cursor:pointer;" title="Đã lưu trên Sheet ${window.loaiBackupHienTai}\nTuyến gán: ${routeStr}\nThao tác bởi: ${ls.nguoiGan}" onclick="window.suaLichSuGhepTuyen('${ls.idBk}')">
-                 <span><i class="bi bi-lock-fill text-warning me-1"></i>${ls.tenBk} <span class="badge bg-dark mx-1">${ls.routes.length} Tuyến</span> (${shortRoutes})</span>
-                 <span class="ms-1 fst-italic fw-normal text-light border-start border-light ps-2">👤 ${ls.nguoiGan}</span>
-                 <i class="bi bi-pencil-square ms-1 fs-6 text-light" title="Bấm để sửa hoặc gán thêm tuyến"></i>
-              </div>`;
-        });
-    }
-
-    if (!hasMatches && (!window.pendingLeftRoutes || window.pendingLeftRoutes.length === 0) && (!window.lichSuGanGlobal || window.lichSuGanGlobal.length === 0)) {
-        cartHtml += `<span class="text-muted fst-italic ms-2">Chưa có tuyến nào được ghép... (Bạn có thể chọn bên trái hoặc bên phải trước đều được)</span>`;
-    }
-    
-    cartHtml += `</div>
-       <button class="btn btn-primary fw-bold px-4 py-2 shadow ms-3" id="btnThucHienGhep" onclick="thucHienGhepBackup()" ${hasMatches ? '' : 'disabled'}>
-         <i class="bi bi-cloud-arrow-up-fill me-2"></i>XÁC NHẬN TẤT CẢ
-       </button>`;
-    
-    vungGhep.innerHTML = cartHtml;
+  if (!hasMatches && (!window.pendingLeftRoutes || window.pendingLeftRoutes.length === 0) && (!window.lichSuGanGlobal || window.lichSuGanGlobal.length === 0)) {
+    cartHtml += `<span class="text-muted fst-italic ms-2">Chưa có tuyến nào được ghép... (Bạn có thể chọn bên trái hoặc bên phải trước đều được)</span>`;
+  }
+  
+  cartHtml += `</div>
+     <button class="btn btn-primary fw-bold px-4 py-2 shadow ms-3" id="btnThucHienGhep" onclick="thucHienGhepBackup()" ${hasMatches ? '' : 'disabled'}>
+       <i class="bi bi-cloud-arrow-up-fill me-2"></i>XÁC NHẬN TẤT CẢ
+     </button>`;
+  
+  vungGhep.innerHTML = cartHtml;
 }
 
 // KHI BẤM "XÁC NHẬN TẤT CẢ" -> HIỂN THỊ BẢNG XÁC NHẬN LẠI RÕ RÀNG TRƯỚC KHI LƯU
 function thucHienGhepBackup() {
-    const activeCarts = Object.values(window.cartGhepTuyen).filter(c => c.routes && c.routes.length > 0);
-    if (activeCarts.length === 0) {
-        alert("Chưa có tuyến nào trong giỏ để xác nhận!");
-        return;
-    }
+  const activeCarts = Object.values(window.cartGhepTuyen).filter(c => c.routes && c.routes.length > 0);
+  if (activeCarts.length === 0) {
+    alert("Chưa có tuyến nào trong giỏ để xác nhận!");
+    return;
+  }
 
-    // Tự động tạo Modal Xác Nhận nếu chưa có trong DOM
-    let modalEl = document.getElementById('modalConfirmGhepBackup');
-    if (!modalEl) {
-        const div = document.createElement('div');
-        div.innerHTML = `
-          <div class="modal fade" id="modalConfirmGhepBackup" tabindex="-1" style="z-index: 1080; background: rgba(0,0,0,0.5);">
-            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-              <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-primary text-white py-2">
-                  <h6 class="modal-title fw-bold mb-0" id="titleConfirmGhepBackup">
-                    <i class="bi bi-clipboard2-check-fill me-1"></i>XÁC NHẬN LẠI DANH SÁCH GÁN TUYẾN
-                  </h6>
-                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-3 bg-light" id="bodyConfirmGhepBackup"></div>
-                <div class="modal-footer py-2 bg-white d-flex justify-content-between">
-                  <button type="button" class="btn btn-secondary btn-sm px-3 fw-bold" data-bs-dismiss="modal">
-                    <i class="bi bi-arrow-left me-1"></i>Quay lại chỉnh sửa
-                  </button>
-                  <button type="button" class="btn btn-success btn-sm px-4 fw-bold shadow-sm" id="btnChotLuuBackupSheet" onclick="window.chotLuuGhepBackupLenSheet()">
-                    <i class="bi bi-check-circle-fill me-1"></i>Xác nhận & Đẩy lên Sheet
-                  </button>
-                </div>
-              </div>
+  let modalEl = document.getElementById('modalConfirmGhepBackup');
+  if (!modalEl) {
+    const div = document.createElement('div');
+    div.innerHTML = `
+      <div class="modal fade" id="modalConfirmGhepBackup" tabindex="-1" style="z-index: 1080; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white py-2">
+              <h6 class="modal-title fw-bold mb-0" id="titleConfirmGhepBackup">
+                <i class="bi bi-clipboard2-check-fill me-1"></i>XÁC NHẬN LẠI DANH SÁCH GÁN TUYẾN
+              </h6>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-          </div>`;
-        document.body.appendChild(div.firstElementChild);
-        modalEl = document.getElementById('modalConfirmGhepBackup');
-    }
+            <div class="modal-body p-3 bg-light" id="bodyConfirmGhepBackup"></div>
+            <div class="modal-footer py-2 bg-white d-flex justify-content-between">
+              <button type="button" class="btn btn-secondary btn-sm px-3 fw-bold" data-bs-dismiss="modal">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại chỉnh sửa
+              </button>
+              <button type="button" class="btn btn-success btn-sm px-4 fw-bold shadow-sm" id="btnChotLuuBackupSheet" onclick="window.chotLuuGhepBackupLenSheet()">
+                <i class="bi bi-check-circle-fill me-1"></i>Xác nhận & Đẩy lên Sheet
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(div.firstElementChild);
+    modalEl = document.getElementById('modalConfirmGhepBackup');
+  }
 
-    const ngayXem = document.getElementById('selectNgayTongQuanOff')?.value || '';
-    const loai = window.loaiBackupHienTai;
-    let totalRoutes = 0;
+  const ngayXem = document.getElementById('selectNgayTongQuanOff')?.value || '';
+  const loai = window.loaiBackupHienTai;
+  let totalRoutes = 0;
 
-    // Bảng 1: Thống kê 1 người gánh bao nhiêu tuyến
-    let htmlBangNguoiGanh = `
-      <div class="fw-bold text-primary mb-2" style="font-size:13px;">
-        <i class="bi bi-person-badge-fill me-1"></i>1. TỔNG HỢP THEO NGƯỜI GÁNH (1 NGƯỜI GÁNH BAO NHIÊU TUYẾN):
-      </div>
-      <div class="table-responsive bg-white rounded shadow-sm border mb-3">
-        <table class="table table-sm table-bordered align-middle mb-0" style="font-size:12.5px;">
-          <thead class="table-primary text-center">
-            <tr>
-              <th style="width: 45px;">STT</th>
-              <th style="min-width: 180px;">Người Đi Gánh (Backup)</th>
-              <th style="width: 120px;">Số Tuyến Gánh</th>
-              <th class="text-start">Chi Tiết Các Tuyến Đảm Nhận</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-    // Bảng 2: Chi tiết tuyến nào gán cho ai
-    let htmlBangChiTietTuyen = `
-      <div class="fw-bold text-danger mb-2" style="font-size:13px;">
-        <i class="bi bi-signpost-split-fill me-1"></i>2. CHI TIẾT TUYẾN NÀO GÁN CHO AI:
-      </div>
-      <div class="table-responsive bg-white rounded shadow-sm border">
-        <table class="table table-sm table-bordered align-middle mb-0" style="font-size:12.5px;">
-          <thead class="table-danger text-center">
-            <tr>
-              <th style="width: 45px;">STT</th>
-              <th>Rider Cần BK (OFF)</th>
-              <th>Tuyến Cần Gánh (${loai})</th>
-              <th><i class="bi bi-arrow-right"></i> Gán Cho Người Gánh</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-    let sttTuyen = 1;
-    activeCarts.forEach((cart, idx) => {
-        totalRoutes += cart.routes.length;
-        const danhSachTuyenStr = cart.routes.map((rt, i) => {
-            const label = rt.type === 'WARD' ? `<b>${rt.route}</b>` : `<b>${rt.name}</b> (${rt.id}) — <span class="text-danger">${rt.route}</span>`;
-            return `${i + 1}. ${label}`;
-        }).join('<br>');
-
-        htmlBangNguoiGanh += `
+  let htmlBangNguoiGanh = `
+    <div class="fw-bold text-primary mb-2" style="font-size:13px;">
+      <i class="bi bi-person-badge-fill me-1"></i>1. TỔNG HỢP THEO NGƯỜI GÁNH (1 NGƯỜI GÁNH BAO NHIÊU TUYẾN):
+    </div>
+    <div class="table-responsive bg-white rounded shadow-sm border mb-3">
+      <table class="table table-sm table-bordered align-middle mb-0" style="font-size:12.5px;">
+        <thead class="table-primary text-center">
           <tr>
-            <td class="text-center text-muted">${idx + 1}</td>
-            <td class="fw-bold text-success">${cart.bkName}<br><span class="small text-muted font-monospace">ID: ${cart.bkId}</span></td>
-            <td class="text-center"><span class="badge bg-danger fs-6 px-3 py-1">${cart.routes.length} tuyến</span></td>
-            <td class="text-start py-2">${danhSachTuyenStr}</td>
-          </tr>`;
+            <th style="width: 45px;">STT</th>
+            <th style="min-width: 180px;">Người Đi Gánh (Backup)</th>
+            <th style="width: 120px;">Số Tuyến Gánh</th>
+            <th class="text-start">Chi Tiết Các Tuyến Đảm Nhận</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
-        cart.routes.forEach(rt => {
-            htmlBangChiTietTuyen += `
-              <tr>
-                <td class="text-center text-muted">${sttTuyen++}</td>
-                <td class="fw-bold text-dark">${rt.type === 'WARD' ? 'TUYẾN TỔNG' : `${rt.name} <span class="text-muted font-monospace">(${rt.id})</span>`}</td>
-                <td class="fw-semibold text-danger">${rt.route}</td>
-                <td class="fw-bold text-success"><i class="bi bi-arrow-right-circle-fill me-1"></i>${cart.bkName} (${cart.bkId})</td>
-              </tr>`;
-        });
+  let htmlBangChiTietTuyen = `
+    <div class="fw-bold text-danger mb-2" style="font-size:13px;">
+      <i class="bi bi-signpost-split-fill me-1"></i>2. CHI TIẾT TUYẾN NÀO GÁN CHO AI:
+    </div>
+    <div class="table-responsive bg-white rounded shadow-sm border">
+      <table class="table table-sm table-bordered align-middle mb-0" style="font-size:12.5px;">
+        <thead class="table-danger text-center">
+          <tr>
+            <th style="width: 45px;">STT</th>
+            <th>Rider Cần BK (OFF)</th>
+            <th>Tuyến Cần Gánh (${loai})</th>
+            <th><i class="bi bi-arrow-right"></i> Gán Cho Người Gánh</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+  let sttTuyen = 1;
+  activeCarts.forEach((cart, idx) => {
+    totalRoutes += cart.routes.length;
+    const danhSachTuyenStr = cart.routes.map((rt, i) => {
+      const label = rt.type === 'WARD' ? `<b>${rt.route}</b>` : `<b>${rt.name}</b> (${rt.id}) — <span class="text-danger">${rt.route}</span>`;
+      return `${i + 1}. ${label}`;
+    }).join('<br>');
+
+    htmlBangNguoiGanh += `
+      <tr>
+        <td class="text-center text-muted">${idx + 1}</td>
+        <td class="fw-bold text-success">${cart.bkName}<br><span class="small text-muted font-monospace">ID: ${cart.bkId}</span></td>
+        <td class="text-center"><span class="badge bg-danger fs-6 px-3 py-1">${cart.routes.length} tuyến</span></td>
+        <td class="text-start py-2">${danhSachTuyenStr}</td>
+      </tr>`;
+
+    cart.routes.forEach(rt => {
+      htmlBangChiTietTuyen += `
+        <tr>
+          <td class="text-center text-muted">${sttTuyen++}</td>
+          <td class="fw-bold text-dark">${rt.type === 'WARD' ? 'TUYẾN TỔNG' : `${rt.name} <span class="text-muted font-monospace">(${rt.id})</span>`}</td>
+          <td class="fw-semibold text-danger">${rt.route}</td>
+          <td class="fw-bold text-success"><i class="bi bi-arrow-right-circle-fill me-1"></i>${cart.bkName} (${cart.bkId})</td>
+        </tr>`;
     });
+  });
 
-    htmlBangNguoiGanh += `</tbody></table></div>`;
-    htmlBangChiTietTuyen += `</tbody></table></div>`;
+  htmlBangNguoiGanh += `</tbody></table></div>`;
+  htmlBangChiTietTuyen += `</tbody></table></div>`;
 
-    document.getElementById('titleConfirmGhepBackup').innerHTML = `
-      <i class="bi bi-clipboard2-check-fill me-1"></i>XÁC NHẬN GÁN TUYẾN BACKUP ${loai} — NGÀY ${ngayXem}`;
+  document.getElementById('titleConfirmGhepBackup').innerHTML = `
+    <i class="bi bi-clipboard2-check-fill me-1"></i>XÁC NHẬN GÁN TUYẾN BACKUP ${loai} — NGÀY ${ngayXem}`;
 
-    document.getElementById('bodyConfirmGhepBackup').innerHTML = `
-      <div class="alert alert-info py-2 mb-3 border-info d-flex justify-content-between align-items-center" style="font-size:13px;">
-        <span>📅 Ngày điều phối: <b>${ngayXem}</b> | Loại: <b>BACKUP ${loai}</b></span>
-        <span>Tổng cộng: <b class="text-primary">${activeCarts.length} người gánh</b> / <b class="text-danger">${totalRoutes} tuyến</b></span>
-      </div>
-      ${htmlBangNguoiGanh}
-      ${htmlBangChiTietTuyen}
-    `;
+  document.getElementById('bodyConfirmGhepBackup').innerHTML = `
+    <div class="alert alert-info py-2 mb-3 border-info d-flex justify-content-between align-items-center" style="font-size:13px;">
+      <span>📅 Ngày điều phối: <b>${ngayXem}</b> | Loại: <b>BACKUP ${loai}</b></span>
+      <span>Tổng cộng: <b class="text-primary">${activeCarts.length} người gánh</b> / <b class="text-danger">${totalRoutes} tuyến</b></span>
+    </div>
+    ${htmlBangNguoiGanh}
+    ${htmlBangChiTietTuyen}
+  `;
 
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
 
 // HÀM THỰC SỰ ĐẨY DỮ LIỆU LÊN SHEET SAU KHI ĐÃ XÁC NHẬN Ở BẢNG POPUP
 window.chotLuuGhepBackupLenSheet = async function() {
-    const btnConfirm = document.getElementById('btnChotLuuBackupSheet');
-    if (btnConfirm) {
-        btnConfirm.disabled = true;
-        btnConfirm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang lưu lên Sheet...';
-    }
+  const btnConfirm = document.getElementById('btnChotLuuBackupSheet');
+  if (btnConfirm) {
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang lưu lên Sheet...';
+  }
 
-    const ngayXem = document.getElementById('selectNgayTongQuanOff')?.value || '';
-    const backupMatches = [];
-    const nguoiThaoTac = typeof layTenNguoiThaoTac === 'function' ? layTenNguoiThaoTac() : 'FTE / Admin';
+  const ngayXem = document.getElementById('selectNgayTongQuanOff')?.value || '';
+  const backupMatches = [];
+  const nguoiThaoTac = typeof layTenNguoiThaoTac === 'function' ? layTenNguoiThaoTac() : 'FTE / Admin';
 
-    Object.values(window.cartGhepTuyen).forEach(cartItem => {
-        if (cartItem.routes.length === 0) return;
+  Object.values(window.cartGhepTuyen).forEach(cartItem => {
+    if (cartItem.routes.length === 0) return;
 
-        let allRoutes = [];
-        let tuyenGanMap = window.loaiBackupHienTai === 'PICK' ? 'PICK' : 'Tân Bình'; 
+    let allRoutes = [];
+    let tuyenGanMap = window.loaiBackupHienTai === 'PICK' ? 'PICK' : 'Tân Bình'; 
 
-        cartItem.routes.forEach(rt => {
-            backupMatches.push({
-                ngay: ngayXem, idGoc: rt.type === 'WARD' ? 'TUYẾN TỔNG' : rt.id,
-                tenGoc: rt.name, tuyenGan: rt.route, idBk: cartItem.bkId,
-                tenBk: cartItem.bkName, nguoiGan: nguoiThaoTac 
-            });
+    cartItem.routes.forEach(rt => {
+      backupMatches.push({
+        ngay: ngayXem, idGoc: rt.type === 'WARD' ? 'TUYẾN TỔNG' : rt.id,
+        tenGoc: rt.name, tuyenGan: rt.route, idBk: cartItem.bkId,
+        tenBk: cartItem.bkName, nguoiGan: nguoiThaoTac 
+      });
 
-            allRoutes.push(rt.type === 'WARD' ? rt.route : `${rt.name} (${rt.route})`);
-            
-            if (window.loaiBackupHienTai === 'DELI') {
-                if (rt.route.includes('Phú Nhuận')) tuyenGanMap = 'Phú Nhuận';
-                if (rt.route.includes('Thủ Đức')) tuyenGanMap = 'Thủ Đức';
+      allRoutes.push(rt.type === 'WARD' ? rt.route : `${rt.name} (${rt.route})`);
+      
+      if (window.loaiBackupHienTai === 'DELI') {
+        if (rt.route.includes('Phú Nhuận')) tuyenGanMap = 'Phú Nhuận';
+        if (rt.route.includes('Thủ Đức')) tuyenGanMap = 'Thủ Đức';
 
-                if (rt.type === 'OFF') {
-                    const oldNote = sessionDraftMap[rt.id]?.note ? `${sessionDraftMap[rt.id].note}, ` : 'Trực bù: ';
-                    sessionDraftMap[rt.id] = { dates: [ngayXem], loaiOff: "OFF", tuyenBK: "", backup: cartItem.bkName, note: `${oldNote}${cartItem.bkName}` };
-                } else if (rt.type === 'WORK') {
-                    const oldNote = sessionDraftMap[rt.id]?.note ? `${sessionDraftMap[rt.id].note}, ` : 'Hỗ trợ bởi BK: ';
-                    sessionDraftMap[rt.id] = { dates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: `${oldNote}${cartItem.bkName}` };
-                }
-            }
-        });
-
-        if (window.loaiBackupHienTai === 'DELI') {
-            const noteChoBK = `Hỗ trợ: ${allRoutes.join('; ')}`;
-            sessionDraftMap[cartItem.bkId] = { dates: [], loaiOff: "OFF", tuyenBK: tuyenGanMap, backup: "", note: noteChoBK };
+        if (rt.type === 'OFF') {
+          const oldNote = sessionDraftMap[rt.id]?.note ? `${sessionDraftMap[rt.id].note}, ` : 'Trực bù: ';
+          sessionDraftMap[rt.id] = { dates: [ngayXem], loaiOff: "OFF", tuyenBK: "", backup: cartItem.bkName, note: `${oldNote}${cartItem.bkName}` };
+        } else if (rt.type === 'WORK') {
+          const oldNote = sessionDraftMap[rt.id]?.note ? `${sessionDraftMap[rt.id].note}, ` : 'Hỗ trợ bởi BK: ';
+          sessionDraftMap[rt.id] = { dates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: `${oldNote}${cartItem.bkName}` };
         }
+      }
     });
-
-    if (backupMatches.length === 0) {
-        if (btnConfirm) { btnConfirm.disabled = false; btnConfirm.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Xác nhận & Đẩy lên Sheet'; }
-        return;
-    }
-
-    try {
-        await fetch(`${API_BASE}/luu-backup-ghep`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ backupMatches, loai: window.loaiBackupHienTai })
-        });
-    } catch (error) {}
-
-    // 1. Chỉ khóa các tuyến thuộc RD OFF bên trái đã lưu xong (RD ĐI LÀM vẫn giữ lại để gán thêm nếu cần)
-    backupMatches.forEach(m => {
-        if (m.idGoc !== 'TUYẾN TỔNG') {
-            const tr = document.getElementById(`tr_left_${m.idGoc}`);
-            const isOffRow = tr && (tr.classList.contains('tr-left-OFF-COT1') || tr.classList.contains('tr-left-OFF-COT2'));
-            if (isOffRow && !window.danhSachTuyenDaGanGlobal.includes(m.idGoc)) {
-                window.danhSachTuyenDaGanGlobal.push(m.idGoc);
-                tr.classList.add('locked-route', 'd-none');
-                tr.classList.remove('table-danger', 'table-primary', 'table-secondary', 'table-success', 'table-warning');
-            }
-        }
-    });
-
-    // 2. Đưa vào lịch sử đã chốt của đúng tab hiện tại
-    Object.values(window.cartGhepTuyen).forEach(cartItem => {
-        if (cartItem.routes.length === 0) return;
-        window.lichSuGanGlobal.push({
-            idBk: cartItem.bkId, tenBk: cartItem.bkName,
-            routes: cartItem.routes.map(r => r.type === 'WARD' ? r.route : `${r.name} (${r.route})`),
-            originalIds: cartItem.routes.map(r => r.type === 'WARD' ? 'TUYẾN TỔNG' : r.id),
-            nguoiGan: nguoiThaoTac 
-        });
-        
-        const trBk = document.getElementById(`tr_bk_${cartItem.bkId}`);
-        if (trBk) trBk.classList.remove('table-success');
-    });
-
-    window.cartGhepTuyen = {};
-    window.pendingLeftRoutes = [];
-    sessionStorage.removeItem(`KV2_DRAFT_BACKUP_${window.loaiBackupHienTai}`); // XÓA LƯU NGẦM KHI ĐÃ ĐẨY SHEET THÀNH CÔNG
-    window.activeBkId = null;
-    window.isIsolationMode = false;
-    
-    ['COT1', 'COT2'].forEach(ca => {
-        window.capNhatTrangThaiCotPhai(ca);
-        window.capNhatTrangThaiCotTrai(ca);
-    });
-    capNhatGiaoDienGhepCap();
-
-    if (btnConfirm) { 
-        btnConfirm.disabled = false; 
-        btnConfirm.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Xác nhận & Đẩy lên Sheet'; 
-    }
-
-    const modalConfirmEl = document.getElementById('modalConfirmGhepBackup');
-    if (modalConfirmEl) bootstrap.Modal.getInstance(modalConfirmEl)?.hide();
 
     if (window.loaiBackupHienTai === 'DELI') {
-        renderTableNewOff(true);
+      const noteChoBK = `Hỗ trợ: ${allRoutes.join('; ')}`;
+      sessionDraftMap[cartItem.bkId] = { dates: [], loaiOff: "OFF", tuyenBK: tuyenGanMap, backup: "", note: noteChoBK };
     }
-    
-    const sheetTb = window.loaiBackupHienTai === 'PICK' ? 'KV2 PICK' : 'KV2 DELI';
-    alert(`✅ Đã lưu thành công ${backupMatches.length} lượt gán tuyến lên Sheet ${sheetTb}!`);
-}
+  });
 
-// ================= HÀM MỞ POPUP CHI TIẾT KHI CLICK =================
-// ================= HÀM MỞ POPUP CHI TIẾT KHI CLICK =================
+  if (backupMatches.length === 0) {
+    if (btnConfirm) { btnConfirm.disabled = false; btnConfirm.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Xác nhận & Đẩy lên Sheet'; }
+    return;
+  }
+
+  try {
+    await fetch(`${API_BASE}/luu-backup-ghep`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ backupMatches, loai: window.loaiBackupHienTai })
+    });
+  } catch (error) {}
+
+  // 1. Chỉ khóa các tuyến thuộc RD OFF bên trái đã lưu xong (RD ĐI LÀM vẫn giữ lại để gán thêm nếu cần)
+  backupMatches.forEach(m => {
+    if (m.idGoc !== 'TUYẾN TỔNG') {
+      const tr = document.getElementById(`tr_left_${m.idGoc}`);
+      const isOffRow = tr && (tr.classList.contains('tr-left-OFF-COT1') || tr.classList.contains('tr-left-OFF-COT2'));
+      if (isOffRow && !window.danhSachTuyenDaGanGlobal.includes(m.idGoc)) {
+        window.danhSachTuyenDaGanGlobal.push(m.idGoc);
+        tr.classList.add('locked-route', 'd-none');
+        tr.classList.remove('table-danger', 'table-primary', 'table-secondary', 'table-success', 'table-warning');
+      }
+    }
+  });
+
+  // 2. Đưa vào lịch sử đã chốt của đúng tab hiện tại
+  Object.values(window.cartGhepTuyen).forEach(cartItem => {
+    if (cartItem.routes.length === 0) return;
+    window.lichSuGanGlobal.push({
+      idBk: cartItem.bkId, tenBk: cartItem.bkName,
+      routes: cartItem.routes.map(r => r.type === 'WARD' ? r.route : `${r.name} (${r.route})`),
+      originalIds: cartItem.routes.map(r => r.type === 'WARD' ? 'TUYẾN TỔNG' : r.id),
+      nguoiGan: nguoiThaoTac 
+    });
+    
+    const trBk = document.getElementById(`tr_bk_${cartItem.bkId}`);
+    if (trBk) trBk.classList.remove('table-success');
+  });
+
+  window.cartGhepTuyen = {};
+  window.pendingLeftRoutes = [];
+  sessionStorage.removeItem(`KV2_DRAFT_BACKUP_${window.loaiBackupHienTai}`);
+  window.activeBkId = null;
+  window.isIsolationMode = false;
+  
+  ['COT1', 'COT2'].forEach(ca => {
+    window.capNhatTrangThaiCotPhai(ca);
+    window.capNhatTrangThaiCotTrai(ca);
+  });
+  capNhatGiaoDienGhepCap();
+
+  if (btnConfirm) { 
+    btnConfirm.disabled = false; 
+    btnConfirm.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Xác nhận & Đẩy lên Sheet'; 
+  }
+
+  const modalConfirmEl = document.getElementById('modalConfirmGhepBackup');
+  if (modalConfirmEl) bootstrap.Modal.getInstance(modalConfirmEl)?.hide();
+
+  if (window.loaiBackupHienTai === 'DELI' && document.getElementById('modalDangKyAllRider')?.classList.contains('show')) {
+    renderTableNewOff(true);
+  }
+  
+  const sheetTb = window.loaiBackupHienTai === 'PICK' ? 'KV2 PICK' : 'KV2 DELI';
+  alert(`✅ Đã lưu thành công ${backupMatches.length} lượt gán tuyến lên Sheet ${sheetTb}!`);
+};
+
 // ================= HÀM MỞ POPUP CHI TIẾT KHI CLICK =================
 function xemDanhSachOff(ngay, quanFilter, caFilter, title, isBKDiLam = false) {
   if (!ngay || !ridersData) return;
 
-  // Lấy thứ tương ứng
   let thuHienTai = '';
   if (typeof dateHeadersGlobal !== 'undefined') {
     const dayObj = dateHeadersGlobal.find(d => d.date === ngay);
@@ -1900,15 +1851,11 @@ function xemDanhSachOff(ngay, quanFilter, caFilter, title, isBKDiLam = false) {
   const normQuanF = normQ(quanFilter);
   const normCaF = normCa(caFilter);
 
-  // Lọc danh sách đúng chuẩn
   const filteredList = ridersData.filter(rd => {
     const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
     const sched = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay].toLowerCase().trim() : '';
     
-    // Nếu lấy danh sách BK đi làm
     if (isBKDiLam) return isBK && !sched.includes('off');
-    
-    // Nếu xem OFF thường thì loại BK ra
     if (isBK) return false;
 
     const q = normQ(rd.quanDeli);
@@ -1947,14 +1894,12 @@ function xemDanhSachOff(ngay, quanFilter, caFilter, title, isBKDiLam = false) {
   }
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietRiderOff')).show();
 }
+
 // =======================================================================
 // ==================== HỆ THỐNG ĐIỀN OFF MỚI (2 PHIÊN ĐỘC LẬP) ==========
 // =======================================================================
 
-// PHIÊN 1: Lưu ngầm dữ liệu CHỈ ĐỌC từ Sheet (Dùng để tô màu các RD đã điền OFF trước đó)
 let sheetReadOffSession = {};
-
-// PHIÊN 2: Lưu ngầm dữ liệu CHỈ ĐĂNG KÝ MỚI / THAY ĐỔI trong lần mở bảng này (Dùng để đẩy đồng bộ)
 let newOffSyncSession = {};
 
 function luuNgamHaiPhienOff() {
@@ -1964,11 +1909,10 @@ function luuNgamHaiPhienOff() {
   } catch (e) {}
 }
 
-// KHỞI TẠO PHIÊN 1 (CHỈ ĐỌC TỪ SHEET) & LÀM SẠCH PHIÊN 2 (ĐĂNG KÝ MỚI) THEO TUẦN
 function khoiTaoHaiPhienTheoTuan() {
   sheetReadOffSession = {};
   newOffSyncSession = {};
-  sessionDraftMap = {}; // Giữ tương thích với các hàm cũ
+  sessionDraftMap = {};
 
   const selWeek = document.getElementById("selWeekNewOff");
   const startIdx = parseInt(selWeek ? selWeek.value : 0, 10);
@@ -1987,7 +1931,6 @@ function khoiTaoHaiPhienTheoTuan() {
       }
     });
 
-    // Ghi vào Phiên 1 (Chỉ đọc để tô màu)
     sheetReadOffSession[r.id] = {
       dates: existingOff,
       loaiTheoNgay: loaiTheoNgay
@@ -1997,7 +1940,6 @@ function khoiTaoHaiPhienTheoTuan() {
   luuNgamHaiPhienOff();
 }
 
-// MỞ MODAL VÀ TỰ ĐỘNG CHỌN TUẦN HIỆN TẠI
 function moBangDangKyAllRider() {
   if (!ridersData || ridersData.length === 0) {
     alert("Đang tải dữ liệu Rider từ hệ thống, vui lòng chờ!");
@@ -2021,7 +1963,7 @@ function moBangDangKyAllRider() {
       
       const weekSlice = dateHeadersGlobal.slice(i, i + 7);
       if (weekSlice.some(d => d.date.includes(todayStr))) {
-         selectedIndexToSet = i;
+        selectedIndexToSet = i;
       }
 
       optionsTuanHtml += `<option value="${i}" data-name="Tuần ${weekCount}: ${start.date} ➔ ${end.date}">Tuần ${weekCount}: ${start.date} ➔ ${end.date}</option>`;
@@ -2031,19 +1973,16 @@ function moBangDangKyAllRider() {
     selWeek.value = selectedIndexToSet;
   }
 
-  // Khởi tạo Phiên 1 (tô màu từ Sheet) và Phiên 2 (chờ đăng ký mới)
   khoiTaoHaiPhienTheoTuan();
   renderTableNewOff(true);
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDangKyAllRider')).show();
 }
 
-// CHUYỂN TUẦN KHÁC THÌ NẠP LẠI PHIÊN ĐỌC SHEET CỦA TUẦN ĐÓ VÀ RESET PHIÊN ĐĂNG KÝ MỚI
 function doiTuanNewOff() {
   khoiTaoHaiPhienTheoTuan();
   renderTableNewOff(true);
 }
 
-// RENDER BẢNG: TÔ MÀU RIDER ĐÃ OFF TỪ PHIÊN 1 & ĐÁNH DẤU RIDER ĐĂNG KÝ MỚI TỪ PHIÊN 2
 function renderTableNewOff(skipSaveCurrent) {
   if (!skipSaveCurrent) {
     const visibleRows = document.querySelectorAll("#riderTableBodyNewOff tr[id^='row_']");
@@ -2051,10 +1990,11 @@ function renderTableNewOff(skipSaveCurrent) {
     capNhatDemOFF(); 
   }
 
-  const ca = document.getElementById("selCaNewOff").value;
-  const quan = document.getElementById("selQuanNewOff").value;
-  const searchKeyword = document.getElementById("txtSearchNewOff").value.trim().toLowerCase();
+  const ca = document.getElementById("selCaNewOff")?.value || "Tất cả";
+  const quan = document.getElementById("selQuanNewOff")?.value || "Tất cả";
+  const searchKeyword = (document.getElementById("txtSearchNewOff")?.value || "").trim().toLowerCase();
   const tbody = document.getElementById("riderTableBodyNewOff");
+  if (!tbody) return;
 
   const selWeek = document.getElementById("selWeekNewOff");
   const startIdx = parseInt(selWeek ? selWeek.value : 0, 10);
@@ -2066,18 +2006,19 @@ function renderTableNewOff(skipSaveCurrent) {
     const qDeli = (r.quanDeli || "").toUpperCase().trim();
 
     if (quan === "Tất cả") {
-        matchQuan = true;
+      matchQuan = true;
     } else if (quan === "BK") {
-        matchQuan = r.isBackup && !qDeli.includes("PHÚ NHUẬN") && !qDeli.includes("TÂN BÌNH") && !qDeli.includes("THỦ ĐỨC");
+      matchQuan = r.isBackup;
     } else {
-        matchQuan = qDeli.includes(quan.toUpperCase());
+      matchQuan = qDeli.includes(quan.toUpperCase());
     }
 
     const matchSearch = !searchKeyword || (r.id + " " + r.name + " " + r.quanPick + " " + r.ca).toLowerCase().includes(searchKeyword);
     return matchCa && matchQuan && matchSearch;
   });
 
-  document.getElementById("txtCountNewOff").textContent = filtered.length;
+  const elCount = document.getElementById("txtCountNewOff");
+  if (elCount) elCount.textContent = filtered.length;
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Không tìm thấy Rider nào thỏa điều kiện!</td></tr>';
@@ -2091,7 +2032,6 @@ function renderTableNewOff(skipSaveCurrent) {
     let trClass = r.isBackup ? "bk-highlight" : "";
     const caBadgeClass = r.ca.includes("1") ? "badge-cot1" : "badge-cot2";
 
-    // Lấy dữ liệu từ Phiên 1 (Sheet) và Phiên 2 (Mới chọn)
     const sheetRead = sheetReadOffSession[r.id] || { dates: [] };
     const newDraft = newOffSyncSession[r.id] || { addedDates: [], removedDates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
 
@@ -2112,11 +2052,9 @@ function renderTableNewOff(skipSaveCurrent) {
       let btnClass = 'btn-outline-secondary bg-light text-dark';
       let titleHint = 'Chưa đăng ký OFF';
       if (isNewAdded) {
-        // Nút mới bấm chọn trong Phiên 2: Đỏ đậm kèm viền xanh nổi bật
         btnClass = 'btn-danger text-white border-primary border-2 shadow-sm';
         titleHint = 'Mới chọn trong phiên này (Sẵn sàng đồng bộ)';
       } else if (isFromSheet) {
-        // Nút đọc từ Phiên 1 (Đã có trên Sheet trước đó): Tô đỏ chuẩn
         btnClass = 'btn-danger text-white opacity-75';
         titleHint = 'Đã điền OFF trước đó trên Sheet';
       }
@@ -2157,7 +2095,6 @@ function renderTableNewOff(skipSaveCurrent) {
   capNhatDemOFF();
 }
 
-// CLICK CHỌN NGÀY: PHÂN BIỆT RÕ PHIÊN 1 (TRÊN SHEET) VÀ PHIÊN 2 (ĐĂNG KÝ MỚI)
 function toggleDayOffBtn(id, dateStr, thuStr, btnEl) {
   if (!newOffSyncSession[id]) {
     newOffSyncSession[id] = { addedDates: [], removedDates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
@@ -2172,27 +2109,20 @@ function toggleDayOffBtn(id, dateStr, thuStr, btnEl) {
   const thuGoc = (thuStr || '').replace('Thứ ', 'T').replace('Chủ nhật', 'CN');
   const ngayNgan = String(dateStr || '').substring(0, 5);
 
-  // TRƯỜNG HỢP 1: Ngày này đã có sẵn trên Sheet (Phiên 1) và đang hiển thị đỏ
   if (isOriginallyOnSheet && !isRemovedFromSheet) {
     if (!confirm(`Ngày ${dateStr} đã có lịch OFF trên Sheet.\nBạn có muốn gỡ ngày OFF này (chuyển sang chế độ Thay đổi ngày OFF) không?`)) return;
     newDraft.removedDates.push(dateStr);
     btnEl.className = 'btn btn-outline-secondary bg-light text-dark p-1 text-center';
     btnEl.innerHTML = `${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>`;
-  } 
-  // TRƯỜNG HỢP 2: Ngày này vốn trên Sheet, vừa bị bấm gỡ nhưng bấm lại lần nữa -> Khôi phục về trạng thái Phiên 1
-  else if (isOriginallyOnSheet && isRemovedFromSheet) {
+  } else if (isOriginallyOnSheet && isRemovedFromSheet) {
     newDraft.removedDates = newDraft.removedDates.filter(d => d !== dateStr);
     btnEl.className = 'btn btn-danger text-white opacity-75 p-1 text-center';
     btnEl.innerHTML = `${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>`;
-  }
-  // TRƯỜNG HỢP 3: Ngày này vừa được đăng ký mới ở Phiên 2, bấm lại để bỏ chọn
-  else if (isNewlyAdded) {
+  } else if (isNewlyAdded) {
     newDraft.addedDates = newDraft.addedDates.filter(d => d !== dateStr);
     btnEl.className = 'btn btn-outline-secondary bg-light text-dark p-1 text-center';
     btnEl.innerHTML = `${thuGoc}<br><span class="fw-bold">${ngayNgan}</span>`;
-  }
-  // TRƯỜNG HỢP 4: Ngày trống -> Bấm chọn đưa vào Phiên 2 (Đăng ký OFF mới)
-  else {
+  } else {
     const dacBiet = kiemTraNgayDacBiet(dateStr, thuStr);
     if (dacBiet) {
       alert(`⚠️ CẢNH BÁO HẠN CHẾ OFF:\nNgày ${dateStr} là ngày ${dacBiet.label}.\n\nYêu cầu: Bạn bắt buộc phải ghi rõ lý do vào cột "Ghi chú" trên bảng mới có thể Lưu và Đồng bộ!`);
@@ -2206,7 +2136,6 @@ function toggleDayOffBtn(id, dateStr, thuStr, btnEl) {
   luuNgamHaiPhienOff();
 }
 
-// LƯU THÔNG TIN LOẠI OFF & GHI CHÚ VÀO PHIÊN 2
 function luuThongTinOff(id, skipUpdateUI = false) {
   if (!newOffSyncSession[id]) {
     newOffSyncSession[id] = { addedDates: [], removedDates: [], loaiOff: "OFF", tuyenBK: "", backup: "", note: "" };
@@ -2221,9 +2150,6 @@ function luuThongTinOff(id, skipUpdateUI = false) {
   if (!skipUpdateUI) capNhatDemOFF();
 }
 
-// ĐẾM TÁCH BIỆT:
-// - txtOffCountNewOff (Trên đầu bảng): Tổng số RD đã có OFF (Phiên 1 + Phiên 2)
-// - btnOffCountFooter (Nút Lưu dưới đáy): CHỈ ĐẾM số RD có đăng ký mới / thay đổi trong Phiên 2
 function capNhatDemOFF() {
   let demTongDaCoOff = 0;
   let demPhienMoi = 0;
@@ -2256,7 +2182,6 @@ function capNhatDemOFF() {
   if (btnOffCount) btnOffCount.textContent = demPhienMoi;
 }
 
-// HÀM LẤY TÊN FTE / ADMIN ĐANG ĐĂNG NHẬP
 function layTenNguoiThaoTac() {
   let nguoiThaoTac = 'FTE / Admin';
   try {
@@ -2277,7 +2202,6 @@ function layTenNguoiThaoTac() {
   return nguoiThaoTac;
 }
 
-// MỞ BẢNG XÁC NHẬN: CHỈ ĐỒNG BỘ NHỮNG RIDER TRONG PHIÊN 2 (ĐĂNG KÝ MỚI / THAY ĐỔI)
 function moPopupXacNhanNewOff() {
   const visibleRows = document.querySelectorAll("#riderTableBodyNewOff tr[id^='row_']");
   visibleRows.forEach(row => luuThongTinOff(row.id.replace("row_", ""), true));
@@ -2302,12 +2226,10 @@ function moPopupXacNhanNewOff() {
     const removedDates = newDraft.removedDates || [];
     const hasBackupChange = r.isBackup && newDraft.tuyenBK && newDraft.tuyenBK !== "";
 
-    // BỎ QUA HOÀN TOÀN NHỮNG RIDER CHỈ CÓ DỮ LIỆU CŨ Ở PHIÊN 1 MÀ KHÔNG CÓ THAO TÁC MỚI Ở PHIÊN 2
     if (addedDates.length === 0 && removedDates.length === 0 && !hasBackupChange) continue;
 
     if (removedDates.length > 0) coXoaNgayCu = true;
 
-    // Kiểm tra bắt buộc ghi chú nếu ngày ĐĂNG KÝ MỚI rơi vào ngày đặc biệt
     if (addedDates.length > 0) {
       let needNote = false;
       let specialLabel = "";
@@ -2333,7 +2255,6 @@ function moPopupXacNhanNewOff() {
       return `${thuStr}(${d.substring(0, 5)})`;
     }).join(", ");
 
-    // Tổng hợp danh sách ngày sau khi gộp (dùng cho chế độ REPLACE) và danh sách chỉ ngày mới (dùng cho chế độ NEW)
     const finalDatesForReplace = sheetRead.dates.filter(d => !removedDates.includes(d)).concat(addedDates);
     const diaBanTuyen = r.quanDeli ? `${r.quanDeli} (P.${r.phuongDeli || '-'})` : (r.quanPick || '—');
 
@@ -2346,7 +2267,7 @@ function moPopupXacNhanNewOff() {
       addedDates: addedDates,
       removedDates: removedDates,
       finalDates: finalDatesForReplace,
-      dates: addedDates, // Mặc định gửi ngày mới (sẽ tự động chuyển sang finalDates nếu chọn REPLACE)
+      dates: addedDates,
       chiTietNgayOff: addedDates.length > 0 
         ? `${newDraft.loaiOff} (${addedDates.map(d => d.substring(0, 5)).join(', ')})` 
         : `Xóa OFF (${removedDates.map(d => d.substring(0, 5)).join(', ')})`,
@@ -2407,7 +2328,6 @@ function moPopupXacNhanNewOff() {
   bootstrap.Modal.getOrCreateInstance(document.getElementById('modalConfirmNewOff')).show();
 }
 
-// BẤM GỬI LÊN SERVER (CHỈ ĐẨY DỮ LIỆU CỦA PHIÊN 2)
 async function thucHienLuuDongBoNewOff() {
   if (!cachedPayloadNewOff) return;
 
@@ -2415,7 +2335,6 @@ async function thucHienLuuDongBoNewOff() {
   cachedPayloadNewOff.mode = isReplace ? 'REPLACE' : 'NEW';
   cachedPayloadNewOff.nguoiGan = layTenNguoiThaoTac();
 
-  // Tùy theo chế độ NEW hay REPLACE mà gán đúng mảng ngày cần ghi lên Sheet
   cachedPayloadNewOff.ridersData.forEach(item => {
     if (isReplace) {
       item.dates = item.finalDates;
