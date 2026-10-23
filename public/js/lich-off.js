@@ -1008,8 +1008,8 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
       const safeName = (rd.name || '').replace(/'/g, "\\'");
       const safeRoute = (labelDeli || '').replace(/'/g, "\\'");
       const searchTxt = `${rd.name} ${rd.id} ${labelDeli}`.toLowerCase();
-      const isLocked = window.danhSachTuyenDaGanGlobal.includes(rd.id);
-      const lockedClass = isLocked ? 'locked-route d-none' : 'd-none';
+      const searchTxt = `${rd.name} ${rd.id} ${labelDeli}`.toLowerCase();
+      const lockedClass = 'd-none'; // Luôn cho phép hiển thị để gán nhiều BK hỗ trợ
 
       htmlOff += `
         <tr id="tr_left_${rd.id}" class="tr-left-WORK-${caFilter} search-row ${lockedClass}" data-search="${searchTxt}" style="cursor:pointer;" onclick="chonRiderGhep('${rd.id}', '${safeName}', '${safeRoute}', 'WORK', '${caFilter}')">
@@ -1165,7 +1165,19 @@ window.filterLeftList = function(val, ca) {
   });
 };
 
-// ================= HÀM CHỌN GHÉP TUYẾN (CẬP NHẬT LOGIC TICK XANH LIỀN TAY) =================
+// Hàm phụ: Lấy danh sách TẤT CẢ những người BK đang cùng gánh 1 tuyến
+window.timDanhSachNguoiDangGanhTuyen = function(routeId) {
+  const list = [];
+  for (const bkId of Object.keys(window.cartGhepTuyen)) {
+    const cart = window.cartGhepTuyen[bkId];
+    if (cart && cart.routes && cart.routes.some(r => String(r.id) === String(routeId))) {
+      list.push(cart);
+    }
+  }
+  return list;
+};
+
+// ================= HÀM CHỌN GHÉP TUYẾN (HỖ TRỢ NHIỀU BK CÙNG GÁNH RD ĐI LÀM / PHƯỜNG) =================
 function chonRiderGhep(id, name, route, type, caFilter) {
   if (type === 'BK') {
     // KHI CHỌN NGƯỜI BACKUP BÊN PHẢI
@@ -1200,40 +1212,70 @@ function chonRiderGhep(id, name, route, type, caFilter) {
     }
   } else {
     // KHI CLICK VÀO TUYẾN BÊN CỘT TRÁI
-    const assignedCart = window.timNguoiDangGanhTuyen(id);
+    const isMultiAssignAllowed = (type === 'WORK' || type === 'WARD');
 
-    if (assignedCart) {
-      // Đã gán -> Gỡ ra
-      const idx = assignedCart.routes.findIndex(r => String(r.id) === String(id));
-      if (idx > -1) assignedCart.routes.splice(idx, 1);
-      if (assignedCart.routes.length === 0 && String(window.activeBkId) !== String(assignedCart.bkId) && !window.isIsolationMode) {
-        delete window.cartGhepTuyen[assignedCart.bkId];
-      }
-    } else {
+    if (isMultiAssignAllowed) {
+      // ĐỐI VỚI RD ĐI LÀM & QUẬN/PHƯỜNG: Cho phép nhiều người BK cùng tích chọn
       if (window.activeBkId) {
-        // ĐANG CHỌN NGƯỜI -> BẤM 1 PHÁT VÀO GIỎ NGAY (TICK XANH)
         if (!window.cartGhepTuyen[window.activeBkId]) {
           window.cartGhepTuyen[window.activeBkId] = { bkId: window.activeBkId, bkName: '', routes: [] };
         }
         const activeCart = window.cartGhepTuyen[window.activeBkId];
-        activeCart.routes.push({ id, name, route, type }); 
-        
-        // Hiệu ứng nháy xanh nhỏ báo thành công
-        const btnThucHien = document.getElementById('btnThucHienGhep');
-        if (btnThucHien) {
+        const idxInActive = activeCart.routes.findIndex(r => String(r.id) === String(id));
+
+        if (idxInActive > -1) {
+          // Nếu người BK đang chọn đã có tuyến này -> Bấm vào sẽ gỡ khỏi giỏ của người đang chọn
+          activeCart.routes.splice(idxInActive, 1);
+          if (activeCart.routes.length === 0 && !window.isIsolationMode) {
+            delete window.cartGhepTuyen[window.activeBkId];
+          }
+        } else {
+          // Nếu người BK đang chọn CHƯA có tuyến này -> Tích gán thêm cho người đang chọn!
+          activeCart.routes.push({ id, name, route, type });
+          const btnThucHien = document.getElementById('btnThucHienGhep');
+          if (btnThucHien) {
             btnThucHien.classList.add('bg-success', 'border-success', 'text-white');
             setTimeout(() => btnThucHien.classList.remove('bg-success', 'border-success', 'text-white'), 300);
+          }
         }
       } else {
-        // CHƯA CHỌN NGƯỜI -> Đưa vào hàng chờ
+        // Nếu chưa chọn người BK bên phải -> Cho phép chọn tạm bên trái (hoặc gỡ nếu chỉ có 1 người đang giữ)
         const pIdx = window.pendingLeftRoutes.findIndex(r => String(r.id) === String(id));
-        if (pIdx > -1) window.pendingLeftRoutes.splice(pIdx, 1);
-        else window.pendingLeftRoutes.push({ id, name, route, type, caFilter });
+        if (pIdx > -1) {
+          window.pendingLeftRoutes.splice(pIdx, 1);
+        } else {
+          window.pendingLeftRoutes.push({ id, name, route, type, caFilter });
+        }
+      }
+    } else {
+      // ĐỐI VỚI RD OFF (Mỗi tuyến OFF chỉ 1 người gánh): Giữ nguyên logic cũ
+      const assignedCart = window.timNguoiDangGanhTuyen(id);
+      if (assignedCart) {
+        const idx = assignedCart.routes.findIndex(r => String(r.id) === String(id));
+        if (idx > -1) assignedCart.routes.splice(idx, 1);
+        if (assignedCart.routes.length === 0 && String(window.activeBkId) !== String(assignedCart.bkId) && !window.isIsolationMode) {
+          delete window.cartGhepTuyen[assignedCart.bkId];
+        }
+      } else {
+        if (window.activeBkId) {
+          if (!window.cartGhepTuyen[window.activeBkId]) {
+            window.cartGhepTuyen[window.activeBkId] = { bkId: window.activeBkId, bkName: '', routes: [] };
+          }
+          window.cartGhepTuyen[window.activeBkId].routes.push({ id, name, route, type });
+          const btnThucHien = document.getElementById('btnThucHienGhep');
+          if (btnThucHien) {
+            btnThucHien.classList.add('bg-success', 'border-success', 'text-white');
+            setTimeout(() => btnThucHien.classList.remove('bg-success', 'border-success', 'text-white'), 300);
+          }
+        } else {
+          const pIdx = window.pendingLeftRoutes.findIndex(r => String(r.id) === String(id));
+          if (pIdx > -1) window.pendingLeftRoutes.splice(pIdx, 1);
+          else window.pendingLeftRoutes.push({ id, name, route, type, caFilter });
+        }
       }
     }
   }
   
-  // Lưu ngầm trạng thái
   luuSessionGioGanNgam();
 
   ['COT1', 'COT2'].forEach(ca => {
@@ -1243,7 +1285,6 @@ function chonRiderGhep(id, name, route, type, caFilter) {
   capNhatGiaoDienGhepCap();
 }
 
-// CẬP NHẬT CỘT TRÁI: ẨN RD OFF KHI GÁN XONG, GIỮ LẠI RD ĐI LÀM & PHƯỜNG
 // CẬP NHẬT CỘT PHẢI: HIỂN THỊ RÕ 1 NGƯỜI ĐANG GÁNH BAO NHIÊU TUYẾN & CHI TIẾT TUYẾN
 window.capNhatTrangThaiCotPhai = function(caFilter) {
     let visibleCount = 0; 
@@ -1261,7 +1302,6 @@ window.capNhatTrangThaiCotPhai = function(caFilter) {
         const routesInHistory = (lsObj && lsObj.routes) ? lsObj.routes : [];
         const totalGanh = routesInCart.length + routesInHistory.length;
 
-        // Cập nhật huy hiệu số tuyến đang gánh ngay cạnh tên Rider
         if (countBadgeEl) {
             if (totalGanh > 0) {
                 countBadgeEl.innerHTML = `<span class="badge bg-danger ms-1 shadow-sm">🔥 Gánh ${totalGanh} tuyến</span>`;
@@ -1272,7 +1312,6 @@ window.capNhatTrangThaiCotPhai = function(caFilter) {
             }
         }
 
-        // Hiển thị chi tiết các tuyến người này đang gánh ngay dưới tên
         if (detailEl) {
             let detailHtml = '';
             if (routesInCart.length > 0) {
@@ -1289,7 +1328,6 @@ window.capNhatTrangThaiCotPhai = function(caFilter) {
             if (isDangChon) tr.classList.remove('d-none');
             else tr.classList.add('d-none');
         } else {
-            // Ở chế độ DELI giữ nguyên ẩn nếu đã có trong giỏ, còn ở PICK luôn hiển thị để dễ gán thêm nhiều tuyến
             if (window.loaiBackupHienTai === 'DELI' && !isDangChon && routesInCart.length > 0 && (!window.pendingLeftRoutes || window.pendingLeftRoutes.length === 0)) {
                 tr.classList.add('d-none');
             } else {
@@ -1318,7 +1356,7 @@ window.capNhatTrangThaiCotPhai = function(caFilter) {
     }
 };
 
-// CẬP NHẬT CỘT TRÁI: ẨN RD OFF KHI GÁN XONG, NHƯNG BẤM SỬA THÌ HIỆN LẠI ĐỂ GỠ TICK
+// CẬP NHẬT CỘT TRÁI: RD ĐI LÀM & PHƯỜNG HIỆN LẠI Ô TRỐNG KHI CHỌN BK MỚI ĐỂ TÍCH THÊM NGƯỜI
 window.capNhatTrangThaiCotTrai = function(caFilter) {
     const tuyenDaCoChu = [];
     Object.values(window.cartGhepTuyen).forEach(cart => {
@@ -1327,7 +1365,6 @@ window.capNhatTrangThaiCotTrai = function(caFilter) {
 
     let countCanBk = 0;
 
-    // Hiệu ứng nhấp nháy cho CSS
     if (!document.getElementById('cssBlinkingTick')) {
         const style = document.createElement('style');
         style.id = 'cssBlinkingTick';
@@ -1342,7 +1379,6 @@ window.capNhatTrangThaiCotTrai = function(caFilter) {
     document.querySelectorAll(`#tbody_${caFilter}_LEFT tr`).forEach(tr => {
         if (tr.hasAttribute('data-bs-toggle')) return; 
 
-        // Xóa class trạng thái cũ
         tr.classList.remove('table-danger', 'table-primary', 'table-secondary', 'table-warning', 'table-success', 'flash-tick');
         const icon = tr.querySelector('.check-icon-left');
         const assignedLbl = tr.querySelector('.assigned-to-label');
@@ -1361,7 +1397,7 @@ window.capNhatTrangThaiCotTrai = function(caFilter) {
         }
 
         const isPendingLeft = (window.pendingLeftRoutes || []).some(r => String(r.id) === String(rtId));
-        const ownerCart = window.timNguoiDangGanhTuyen(rtId);
+        const allOwners = window.timDanhSachNguoiDangGanhTuyen(rtId);
         const typeRoute = tr.classList.contains(`tr-left-OFF-${caFilter}`) ? 'OFF' : (tr.classList.contains(`tr-left-WORK-${caFilter}`) ? 'WORK' : 'WARD');
 
         if (isPendingLeft) {
@@ -1371,27 +1407,41 @@ window.capNhatTrangThaiCotTrai = function(caFilter) {
             if (assignedLbl) {
                 assignedLbl.innerHTML = `<span class="badge bg-warning text-dark"><i class="bi bi-hand-index-thumb me-1"></i>Đang chọn chờ gán</span>`;
             }
-        } else if (ownerCart) {
-            // TUYẾN NÀY ĐÃ ĐƯỢC CHỐT VÀO GIỎ!
-            const isOwnerActive = String(ownerCart.bkId) === String(window.activeBkId);
-            
+        } else if (allOwners.length > 0) {
+            const isCurrentActiveOwner = window.activeBkId && allOwners.some(c => String(c.bkId) === String(window.activeBkId));
+            const ownerNames = allOwners.map(c => c.bkName).join(', ');
+
             if (typeRoute === 'OFF') {
-                if (isOwnerActive) {
-                    // ĐANG SỬA NGƯỜI GÁNH NÀY -> BẮT BUỘC HIỆN ĐỂ CÓ THỂ GỠ TICK
+                // ĐỐI VỚI RD OFF: Ẩn khi đã gán, chỉ hiện lại khi bấm Sửa đúng người đang gánh
+                if (isCurrentActiveOwner) {
                     tr.classList.remove('temp-hidden', 'd-none');
                     tr.classList.add('table-success');
                     if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-left';
-                    if (assignedLbl) assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đang gán cho: ${ownerCart.bkName} (Bấm để gỡ)</span>`;
+                    if (assignedLbl) assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đang gán cho: ${ownerNames} (Bấm để gỡ)</span>`;
                 } else {
-                    // GÁN XONG CHO NGƯỜI KHÁC RỒI THÌ ẨN LUÔN CHO NHẸ BẢNG
                     tr.classList.add('d-none', 'temp-hidden');
                 }
             } else {
-                // NẾU LÀ RD ĐI LÀM HOẶC PHƯỜNG -> LUÔN HIỆN TICK XANH CHỨ KHÔNG ẨN
+                // ĐỐI VỚI RD ĐI LÀM & QUẬN/PHƯỜNG:
                 tr.classList.remove('temp-hidden', 'd-none');
-                tr.classList.add('table-success', 'flash-tick');
-                if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-left icon-pulse';
-                if (assignedLbl) assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đã gán 1 ca cho: ${ownerCart.bkName}</span>`;
+                if (isCurrentActiveOwner) {
+                    // Nếu chính BK đang chọn đã tích tuyến này -> Hiện dấu Tick Xanh
+                    tr.classList.add('table-success', 'flash-tick');
+                    if (icon) icon.className = 'bi bi-check-circle-fill text-success fs-5 check-icon-left icon-pulse';
+                    if (assignedLbl) {
+                        assignedLbl.innerHTML = `<span class="badge bg-success shadow-sm mt-1"><i class="bi bi-person-check-fill me-1"></i>Đã gán (${allOwners.length} BK): ${ownerNames} (Bấm để gỡ)</span>`;
+                    }
+                } else {
+                    // Nếu chọn sang BK mới (hoặc chưa chọn BK nào) -> Hiện lại Ô TRỐNG để tích thêm người!
+                    if (icon) {
+                        icon.className = typeRoute === 'WARD' 
+                            ? 'bi bi-square text-primary fs-5 check-icon-left' 
+                            : 'bi bi-circle text-primary fs-5 check-icon-left';
+                    }
+                    if (assignedLbl) {
+                        assignedLbl.innerHTML = `<span class="badge bg-info text-dark border border-info shadow-sm mt-1"><i class="bi bi-people-fill me-1"></i>Đã có ${allOwners.length} BK: ${ownerNames} (Bấm để gán thêm)</span>`;
+                    }
+                }
             }
         } else {
             tr.classList.remove('temp-hidden');
@@ -1777,12 +1827,13 @@ window.chotLuuGhepBackupLenSheet = async function() {
         });
     } catch (error) {}
 
-    // 1. Khóa các tuyến bên trái đã lưu xong
+    // 1. Chỉ khóa các tuyến thuộc RD OFF bên trái đã lưu xong (RD ĐI LÀM vẫn giữ lại để gán thêm nếu cần)
     backupMatches.forEach(m => {
-        if (m.idGoc !== 'TUYẾN TỔNG' && !window.danhSachTuyenDaGanGlobal.includes(m.idGoc)) {
-            window.danhSachTuyenDaGanGlobal.push(m.idGoc);
+        if (m.idGoc !== 'TUYẾN TỔNG') {
             const tr = document.getElementById(`tr_left_${m.idGoc}`);
-            if (tr) {
+            const isOffRow = tr && (tr.classList.contains('tr-left-OFF-COT1') || tr.classList.contains('tr-left-OFF-COT2'));
+            if (isOffRow && !window.danhSachTuyenDaGanGlobal.includes(m.idGoc)) {
+                window.danhSachTuyenDaGanGlobal.push(m.idGoc);
                 tr.classList.add('locked-route', 'd-none');
                 tr.classList.remove('table-danger', 'table-primary', 'table-secondary', 'table-success', 'table-warning');
             }
