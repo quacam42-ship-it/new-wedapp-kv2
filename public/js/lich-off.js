@@ -904,9 +904,6 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
   });
 
   const predefinedWards = {
-    'Phú Nhuận': ['1', '2', '3', '4', '5', '7', '8', '9', '10', '11', '13', '15', '17'],
-    'Tân Bình': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'],
-    'Thủ Đức': ['Hiệp Bình Chánh', 'Hiệp Bình Phước', 'Linh Đông', 'Bình Chiểu', 'Tam Bình', 'Tam Phú', 'Linh Chiểu', 'Bình Thọ', 'Trường Thọ', 'Linh Trung', 'Linh Xuân', 'Linh Tây'],
     'Quận 2': ['An Khánh', 'An Lợi Đông', 'An Phú', 'Bình An', 'Bình Khánh', 'Bình Trưng Đông', 'Bình Trưng Tây', 'Cát Lái', 'Thạnh Mỹ Lợi', 'Thảo Điền', 'Thủ Thiêm'],
     'Quận 4': ['1', '2', '3', '4', '6', '8', '9', '10', '13', '14', '15', '16', '18'],
     'Quận 7': ['Bình Thuận', 'Phú Mỹ', 'Phú Thuận', 'Tân Hưng', 'Tân Kiểng', 'Tân Phong', 'Tân Phú', 'Tân Quy', 'Tân Thuận Đông', 'Tân Thuận Tây'],
@@ -1022,7 +1019,7 @@ function renderNoiDungCaAccordion(containerId, listOff, loaiBackup, caFilter) {
         <tr class="tr-left-WARD-${caFilter} bg-white border-bottom d-none" data-bs-toggle="collapse" data-bs-target=".${targetClass}" style="cursor:pointer;">
           <td class="px-2 py-2">
             <div class="fw-bold text-dark d-flex justify-content-between align-items-center" style="font-size:12px;">
-              <span><i class="bi bi-map-fill text-secondary me-2"></i>QUẬN ${quanName.toUpperCase()} (${wards.length} phường)</span> 
+              <span><i class="bi bi-map-fill text-secondary me-2"></i> ${quanName.toUpperCase()} (${wards.length} phường)</span> 
               <i class="bi bi-chevron-expand text-muted"></i>
             </div>
           </td>
