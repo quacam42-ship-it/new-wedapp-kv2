@@ -113,25 +113,70 @@ function getTuanKey(dateObj) {
 
 // ================= API BACKEND CHÍNH =================
 
-// 1. API: Tuyến Rider & Lịch OFF
+const fs = require('fs');
+
+// Tự động tìm và trả về file lich-off.js mới nhất (dù bạn lưu ở thư mục gốc hay trong public/js) & chống kẹt Cache
+app.get(['/js/lich-off.js', '/lich-off.js'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  const candidates = [
+    path.join(__dirname, 'public', 'js', 'lich-off.js'),
+    path.join(__dirname, 'js', 'lich-off.js'),
+    path.join(__dirname, 'lich-off.js')
+  ].filter(p => fs.existsSync(p));
+
+  if (candidates.length === 0) return res.status(404).send('// Không tìm thấy lich-off.js');
+  candidates.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  res.sendFile(candidates[0]);
+});
+
+// Bộ nhớ đệm ngắn 10 giây chống lỗi 429 khi nhiều tab gọi cùng lúc
+let riderDataCache = null;
+let riderDataCacheTime = 0;
+
+// 1. API: Tuyến Rider & Lịch OFF (Đọc linh hoạt không lo lỗi giới hạn cột EF)
 app.get('/api/rider-data', async (req, res) => {
   try {
+    const now = Date.now();
+    if (!req.query.force && riderDataCache && (now - riderDataCacheTime < 10000)) {
+      return res.json(riderDataCache);
+    }
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'TỔNG QUAN RD'!M1:EF",
+      range: "'TỔNG QUAN RD'",
     });
 
-    const values = response.data.values || [];
-    if (values.length < 3) return res.json({ riders: [], dateHeaders: [] });
+    const rawValues = response.data.values || [];
+    if (rawValues.length < 3) return res.json({ riders: [], dateHeaders: [] });
 
-    const row1 = values[0] || [];
-    const row2 = values[1] || [];
+    // Cắt từ cột M (index 12) trở đi để giữ nguyên cấu trúc index cũ
+    const values = rawValues.map(r => (r || []).slice(12));
+
+    // Tự động dò dòng chứa tiêu đề Ngày (quét 5 dòng đầu)
+    let dateRowIdx = 1;
+    let maxDates = 0;
+    for (let r = 0; r < Math.min(5, values.length); r++) {
+      let cnt = 0;
+      const rowArr = values[r] || [];
+      for (let c = 13; c < rowArr.length; c++) {
+        const val = (rowArr[c] || '').toString().trim();
+        if (/^\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?$/.test(val)) cnt++;
+      }
+      if (cnt > maxDates) {
+        maxDates = cnt;
+        dateRowIdx = r;
+      }
+    }
+
+    const thuRowIdx = dateRowIdx > 0 ? dateRowIdx - 1 : 0;
+    const rowThu = values[thuRowIdx] || [];
+    const rowDate = values[dateRowIdx] || [];
 
     const dateHeaders = [];
-    for (let c = 13; c < row2.length; c++) {
-      const cellDate = (row2[c] || '').toString().trim();
-      const cellThu = (row1[c] || '').toString().trim();
-      if (cellDate && (cellDate.includes('/') || cellDate.includes('-'))) {
+    for (let c = 13; c < rowDate.length; c++) {
+      const cellDate = (rowDate[c] || '').toString().trim();
+      const cellThu = (rowThu[c] || '').toString().trim();
+      if (cellDate && /^\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?$/.test(cellDate)) {
         dateHeaders.push({
           colIdx: c,
           thu: cellThu || '',
@@ -141,7 +186,7 @@ app.get('/api/rider-data', async (req, res) => {
     }
 
     const riders = [];
-    for (let r = 2; r < values.length; r++) {
+    for (let r = dateRowIdx + 1; r < values.length; r++) {
       const row = values[r];
       if (!row || !row[4] || !row[4].toString().trim()) continue;
 
@@ -176,7 +221,9 @@ app.get('/api/rider-data', async (req, res) => {
       });
     }
 
-    res.json({ riders, dateHeaders });
+    riderDataCache = { riders, dateHeaders };
+    riderDataCacheTime = Date.now();
+    res.json(riderDataCache);
   } catch (error) {
     console.error('Lỗi đọc Tuyến Rider:', error.message);
     res.status(500).json({ error: error.message });

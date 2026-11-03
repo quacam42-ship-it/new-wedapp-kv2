@@ -1732,7 +1732,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="/js/lich-off.js"></script>
+  <script src="/js/lich-off.js?v=20261103"></script>
   <script src="/js/thong-tin-rider.js"></script>
   <script src="/js/profile_rider.js"></script>
   <script src="/js/performance_rider.js"></script>
@@ -1755,6 +1755,8 @@
       if (txt) txt.innerText = isTop5Open ? 'Thu gọn' : 'Mở rộng';
     }
 
+    let isFetchingRiderData = false;
+
     function chuyenTab(tabId) {
       currentTab = tabId;
       document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
@@ -1765,33 +1767,68 @@
       const sec = document.getElementById('section-' + tabId);
       if (sec) sec.classList.add('active');
 
-      if (tabId === 'tuyenRider') { if (!loadedTabs.tuyenRider) loadRiderData(); } 
-      else if (tabId === 'lichOff') { if (!loadedTabs.tuyenRider) loadRiderData(); else { if (typeof renderMaTranOff === 'function') renderMaTranOff(); if (typeof filterOffData === 'function') filterOffData(); } } 
-      else if (tabId === 'performance') { loadPerformanceData(); } 
+      if (tabId === 'tuyenRider') {
+        if (!loadedTabs.tuyenRider || ridersData.length === 0) loadRiderData();
+      } else if (tabId === 'lichOff') {
+        if (!loadedTabs.tuyenRider || ridersData.length === 0 || dateHeadersGlobal.length === 0) {
+          loadRiderData();
+        } else {
+          const selTuan = document.getElementById('selectTuanOff');
+          if (typeof taoDropdownTuanOff === 'function' && (!selTuan || selTuan.options.length === 0)) {
+            taoDropdownTuanOff(dateHeadersGlobal);
+          }
+          if (typeof renderMaTranOff === 'function') renderMaTranOff();
+          if (typeof filterOffData === 'function') filterOffData();
+        }
+      } else if (tabId === 'performance') { loadPerformanceData(); } 
       else if (tabId === 'hangHoa') { loadHangHoaData(); if (currentKieuHangHoa === 'PENDING') loadHangHoaData(); } 
       else if (tabId === 'diemDanh') { khoiTaoTabDiemDanh(); }
       else if (tabId === 'thongTinRider') { loadThongTinChungData(); }
     }
 
     function lamMoiDuLieu() {
-      if (currentTab === 'tuyenRider' || currentTab === 'lichOff') { loadedTabs.tuyenRider = false; loadRiderData(); } 
+      if (currentTab === 'tuyenRider' || currentTab === 'lichOff') { loadedTabs.tuyenRider = false; loadRiderData(true); } 
       else if (currentTab === 'performance') { loadPerformanceData(); } 
       else if (currentTab === 'hangHoa') { loadHangHoaData(); } 
       else if (currentTab === 'diemDanh') { loadLichSuDiemDanh(); }
     }
 
-    // TẢI RIDER & PERFORMANCE
-    async function loadRiderData() {
+    // TẢI RIDER & LỊCH OFF (CHỐNG GỌI TRÙNG & ĐỒNG BỘ BIẾN TOÀN CỤC)
+    async function loadRiderData(forceReload = false) {
+      if (isFetchingRiderData) return;
+      isFetchingRiderData = true;
+
       const tbody = document.getElementById('riderTableBody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải toàn bộ Rider...</td></tr>';
+      const tbodyOff = document.getElementById('tbodyMaTranOff');
+      if (tbody && ridersData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải toàn bộ Rider...</td></tr>';
+      }
+      if (tbodyOff && dateHeadersGlobal.length === 0) {
+        tbodyOff.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải dữ liệu Lịch OFF...</td></tr>';
+      }
+
       try {
-        const res = await fetch(`${API_BASE}/rider-data`); const data = await res.json();
-        ridersData = data.riders || []; dateHeadersGlobal = data.dateHeaders || []; loadedTabs.tuyenRider = true;
-        populateQuanDeliOptions(ridersData); filterRiderData();
+        const url = forceReload ? `${API_BASE}/rider-data?force=1` : `${API_BASE}/rider-data`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+
+        ridersData = window.ridersData = data.riders || [];
+        dateHeadersGlobal = window.dateHeadersGlobal = data.dateHeaders || [];
+        loadedTabs.tuyenRider = ridersData.length > 0;
+
+        populateQuanDeliOptions(ridersData);
+        filterRiderData();
         if (typeof filterOffData === 'function') filterOffData();
         if (typeof taoDropdownTuanOff === 'function') taoDropdownTuanOff(dateHeadersGlobal);
         if (typeof renderMaTranOff === 'function') renderMaTranOff();
-      } catch (err) { if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Lỗi tải dữ liệu: ${err.message}</td></tr>`; }
+      } catch (err) {
+        loadedTabs.tuyenRider = false;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Lỗi tải dữ liệu: ${err.message}</td></tr>`;
+        if (tbodyOff) tbodyOff.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">Lỗi tải Lịch OFF: ${err.message} (Bấm nút Tải lại ở góc trên bên phải)</td></tr>`;
+      } finally {
+        isFetchingRiderData = false;
+      }
     }
 
     function populateQuanDeliOptions(riders) {
