@@ -133,29 +133,21 @@ app.get(['/js/lich-off.js', '/lich-off.js'], (req, res) => {
 let riderDataCache = null;
 let riderDataCacheTime = 0;
 
-// 1. API: Tuyến Rider & Lịch OFF (Đọc linh hoạt không lo lỗi giới hạn cột EF)
+// 1. API: Tuyến Rider & Lịch OFF (Tự động dò Dòng 15 - Thứ & Dòng 16 - Ngày trên TỔNG QUAN RD)
 app.get('/api/rider-data', async (req, res) => {
   try {
-    const now = Date.now();
-    if (!req.query.force && riderDataCache && (now - riderDataCacheTime < 10000)) {
-      return res.json(riderDataCache);
-    }
-
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'TỔNG QUAN RD'",
+      range: "'TỔNG QUAN RD'!M1:ZZ1000",
     });
 
-    const rawValues = response.data.values || [];
-    if (rawValues.length < 3) return res.json({ riders: [], dateHeaders: [] });
+    const values = response.data.values || [];
+    if (values.length < 3) return res.json({ riders: [], dateHeaders: [] });
 
-    // Cắt từ cột M (index 12) trở đi để giữ nguyên cấu trúc index cũ
-    const values = rawValues.map(r => (r || []).slice(12));
-
-    // Tự động dò dòng chứa tiêu đề Ngày (quét 5 dòng đầu)
+    // Tự động quét 30 dòng đầu để tìm đúng dòng chứa Ngày (Dòng 16 trên Sheet = index 15)
     let dateRowIdx = 1;
     let maxDates = 0;
-    for (let r = 0; r < Math.min(5, values.length); r++) {
+    for (let r = 0; r < Math.min(30, values.length); r++) {
       let cnt = 0;
       const rowArr = values[r] || [];
       for (let c = 13; c < rowArr.length; c++) {
@@ -168,7 +160,7 @@ app.get('/api/rider-data', async (req, res) => {
       }
     }
 
-    const thuRowIdx = dateRowIdx > 0 ? dateRowIdx - 1 : 0;
+    const thuRowIdx = dateRowIdx > 0 ? dateRowIdx - 1 : 0; // Dòng 15 (Thứ 2, Thứ 3...)
     const rowThu = values[thuRowIdx] || [];
     const rowDate = values[dateRowIdx] || [];
 
@@ -185,6 +177,7 @@ app.get('/api/rider-data', async (req, res) => {
       }
     }
 
+    // Quét danh sách Rider bắt đầu từ ngay dưới dòng tiêu đề Ngày (từ Dòng 17 trở đi)
     const riders = [];
     for (let r = dateRowIdx + 1; r < values.length; r++) {
       const row = values[r];
@@ -195,7 +188,8 @@ app.get('/api/rider-data', async (req, res) => {
         dailySchedule[dh.date] = (row[dh.colIdx] || '').toString().trim();
       });
 
-      const rawQuanDeli = (row[8] || '').toString().trim();
+      let rawQuanDeli = (row[8] || '').toString().trim();
+      if (rawQuanDeli.toUpperCase() === 'BACKUP') rawQuanDeli = 'BK'; // Chuẩn hóa chữ "Backup" ở dòng 271 thành "BK"
       const rawPhuongDeli = (row[9] || '').toString().trim();
       const isBackup = rawQuanDeli.toUpperCase().includes('BK') || rawPhuongDeli.toUpperCase().includes('BACKUP');
 
@@ -221,15 +215,12 @@ app.get('/api/rider-data', async (req, res) => {
       });
     }
 
-    riderDataCache = { riders, dateHeaders };
-    riderDataCacheTime = Date.now();
-    res.json(riderDataCache);
+    res.json({ riders, dateHeaders });
   } catch (error) {
     console.error('Lỗi đọc Tuyến Rider:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
-
 // 2. API: Performance
 app.get('/api/performance-data', async (req, res) => {
   try {
@@ -532,7 +523,7 @@ async function capNhatLichOffVaoSheet(spreadsheetId, sheetTitleOrGid, ridersData
   // 1. Tự động tìm dòng chứa tiêu đề Ngày (quét 10 dòng đầu, chỉ đếm các ô ngày thuần túy từ cột Z trở đi hoặc từ cột S trở đi)
   let bestDateRowIdx = 1;
   let maxDateCount = 0;
-  for (let r = 0; r < Math.min(10, rows.length); r++) {
+  for (let r = 0; r < Math.min(30, rows.length); r++) {
     let count = 0;
     const rowArr = rows[r] || [];
     for (let c = 18; c < rowArr.length; c++) {
