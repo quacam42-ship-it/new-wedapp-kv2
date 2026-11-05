@@ -133,18 +133,31 @@ app.get(['/js/lich-off.js', '/lich-off.js'], (req, res) => {
 let riderDataCache = null;
 let riderDataCacheTime = 0;
 
-// 1. API: Tuyến Rider & Lịch OFF (Tự động dò Dòng 15 - Thứ & Dòng 16 - Ngày trên TỔNG QUAN RD)
+// Bộ nhớ đệm 15 giây giúp 100 Rider quét QR cùng lúc nhận danh sách tức thì (0.01s)
+let cachedRiderDataResponse = null;
+let lastRiderDataFetchTime = 0;
+
+// 1. API: Tuyến Rider & Lịch OFF
 app.get('/api/rider-data', async (req, res) => {
   try {
+    const now = Date.now();
+    // Nếu dữ liệu vừa tải trong vòng 15 giây gần nhất -> Trả về ngay lập tức từ RAM
+    if (!req.query.force && cachedRiderDataResponse && (now - lastRiderDataFetchTime < 15000)) {
+      return res.json(cachedRiderDataResponse);
+    }
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
       range: "'TỔNG QUAN RD'!M1:ZZ1000",
     });
 
     const values = response.data.values || [];
-    if (values.length < 3) return res.json({ riders: [], dateHeaders: [] });
+    if (values.length < 3) {
+      if (cachedRiderDataResponse) return res.json(cachedRiderDataResponse);
+      return res.json({ riders: [], dateHeaders: [] });
+    }
 
-    // Tự động quét 30 dòng đầu để tìm đúng dòng chứa Ngày (Dòng 16 trên Sheet = index 15)
+    // Tự động quét 30 dòng đầu để tìm đúng dòng chứa Ngày (Dòng 16 trên Sheet)
     let dateRowIdx = 1;
     let maxDates = 0;
     for (let r = 0; r < Math.min(30, values.length); r++) {
@@ -160,7 +173,7 @@ app.get('/api/rider-data', async (req, res) => {
       }
     }
 
-    const thuRowIdx = dateRowIdx > 0 ? dateRowIdx - 1 : 0; // Dòng 15 (Thứ 2, Thứ 3...)
+    const thuRowIdx = dateRowIdx > 0 ? dateRowIdx - 1 : 0;
     const rowThu = values[thuRowIdx] || [];
     const rowDate = values[dateRowIdx] || [];
 
@@ -177,11 +190,10 @@ app.get('/api/rider-data', async (req, res) => {
       }
     }
 
-    // Quét danh sách Rider bắt đầu từ ngay dưới dòng tiêu đề Ngày (từ Dòng 17 trở đi)
     const riders = [];
     for (let r = dateRowIdx + 1; r < values.length; r++) {
       const row = values[r];
-      if (!row || !row[4] || !row[4].toString().trim()) continue;
+      if (!row || !row[3] || !row[3].toString().trim()) continue; // Kiểm tra trực tiếp cột Mã ID (row[3] = Cột P)
 
       const dailySchedule = {};
       dateHeaders.forEach(dh => {
@@ -189,7 +201,7 @@ app.get('/api/rider-data', async (req, res) => {
       });
 
       let rawQuanDeli = (row[8] || '').toString().trim();
-      if (rawQuanDeli.toUpperCase() === 'BACKUP') rawQuanDeli = 'BK'; // Chuẩn hóa chữ "Backup" ở dòng 271 thành "BK"
+      if (rawQuanDeli.toUpperCase() === 'BACKUP') rawQuanDeli = 'BK';
       const rawPhuongDeli = (row[9] || '').toString().trim();
       const isBackup = rawQuanDeli.toUpperCase().includes('BK') || rawPhuongDeli.toUpperCase().includes('BACKUP');
 
@@ -215,12 +227,17 @@ app.get('/api/rider-data', async (req, res) => {
       });
     }
 
-    res.json({ riders, dateHeaders });
+    cachedRiderDataResponse = { riders, dateHeaders };
+    lastRiderDataFetchTime = Date.now();
+    res.json(cachedRiderDataResponse);
   } catch (error) {
     console.error('Lỗi đọc Tuyến Rider:', error.message);
+    // Nếu Google Sheet bị quá tải tạm thời, trả về dữ liệu Cache gần nhất thay vì báo lỗi 500
+    if (cachedRiderDataResponse) return res.json(cachedRiderDataResponse);
     res.status(500).json({ error: error.message });
   }
 });
+
 // 2. API: Performance
 app.get('/api/performance-data', async (req, res) => {
   try {

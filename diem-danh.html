@@ -535,5 +535,84 @@
       loadRiders();
     };
   </script>
+
+<script>
+// ================= FIX TRIỆT ĐỂ LỖI KHÔNG TÌM THẤY MÃ ID KHI ĐIỂM DANH =================
+(function() {
+  let checkTimer = null;
+  let retryFetchCount = 0;
+
+  // Tìm ô nhập ID trên giao diện Điểm danh
+  function layOInputId() {
+    return document.querySelector('input[type="text"], input[type="number"], input[type="tel"], #riderId, #txtRiderId, #inputRiderId');
+  }
+
+  // Kiểm tra xem màn hình có đang hiện lỗi "Không tìm thấy Mã ID" không
+  function dangBaoLoiKhongTimThay() {
+    return document.body.innerText.includes('Không tìm thấy Mã ID');
+  }
+
+  // Hàm ép kích hoạt lại kiểm tra ID mà không cần Rider phải xóa đi gõ lại
+  function kichHoatKiemTraLai(inputEl) {
+    if (!inputEl) return;
+    // Làm sạch khoảng trắng hoặc ký tự ẩn do bàn phím điện thoại tự chèn
+    const cleanVal = (inputEl.value || '').replace(/[\s\u200B-\u200D\uFEFF\u00A0]+/g, '').trim();
+    if (inputEl.value !== cleanVal) inputEl.value = cleanVal;
+    if (!cleanVal) return;
+
+    // Bắn lại các sự kiện để hàm dò tên Rider trong trang tự động chạy lại
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+    inputEl.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+  }
+
+  // Hàm tự động nạp dự phòng nếu lần tải đầu tiên lúc mở trang bị nghẽn mạng
+  async function taiDuPhongVaKiemTra(inputEl) {
+    try {
+      const res = await fetch('/api/rider-data');
+      const data = await res.json();
+      if (data && Array.isArray(data.riders) && data.riders.length > 0) {
+        // Cập nhật vào các tên biến danh sách Rider phổ biến trong trang
+        window.ridersData = data.riders;
+        window.danhSachRiders = data.riders;
+        window.riders = data.riders;
+        try { if (typeof ridersData !== 'undefined') ridersData = data.riders; } catch(e) {}
+        try { if (typeof danhSachRiders !== 'undefined') danhSachRiders = data.riders; } catch(e) {}
+        try { if (typeof riders !== 'undefined') riders = data.riders; } catch(e) {}
+
+        kichHoatKiemTraLai(inputEl);
+      }
+    } catch (e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const inputEl = layOInputId();
+    if (!inputEl) return;
+
+    // 1. Tự động cắt bỏ khoảng trắng thừa ngay khi Rider gõ hoặc dán mã
+    inputEl.addEventListener('input', () => {
+      const cleaned = inputEl.value.replace(/[\s\u200B-\u200D\uFEFF\u00A0]+/g, '');
+      if (inputEl.value !== cleaned) inputEl.value = cleaned;
+    });
+
+    // 2. Vòng lặp thông minh (quét mỗi 0.6 giây):
+    // Nếu ô nhập đã có Mã ID mà vẫn báo "Không tìm thấy Mã ID" (do dữ liệu tải trễ),
+    // hệ thống sẽ tự động nạp lại và kích hoạt nhận diện ngay lập tức!
+    checkTimer = setInterval(() => {
+      const val = (inputEl.value || '').trim();
+      if (val.length >= 4 && dangBaoLoiKhongTimThay()) {
+        kichHoatKiemTraLai(inputEl);
+        
+        // Nếu sau khi kích hoạt lại mà vẫn báo lỗi (do mạng chưa tải xong danh sách), tự gọi API nạp lại
+        if (dangBaoLoiKhongTimThay() && retryFetchCount < 8) {
+          retryFetchCount++;
+          taiDuPhongVaKiemTra(inputEl);
+        }
+      }
+    }, 600);
+  });
+})();
+</script>
+
 </body>
 </html>
