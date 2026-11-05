@@ -940,6 +940,7 @@
                       <th>Mã RD</th>
                       <th>Họ và Tên</th>
                       <th style="width: 60px;">Ca</th>
+                      <th style="width: 75px;">Cách Kho</th>
                       <th style="width: 85px;">Trạng Thái</th>
                     </tr>
                   </thead>
@@ -2140,9 +2141,11 @@
       });
       let html = '';
       filtered.forEach((item, idx) => {
-        html += `<tr><td class="text-muted small">${idx + 1}</td><td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td><td class="font-monospace">${item.id}</td><td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td><td><span class="badge ${item.ca && item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td><td><span class="badge bg-success">Đã điểm danh</span></td></tr>`;
+        const isNgoai = (item.viTri || '').toLowerCase().includes('ngoài');
+        const badgeKC = `<span class="badge ${isNgoai ? 'bg-danger' : 'bg-info text-dark'} font-monospace">${item.khoangCach || '—'}</span>`;
+        html += `<tr><td class="text-muted small">${idx + 1}</td><td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td><td class="font-monospace">${item.id}</td><td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td><td><span class="badge ${item.ca && item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td><td>${badgeKC}</td><td><span class="badge bg-success">Đã điểm danh</span></td></tr>`;
       });
-      if (filtered.length === 0) html = `<tr><td colspan="6" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
+      if (filtered.length === 0) html = `<tr><td colspan="7" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
       tbody.innerHTML = html;
     }
 

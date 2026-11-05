@@ -938,7 +938,86 @@ async function napAnhTuSheetVaoAlbum() {
   }
 }
 
-// 6. API: Điểm danh Rider
+// TỌA ĐỘ KHO XÁC ĐỊNH & HÀM TÍNH KHOẢNG CÁCH (MÉT)
+const TARGET_LAT = 10.819452810093942;
+const TARGET_LNG = 106.67217349075761;
+
+function tinhKhoangCachMetTuToaDo(viDo, kinhDo) {
+  if (viDo === undefined || kinhDo === undefined || viDo === null || kinhDo === null || viDo === '' || kinhDo === '') {
+    return null;
+  }
+  const latNum = parseFloat(String(viDo).trim().replace(',', '.'));
+  const lngNum = parseFloat(String(kinhDo).trim().replace(',', '.'));
+  if (isNaN(latNum) || isNaN(lngNum)) return null;
+
+  const R = 6371000; // Bán kính Trái Đất (m)
+  const toRad = (x) => (x * Math.PI) / 180;
+  const dLat = toRad(latNum - TARGET_LAT);
+  const dLng = toRad(lngNum - TARGET_LNG);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(TARGET_LAT)) * Math.cos(toRad(latNum)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c); // Trả về số mét làm tròn
+}
+
+// HÀM TỰ ĐỘNG RECHECK & ĐIỀN BÙ CỘT L (KHOẢNG CÁCH MÉT) CHO CÁC DÒNG CŨ TRÊN SHEET "LƯU ĐIỂM DANH"
+async function recheckKhoangCachDiemDanhSheet() {
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+      range: "'LƯU ĐIỂM DANH'!A1:L5000",
+    });
+    const rows = res.data.values || [];
+    if (rows.length === 0) return;
+
+    const updates = [];
+    // Đặt tiêu đề Cột L (L1) nếu chưa có
+    const headerRow = rows[0] || [];
+    if (!headerRow[11] || !headerRow[11].toString().trim()) {
+      updates.push({
+        range: "'LƯU ĐIỂM DANH'!L1",
+        values: [['Recheck Khoảng Cách (m)']]
+      });
+    }
+
+    // Quét toàn bộ các dòng điểm danh cũ: Nếu có Vĩ độ (Cột I) & Kinh độ (Cột J) mà Cột L đang trống -> Tự tính và điền vào Cột L
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i] || [];
+      const viDo = r[8];   // Cột I
+      const kinhDo = r[9]; // Cột J
+      const cotL = (r[11] || '').toString().trim(); // Cột L
+
+      if (!cotL && viDo && kinhDo) {
+        const soMet = tinhKhoangCachMetTuToaDo(viDo, kinhDo);
+        if (soMet !== null) {
+          updates.push({
+            range: `'LƯU ĐIỂM DANH'!L${i + 1}`,
+            values: [[`${soMet}m`]]
+          });
+        }
+      }
+    }
+
+    if (updates.length > 0) {
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+        requestBody: {
+          valueInputOption: 'USER_ENTERED',
+          data: updates
+        }
+      });
+      console.log(`Đã recheck và cập nhật khoảng cách (m) vào Cột L cho ${updates.length} dòng trên LƯU ĐIỂM DANH!`);
+    }
+  } catch (e) {
+    console.warn('Lỗi recheck khoảng cách điểm danh:', e.message);
+  }
+}
+
+// Chạy tự động Recheck Cột L sau khi Server khởi động 5 giây
+setTimeout(() => { recheckKhoangCachDiemDanhSheet(); }, 5000);
+
+// 6. API: Điểm danh Rider (Ghi thêm Cột L: Recheck Khoảng Cách m)
 app.post('/api/diem-danh', async (req, res) => {
   try {
     const { riderId, riderName, caDiemDanh, caThucTe, anhBase64, ghiChu, coLichLam, viDo, kinhDo } = req.body;
@@ -952,21 +1031,13 @@ app.post('/api/diem-danh', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Hôm nay bạn không có lịch làm, vui lòng check lại với FTE khu vực!' });
     }
 
-    // Xác định trong kho / ngoài kho (không từ chối, chỉ ghi nhận)
-    const TARGET_LAT = 10.819452810093942;
-    const TARGET_LNG = 106.67217349075761;
+    // Tính khoảng cách (m) và xác định Trong kho / Ngoài kho
     let viTri = 'Không xác định';
-    if (viDo !== undefined && kinhDo !== undefined && viDo !== null && kinhDo !== null && viDo !== '' && kinhDo !== '') {
-      const R = 6371000;
-      const toRad = (x) => (x * Math.PI) / 180;
-      const dLat = toRad(Number(viDo) - TARGET_LAT);
-      const dLng = toRad(Number(kinhDo) - TARGET_LNG);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(toRad(TARGET_LAT)) * Math.cos(toRad(Number(viDo))) *
-        Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distance = R * c;
-      viTri = distance <= 50 ? 'Trong kho' : 'Ngoài kho';
+    let khoangCachStr = 'Không xác định';
+    const distanceMet = tinhKhoangCachMetTuToaDo(viDo, kinhDo);
+    if (distanceMet !== null) {
+      viTri = distanceMet <= 50 ? 'Trong kho' : 'Ngoài kho';
+      khoangCachStr = `${distanceMet}m`;
     }
 
     const now = new Date();
@@ -1042,27 +1113,49 @@ app.post('/api/diem-danh', async (req, res) => {
 
     const ghiChuFinal = anhBase64 ? 'Đã chụp ảnh xác thực tại trạm' : (ghiChu || 'Quét QR');
 
-    const newRow = [timestamp, ngayDiemDanh, gioDiemDanh, riderId, riderName, caChuan, 'Đã điểm danh', ghiChuFinal, viDo || '', kinhDo || '', viTri];
+    // Ghi đủ 12 cột (A -> L), trong đó Cột L là Khoảng Cách (m)
+    const newRow = [
+      timestamp,
+      ngayDiemDanh,
+      gioDiemDanh,
+      riderId,
+      riderName,
+      caChuan,
+      'Đã điểm danh',
+      ghiChuFinal,
+      viDo || '',
+      kinhDo || '',
+      viTri,
+      khoangCachStr
+    ];
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'LƯU ĐIỂM DANH'!A:K",
+      range: "'LƯU ĐIỂM DANH'!A:L",
       valueInputOption: 'USER_ENTERED',
       requestBody: { values: [newRow] },
     });
 
-    return res.status(200).json({ success: true, message: `Đã điểm danh thành công lúc ${gioDiemDanh}!`, trangThai: 'Đã điểm danh' });
+    return res.status(200).json({
+      success: true,
+      message: `Đã điểm danh thành công lúc ${gioDiemDanh}! (Cách trạm: ${khoangCachStr})`,
+      trangThai: 'Đã điểm danh',
+      khoangCach: khoangCachStr
+    });
   } catch (error) {
     console.error('Lỗi điểm danh:', error.message);
     return res.status(500).json({ success: false, message: 'Lỗi ghi nhận điểm danh: ' + error.message });
   }
 });
 
-// 7. API: Lịch sử điểm danh hôm nay
+// 7. API: Lịch sử điểm danh hôm nay (Kèm cột Khoảng cách m)
 app.get('/api/lich-su-diem-danh', async (req, res) => {
   try {
+    // Kích hoạt chạy ngầm điền bù Cột L nếu có dòng nào chưa tính
+    recheckKhoangCachDiemDanhSheet();
+
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'LƯU ĐIỂM DANH'!A2:K500",
+      range: "'LƯU ĐIỂM DANH'!A2:L2000",
     });
     const rows = response.data.values || [];
 
@@ -1084,18 +1177,26 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
         const valB = (r[1] || '').toString().trim();
         return valB === homNayChuan || valB === homNayKhongSo0 || chuanHoaNgayIso(valB) === `${p.year}-${p.month}-${p.day}`;
       })
-      .map((r, idx) => ({
-        stt: idx + 1,
-        thoiGian: r[0] || '',
-        ngay: r[1] || '',
-        gio: r[2] || '',
-        id: r[3] || '',
-        name: r[4] || '',
-        ca: r[5] || '',
-        trangThai: 'Đã điểm danh',
-        ghiChu: r[7] || '',
-        viTri: r[10] || '',
-      }))
+      .map((r, idx) => {
+        let kc = (r[11] || '').toString().trim();
+        if (!kc && r[8] && r[9]) {
+          const m = tinhKhoangCachMetTuToaDo(r[8], r[9]);
+          if (m !== null) kc = `${m}m`;
+        }
+        return {
+          stt: idx + 1,
+          thoiGian: r[0] || '',
+          ngay: r[1] || '',
+          gio: r[2] || '',
+          id: r[3] || '',
+          name: r[4] || '',
+          ca: r[5] || '',
+          trangThai: 'Đã điểm danh',
+          ghiChu: r[7] || '',
+          viTri: r[10] || '',
+          khoangCach: kc || '—'
+        };
+      })
       .reverse();
 
     res.json(list);

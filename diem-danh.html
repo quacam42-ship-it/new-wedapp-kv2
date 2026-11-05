@@ -174,9 +174,14 @@
       try {
         const res = await fetch(`${API_BASE}/rider-data`);
         const data = await res.json();
-        ridersList = data.riders || [];
+        ridersList = window.ridersList = data.riders || [];
+        // Tự động kiểm tra lại ngay nếu Rider đã gõ sẵn Mã ID trong lúc chờ tải
+        const inp = document.getElementById('inputRiderId');
+        if (inp && inp.value.trim()) timKiemRiderTheoId();
       } catch (e) {}
     }
+    // Gọi tải danh sách Rider song song ngay khi mở trang (không cần chờ API kiểm tra cổng)
+    loadRiders();
 
     function capNhatTrangThaiNutGui() {
       const btn = document.getElementById('btnSubmitDiemDanh');
