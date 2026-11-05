@@ -1094,7 +1094,7 @@ app.get('/api/thong-tin-chung-rider', async (req, res) => {
     const response = await sheets.spreadsheets.values.batchGet({
       spreadsheetId: '1tBjwEVJrbv4UNxdKH0wIEX5ar62gg3YQIVNWwE5ik54',
       ranges: [
-        "'HUB TO HUB'!B6:H500",
+        "'HUB TO HUB'!B6:H1000",
         "'GROUP ZALO'!A2:B20",
       ]
     });
