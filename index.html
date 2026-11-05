@@ -2102,50 +2102,82 @@
     }
 
     let danhSachDiemDanhHomNay = [];
+    let loaiDiemDanhDangXem = null;
+
+    // Hàm chuẩn hóa kiểm tra Trễ giờ & Ngoài kho (> 75m)
+    function phanLoaiDiemDanhItem(item) {
+      const gopChuoi = `${item.trangThai || ''} ${item.ghiChu || ''} ${item.viTri || ''}`.toLowerCase();
+      const soMet = parseInt(String(item.khoangCach || '').replace(/[^\d]/g, ''), 10);
+
+      const isTre = gopChuoi.includes('trễ') || gopChuoi.includes('tre') || gopChuoi.includes('muộn');
+      const isNgoai = (!isNaN(soMet) ? soMet > 75 : (gopChuoi.includes('ngoài') || gopChuoi.includes('ngoai')));
+      return { isTre, isNgoai };
+    }
+
     async function loadLichSuDiemDanh() {
       try {
-        const res = await fetch(`${API_BASE}/lich-su-diem-danh`); const list = await res.json();
+        const res = await fetch(`${API_BASE}/lich-su-diem-danh`);
+        const list = await res.json();
         danhSachDiemDanhHomNay = Array.isArray(list) ? list : [];
         const dStr = new Date().toLocaleDateString('vi-VN');
-        const lbl = document.getElementById('lblNgayDiemDanhHomNay'); if (lbl) lbl.innerText = `Ngày: ${dStr} (${danhSachDiemDanhHomNay.length} lượt)`;
+        const lbl = document.getElementById('lblNgayDiemDanhHomNay');
+        if (lbl) lbl.innerText = `Ngày: ${dStr} (${danhSachDiemDanhHomNay.length} lượt)`;
 
         let dungGio = 0, tre = 0, ngoai = 0;
         danhSachDiemDanhHomNay.forEach(item => {
-          const status = ((item.trangThai || '') + ' ' + (item.ghiChu || '') + ' ' + (item.viTri || '')).toLowerCase();
-          if (status.includes('trễ') || status.includes('tre')) tre++; else dungGio++;
-          if (status.includes('ngoài') || status.includes('ngoai')) ngoai++;
+          const { isTre, isNgoai } = phanLoaiDiemDanhItem(item);
+          if (isTre) tre++; else dungGio++;
+          if (isNgoai) ngoai++;
         });
+
         const elDung = document.getElementById('ddCountDungGio'); if (elDung) elDung.innerText = dungGio;
         const elTre = document.getElementById('ddCountTre'); if (elTre) elTre.innerText = tre;
         const elNgoai = document.getElementById('ddCountNgoai'); if (elNgoai) elNgoai.innerText = ngoai;
+
+        // Nếu đang mở sẵn bảng chi tiết thì tự động làm mới luôn
+        if (loaiDiemDanhDangXem) hienThiChiTietDD(loaiDiemDanhDangXem);
       } catch (e) { console.error(e); }
     }
 
     function hienThiChiTietDD(loai) {
+      loaiDiemDanhDangXem = loai;
       const panel = document.getElementById('chiTietDiemDanh');
       const tbody = document.getElementById('tbodyChiTietDD');
       if (!panel || !tbody) return;
       panel.style.display = 'block';
+
       let filtered = danhSachDiemDanhHomNay;
-      if (loai === 'tre') filtered = danhSachDiemDanhHomNay.filter(i => {
-        const s = ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase();
-        return s.includes('tr\u1ec7') || s.includes('tre');
-      });
-      if (loai === 'ngoai') filtered = danhSachDiemDanhHomNay.filter(i => {
-        const s = ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase();
-        return s.includes('ngo\u1ea1i') || s.includes('ngoai');
-      });
-      if (loai === 'dunggio') filtered = danhSachDiemDanhHomNay.filter(i => {
-        const s = ((i.trangThai||'')+' '+(i.ghiChu||'')+' '+(i.viTri||'')).toLowerCase();
-        return !(s.includes('tr\u1ec7')||s.includes('tre')) && !(s.includes('ngo\u1ea1i')||s.includes('ngoai'));
-      });
+      if (loai === 'tre') {
+        filtered = danhSachDiemDanhHomNay.filter(i => phanLoaiDiemDanhItem(i).isTre);
+      } else if (loai === 'ngoai') {
+        filtered = danhSachDiemDanhHomNay.filter(i => phanLoaiDiemDanhItem(i).isNgoai);
+      } else if (loai === 'dunggio') {
+        filtered = danhSachDiemDanhHomNay.filter(i => !phanLoaiDiemDanhItem(i).isTre);
+      }
+
       let html = '';
       filtered.forEach((item, idx) => {
-        const isNgoai = (item.viTri || '').toLowerCase().includes('ngoài');
+        const { isTre, isNgoai } = phanLoaiDiemDanhItem(item);
         const badgeKC = `<span class="badge ${isNgoai ? 'bg-danger' : 'bg-info text-dark'} font-monospace">${item.khoangCach || '—'}</span>`;
-        html += `<tr><td class="text-muted small">${idx + 1}</td><td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td><td class="font-monospace">${item.id}</td><td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td><td><span class="badge ${item.ca && item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td><td>${badgeKC}</td><td><span class="badge bg-success">Đã điểm danh</span></td></tr>`;
+        const badgeTT = isNgoai
+          ? `<span class="badge bg-danger">Ngoài kho</span>`
+          : (isTre ? `<span class="badge bg-warning text-dark">Trễ giờ</span>` : `<span class="badge bg-success">${item.trangThai || 'Trong kho'}</span>`);
+
+        html += `
+          <tr>
+            <td class="text-muted small">${idx + 1}</td>
+            <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
+            <td class="font-monospace">${item.id}</td>
+            <td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td>
+            <td><span class="badge ${item.ca && item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td>
+            <td>${badgeKC}</td>
+            <td>${badgeTT}</td>
+          </tr>`;
       });
-      if (filtered.length === 0) html = `<tr><td colspan="7" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
+
+      if (filtered.length === 0) {
+        html = `<tr><td colspan="7" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
+      }
       tbody.innerHTML = html;
     }
 

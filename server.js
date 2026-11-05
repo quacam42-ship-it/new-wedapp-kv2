@@ -938,9 +938,10 @@ async function napAnhTuSheetVaoAlbum() {
   }
 }
 
-// TỌA ĐỘ KHO XÁC ĐỊNH & HÀM TÍNH KHOẢNG CÁCH (MÉT)
+// TỌA ĐỘ KHO XÁC ĐỊNH & NGƯỠNG BÁN KÍNH HỢP LỆ (75 MÉT)
 const TARGET_LAT = 10.819452810093942;
 const TARGET_LNG = 106.67217349075761;
+const MAX_KHO_DISTANCE_MET = 75;
 
 function tinhKhoangCachMetTuToaDo(viDo, kinhDo) {
   if (viDo === undefined || kinhDo === undefined || viDo === null || kinhDo === null || viDo === '' || kinhDo === '') {
@@ -950,7 +951,7 @@ function tinhKhoangCachMetTuToaDo(viDo, kinhDo) {
   const lngNum = parseFloat(String(kinhDo).trim().replace(',', '.'));
   if (isNaN(latNum) || isNaN(lngNum)) return null;
 
-  const R = 6371000; // Bán kính Trái Đất (m)
+  const R = 6371000;
   const toRad = (x) => (x * Math.PI) / 180;
   const dLat = toRad(latNum - TARGET_LAT);
   const dLng = toRad(lngNum - TARGET_LNG);
@@ -958,10 +959,10 @@ function tinhKhoangCachMetTuToaDo(viDo, kinhDo) {
     Math.cos(toRad(TARGET_LAT)) * Math.cos(toRad(latNum)) *
     Math.sin(dLng / 2) * Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Math.round(R * c); // Trả về số mét làm tròn
+  return Math.round(R * c);
 }
 
-// HÀM TỰ ĐỘNG RECHECK & ĐIỀN BÙ CỘT L (KHOẢNG CÁCH MÉT) CHO CÁC DÒNG CŨ TRÊN SHEET "LƯU ĐIỂM DANH"
+// HÀM TỰ ĐỘNG RECHECK CỘT K (TRONG/NGOÀI KHO THEO MỐC 75M) & CỘT L (SỐ MÉT) TRÊN SHEET "LƯU ĐIỂM DANH"
 async function recheckKhoangCachDiemDanhSheet() {
   try {
     const res = await sheets.spreadsheets.values.get({
@@ -972,7 +973,6 @@ async function recheckKhoangCachDiemDanhSheet() {
     if (rows.length === 0) return;
 
     const updates = [];
-    // Đặt tiêu đề Cột L (L1) nếu chưa có
     const headerRow = rows[0] || [];
     if (!headerRow[11] || !headerRow[11].toString().trim()) {
       updates.push({
@@ -981,20 +981,26 @@ async function recheckKhoangCachDiemDanhSheet() {
       });
     }
 
-    // Quét toàn bộ các dòng điểm danh cũ: Nếu có Vĩ độ (Cột I) & Kinh độ (Cột J) mà Cột L đang trống -> Tự tính và điền vào Cột L
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i] || [];
       const viDo = r[8];   // Cột I
       const kinhDo = r[9]; // Cột J
-      const cotL = (r[11] || '').toString().trim(); // Cột L
+      const cotK = (r[10] || '').toString().trim(); // Cột K (Trong kho / Ngoài kho)
+      const cotL = (r[11] || '').toString().trim(); // Cột L (Khoảng cách m)
 
-      if (!cotL && viDo && kinhDo) {
+      if (viDo && kinhDo) {
         const soMet = tinhKhoangCachMetTuToaDo(viDo, kinhDo);
         if (soMet !== null) {
-          updates.push({
-            range: `'LƯU ĐIỂM DANH'!L${i + 1}`,
-            values: [[`${soMet}m`]]
-          });
+          const viTriChuan75m = soMet <= MAX_KHO_DISTANCE_MET ? 'Trong kho' : 'Ngoài kho';
+          const kcChuan = `${soMet}m`;
+
+          // Nếu Cột K lệch so với chuẩn 75m hoặc Cột L chưa có số mét -> Cập nhật luôn cả K và L
+          if (cotK !== viTriChuan75m || cotL !== kcChuan) {
+            updates.push({
+              range: `'LƯU ĐIỂM DANH'!K${i + 1}:L${i + 1}`,
+              values: [[viTriChuan75m, kcChuan]]
+            });
+          }
         }
       }
     }
@@ -1007,17 +1013,16 @@ async function recheckKhoangCachDiemDanhSheet() {
           data: updates
         }
       });
-      console.log(`Đã recheck và cập nhật khoảng cách (m) vào Cột L cho ${updates.length} dòng trên LƯU ĐIỂM DANH!`);
+      console.log(`Đã đồng bộ chuẩn 75m (Cột K & L) cho ${updates.length} dòng trên LƯU ĐIỂM DANH!`);
     }
   } catch (e) {
     console.warn('Lỗi recheck khoảng cách điểm danh:', e.message);
   }
 }
 
-// Chạy tự động Recheck Cột L sau khi Server khởi động 5 giây
 setTimeout(() => { recheckKhoangCachDiemDanhSheet(); }, 5000);
 
-// 6. API: Điểm danh Rider (Ghi thêm Cột L: Recheck Khoảng Cách m)
+// 6. API: Điểm danh Rider (Áp dụng mốc 75m & tự động đánh dấu Trễ giờ nếu điểm danh sau giờ đóng cổng)
 app.post('/api/diem-danh', async (req, res) => {
   try {
     const { riderId, riderName, caDiemDanh, caThucTe, anhBase64, ghiChu, coLichLam, viDo, kinhDo } = req.body;
@@ -1031,12 +1036,12 @@ app.post('/api/diem-danh', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Hôm nay bạn không có lịch làm, vui lòng check lại với FTE khu vực!' });
     }
 
-    // Tính khoảng cách (m) và xác định Trong kho / Ngoài kho
+    // Xác định Trong kho / Ngoài kho với bán kính 75m
     let viTri = 'Không xác định';
     let khoangCachStr = 'Không xác định';
     const distanceMet = tinhKhoangCachMetTuToaDo(viDo, kinhDo);
     if (distanceMet !== null) {
-      viTri = distanceMet <= 50 ? 'Trong kho' : 'Ngoài kho';
+      viTri = distanceMet <= MAX_KHO_DISTANCE_MET ? 'Trong kho' : 'Ngoài kho';
       khoangCachStr = `${distanceMet}m`;
     }
 
@@ -1058,11 +1063,17 @@ app.post('/api/diem-danh', async (req, res) => {
     const timestamp = `${p.hour}:${p.minute}:${p.second} ${p.day}/${p.month}/${p.year}`;
     const ngayDiemDanh = `${p.day}/${p.month}/${p.year}`;
     const gioDiemDanh = `${p.hour}:${p.minute}:${p.second}`;
+    const gioPhutHienTai = `${p.hour}:${p.minute}`;
     const keyNgayIso = `${p.year}-${p.month}-${p.day}`;
     const tenTabAnhNgay = `ảnh - ${p.day}/${p.month}/${p.year}`;
 
     const caChuan = (caThucTe || caDiemDanh || 'COT 1').toUpperCase().includes('2') ? 'COT 2' : 'COT 1';
     const caTag = caChuan === 'COT 2' ? 'COT2' : 'COT1';
+    const cfgCa = cauHinhHaiCa[caTag] || { gioDong: '12:15' };
+
+    // Nếu FTE mở cổng bổ sung sau giờ đóng cổng quy định -> Tự động ghi nhận "Trễ giờ"
+    const trangThaiDiemDanh = (gioPhutHienTai > cfgCa.gioDong) ? 'Trễ giờ' : 'Đã điểm danh';
+
     const tuanKey = getTuanKey(now);
     const maAnh = `IMG_${riderId}_${Date.now()}`;
     const tsNow = Date.now();
@@ -1113,7 +1124,6 @@ app.post('/api/diem-danh', async (req, res) => {
 
     const ghiChuFinal = anhBase64 ? 'Đã chụp ảnh xác thực tại trạm' : (ghiChu || 'Quét QR');
 
-    // Ghi đủ 12 cột (A -> L), trong đó Cột L là Khoảng Cách (m)
     const newRow = [
       timestamp,
       ngayDiemDanh,
@@ -1121,7 +1131,7 @@ app.post('/api/diem-danh', async (req, res) => {
       riderId,
       riderName,
       caChuan,
-      'Đã điểm danh',
+      trangThaiDiemDanh,
       ghiChuFinal,
       viDo || '',
       kinhDo || '',
@@ -1138,7 +1148,7 @@ app.post('/api/diem-danh', async (req, res) => {
     return res.status(200).json({
       success: true,
       message: `Đã điểm danh thành công lúc ${gioDiemDanh}! (Cách trạm: ${khoangCachStr})`,
-      trangThai: 'Đã điểm danh',
+      trangThai: trangThaiDiemDanh,
       khoangCach: khoangCachStr
     });
   } catch (error) {
@@ -1147,10 +1157,9 @@ app.post('/api/diem-danh', async (req, res) => {
   }
 });
 
-// 7. API: Lịch sử điểm danh hôm nay (Kèm cột Khoảng cách m)
+// 7. API: Lịch sử điểm danh hôm nay (Tính theo chuẩn 75m & kiểm tra giờ trễ)
 app.get('/api/lich-su-diem-danh', async (req, res) => {
   try {
-    // Kích hoạt chạy ngầm điền bù Cột L nếu có dòng nào chưa tính
     recheckKhoangCachDiemDanhSheet();
 
     const response = await sheets.spreadsheets.values.get({
@@ -1178,11 +1187,19 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
         return valB === homNayChuan || valB === homNayKhongSo0 || chuanHoaNgayIso(valB) === `${p.year}-${p.month}-${p.day}`;
       })
       .map((r, idx) => {
-        let kc = (r[11] || '').toString().trim();
-        if (!kc && r[8] && r[9]) {
-          const m = tinhKhoangCachMetTuToaDo(r[8], r[9]);
-          if (m !== null) kc = `${m}m`;
+        const m = tinhKhoangCachMetTuToaDo(r[8], r[9]);
+        const kc = m !== null ? `${m}m` : ((r[11] || '').toString().trim() || '—');
+        const viTriChuan = m !== null ? (m <= MAX_KHO_DISTANCE_MET ? 'Trong kho' : 'Ngoài kho') : (r[10] || '');
+
+        // Kiểm tra trễ giờ dựa trên Cột G hoặc so sánh giờ điểm danh (Cột C) với giờ đóng cổng của Ca
+        const caRow = (r[5] || '').toString().toUpperCase();
+        const gioRow = (r[2] || '').toString().trim().substring(0, 5); // HH:MM
+        const gioDongQuyDinh = caRow.includes('2') ? cauHinhHaiCa.COT2.gioDong : cauHinhHaiCa.COT1.gioDong;
+        let trangThaiRow = (r[6] || 'Đã điểm danh').toString().trim();
+        if (gioRow && gioDongQuyDinh && gioRow > gioDongQuyDinh && !trangThaiRow.toLowerCase().includes('trễ')) {
+          trangThaiRow = 'Trễ giờ';
         }
+
         return {
           stt: idx + 1,
           thoiGian: r[0] || '',
@@ -1191,10 +1208,10 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
           id: r[3] || '',
           name: r[4] || '',
           ca: r[5] || '',
-          trangThai: 'Đã điểm danh',
+          trangThai: trangThaiRow,
           ghiChu: r[7] || '',
-          viTri: r[10] || '',
-          khoangCach: kc || '—'
+          viTri: viTriChuan,
+          khoangCach: kc
         };
       })
       .reverse();
