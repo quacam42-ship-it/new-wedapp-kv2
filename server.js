@@ -340,9 +340,9 @@ app.get('/api/hang-hoa-data', async (req, res) => {
         });
     }
 
-    const phuongPhuNhuan = groupsByDistrict('quận 2');
-    const phuongTanBinh = groupsByDistrict('quận 4');
-    const phuongThuDuc = groupsByDistrict('quận 7');
+    const phuongQuan2 = groupsByDistrict('quận 2');
+    const phuongQuan4 = groupsByDistrict('quận 4');
+    const phuongQuan7 = groupsByDistrict('quận 7');
     const phuongQuan9 = groupsByDistrict('quận 9');
     const phuongBinhThanh = groupsByDistrict('bình thạnh');
 
@@ -350,9 +350,9 @@ app.get('/api/hang-hoa-data', async (req, res) => {
 
     const kpi = {
       tongDon: rows.length,
-      phuNhuan: countDistrict('quận 2'),
-      tanBinh: countDistrict('quận 4'),
-      thuDuc: countDistrict('quận 7'),
+      q2: countDistrict('quận 2'),
+      q4: countDistrict('quận 4'),
+      q7: countDistrict('quận 7'),
       q9: countDistrict('quận 9'),
       bt: countDistrict('bình thạnh'),
       donMp: pendingMP,
@@ -370,11 +370,42 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       soLuong: g.soLuong,
     }));
 
-    const mapped = rows.map(r => ({ shipmentId: r[0] || '', quan: r[13] || '', loaiHang: (r[9] && r[9] !== '0' && r[9].toLowerCase() !== 'trong' && r[9].toLowerCase() !== 'trống') ? 'WH' : 'MP', isHv: (r[12] || '').toString().trim() }));
-    res.json({ headers: ['Tracking', 'Zone', 'Status'], rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']), kpi, top5Phuong, phuongPhuNhuan, phuongTanBinh, phuongThuDuc, phuongQuan9, phuongBinhThanh, cachedInboundOrders: mapped, inboundOrdersCache: mapped });
+    const mapped = rows.map(r => ({
+      shipmentId: (r[0] || '').toString().trim(),
+      zoneId: (r[1] || '').toString().trim(),
+      receivedTime: (r[6] || '').toString().trim(),
+      quan: (r[13] || '').toString().trim(),
+      phuong: (r[14] || '').toString().trim(),
+      loaiHang: (r[9] && r[9].toString().trim() !== '' && r[9].toString().trim() !== '0' && r[9].toString().toLowerCase() !== 'trong' && r[9].toString().toLowerCase() !== 'trống') ? 'WH' : 'MP',
+      isHv: (r[12] || '').toString().trim()
+    }));
+
+    res.json({
+      headers: ['Tracking', 'Zone', 'Status'],
+      rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']),
+      kpi,
+      top5Phuong,
+      phuongQuan2,
+      phuongQuan4,
+      phuongQuan7,
+      phuongQuan9,
+      phuongBinhThanh,
+      cachedInboundOrders: mapped,
+      inboundOrdersCache: mapped
+    });
   } catch (error) {
-    console.warn('L?i d?c DATA PENDING:', error.message);
-    res.json({ headers: ['Thong bao'], rows: [['Dang cap nhat du lieu...']], kpi: { tongDon: 0, donMp: 0, donWh: 0, lastUpdate: new Date().toLocaleTimeString('vi-VN') }, top5Phuong: [], phuongPhuNhuan: [], phuongTanBinh: [], phuongThuDuc: [] });
+    console.warn('Lỗi đọc DATA PENDING:', error.message);
+    res.json({
+      headers: ['Thông báo'],
+      rows: [['Đang cập nhật dữ liệu...']],
+      kpi: { tongDon: 0, q2: 0, q4: 0, q7: 0, q9: 0, bt: 0, donMp: 0, donWh: 0, donHv: 0, lastUpdate: new Date().toLocaleTimeString('vi-VN') },
+      top5Phuong: [],
+      phuongQuan2: [],
+      phuongQuan4: [],
+      phuongQuan7: [],
+      phuongQuan9: [],
+      phuongBinhThanh: []
+    });
   }
 });
 
@@ -962,12 +993,64 @@ function tinhKhoangCachMetTuToaDo(viDo, kinhDo) {
   return Math.round(R * c);
 }
 
-// HÀM TỰ ĐỘNG RECHECK CỘT K (TRONG/NGOÀI KHO THEO MỐC 75M) & CỘT L (SỐ MÉT) TRÊN SHEET "LƯU ĐIỂM DANH"
-async function recheckKhoangCachDiemDanhSheet() {
+// Hàm tính số phút trễ so với giờ đóng cổng quy định của Ca
+function tinhSoPhutTre(gioDiemDanhStr, gioDongStr) {
+  if (!gioDiemDanhStr || !gioDongStr) return 0;
+  const pGio = gioDiemDanhStr.toString().trim().split(':').map(Number);
+  const pDong = gioDongStr.toString().trim().split(':').map(Number);
+  if (pGio.length < 2 || pDong.length < 2 || isNaN(pGio[0]) || isNaN(pGio[1]) || isNaN(pDong[0]) || isNaN(pDong[1])) {
+    return 0;
+  }
+  const secCheckIn = pGio[0] * 3600 + pGio[1] * 60 + (pGio[2] || 0);
+  const secDong = pDong[0] * 3600 + pDong[1] * 60;
+  if (secCheckIn <= secDong) return 0;
+  return Math.max(1, Math.ceil((secCheckIn - secDong) / 60));
+}
+
+// Tự động đảm bảo Sheet "LƯU ĐIỂM DANH" có đủ 12 cột (tới Cột L) để không bao giờ bị lỗi vượt lưới cột
+let daDamBaoCotLDiemDanh = false;
+async function damBaoSheetLuuDiemDanhCoCotL() {
+  if (daDamBaoCotLDiemDanh) return;
   try {
+    const meta = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+      fields: 'sheets.properties(title,sheetId,gridProperties.columnCount)'
+    });
+    const sheetDD = (meta.data.sheets || []).find(s => s.properties.title === 'LƯU ĐIỂM DANH');
+    if (sheetDD) {
+      const colCount = sheetDD.properties.gridProperties?.columnCount || 11;
+      if (colCount < 12) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+          requestBody: {
+            requests: [{
+              appendDimension: {
+                sheetId: sheetDD.properties.sheetId,
+                dimension: 'COLUMNS',
+                length: 12 - colCount
+              }
+            }]
+          }
+        });
+      }
+      daDamBaoCotLDiemDanh = true;
+    }
+  } catch (e) {
+    console.warn('Không thể mở rộng cột L cho LƯU ĐIỂM DANH:', e.message);
+  }
+}
+
+// HÀM TỰ ĐỘNG RECHECK CỘT K (TRONG/NGOÀI KHO THEO MỐC 75M) & CỘT L (SỐ MÉT)
+let isRecheckingDD = false;
+async function recheckKhoangCachDiemDanhSheet() {
+  if (isRecheckingDD) return;
+  isRecheckingDD = true;
+  try {
+    await damBaoSheetLuuDiemDanhCoCotL();
+
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'LƯU ĐIỂM DANH'!A1:L5000",
+      range: "'LƯU ĐIỂM DANH'",
     });
     const rows = res.data.values || [];
     if (rows.length === 0) return;
@@ -985,8 +1068,8 @@ async function recheckKhoangCachDiemDanhSheet() {
       const r = rows[i] || [];
       const viDo = r[8];   // Cột I
       const kinhDo = r[9]; // Cột J
-      const cotK = (r[10] || '').toString().trim(); // Cột K (Trong kho / Ngoài kho)
-      const cotL = (r[11] || '').toString().trim(); // Cột L (Khoảng cách m)
+      const cotK = (r[10] || '').toString().trim(); // Cột K
+      const cotL = (r[11] || '').toString().trim(); // Cột L
 
       if (viDo && kinhDo) {
         const soMet = tinhKhoangCachMetTuToaDo(viDo, kinhDo);
@@ -994,7 +1077,6 @@ async function recheckKhoangCachDiemDanhSheet() {
           const viTriChuan75m = soMet <= MAX_KHO_DISTANCE_MET ? 'Trong kho' : 'Ngoài kho';
           const kcChuan = `${soMet}m`;
 
-          // Nếu Cột K lệch so với chuẩn 75m hoặc Cột L chưa có số mét -> Cập nhật luôn cả K và L
           if (cotK !== viTriChuan75m || cotL !== kcChuan) {
             updates.push({
               range: `'LƯU ĐIỂM DANH'!K${i + 1}:L${i + 1}`,
@@ -1017,12 +1099,14 @@ async function recheckKhoangCachDiemDanhSheet() {
     }
   } catch (e) {
     console.warn('Lỗi recheck khoảng cách điểm danh:', e.message);
+  } finally {
+    isRecheckingDD = false;
   }
 }
 
 setTimeout(() => { recheckKhoangCachDiemDanhSheet(); }, 5000);
 
-// 6. API: Điểm danh Rider (Áp dụng mốc 75m & tự động đánh dấu Trễ giờ nếu điểm danh sau giờ đóng cổng)
+// 6. API: Điểm danh Rider (Áp dụng mốc 75m & tính số phút trễ)
 app.post('/api/diem-danh', async (req, res) => {
   try {
     const { riderId, riderName, caDiemDanh, caThucTe, anhBase64, ghiChu, coLichLam, viDo, kinhDo } = req.body;
@@ -1036,7 +1120,6 @@ app.post('/api/diem-danh', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Hôm nay bạn không có lịch làm, vui lòng check lại với FTE khu vực!' });
     }
 
-    // Xác định Trong kho / Ngoài kho với bán kính 75m
     let viTri = 'Không xác định';
     let khoangCachStr = 'Không xác định';
     const distanceMet = tinhKhoangCachMetTuToaDo(viDo, kinhDo);
@@ -1063,7 +1146,6 @@ app.post('/api/diem-danh', async (req, res) => {
     const timestamp = `${p.hour}:${p.minute}:${p.second} ${p.day}/${p.month}/${p.year}`;
     const ngayDiemDanh = `${p.day}/${p.month}/${p.year}`;
     const gioDiemDanh = `${p.hour}:${p.minute}:${p.second}`;
-    const gioPhutHienTai = `${p.hour}:${p.minute}`;
     const keyNgayIso = `${p.year}-${p.month}-${p.day}`;
     const tenTabAnhNgay = `ảnh - ${p.day}/${p.month}/${p.year}`;
 
@@ -1071,8 +1153,8 @@ app.post('/api/diem-danh', async (req, res) => {
     const caTag = caChuan === 'COT 2' ? 'COT2' : 'COT1';
     const cfgCa = cauHinhHaiCa[caTag] || { gioDong: '12:15' };
 
-    // Nếu FTE mở cổng bổ sung sau giờ đóng cổng quy định -> Tự động ghi nhận "Trễ giờ"
-    const trangThaiDiemDanh = (gioPhutHienTai > cfgCa.gioDong) ? 'Trễ giờ' : 'Đã điểm danh';
+    const phutTre = tinhSoPhutTre(gioDiemDanh, cfgCa.gioDong);
+    const trangThaiDiemDanh = phutTre > 0 ? `Trễ ${phutTre} phút` : 'Đã điểm danh';
 
     const tuanKey = getTuanKey(now);
     const maAnh = `IMG_${riderId}_${Date.now()}`;
@@ -1124,6 +1206,7 @@ app.post('/api/diem-danh', async (req, res) => {
 
     const ghiChuFinal = anhBase64 ? 'Đã chụp ảnh xác thực tại trạm' : (ghiChu || 'Quét QR');
 
+    await damBaoSheetLuuDiemDanhCoCotL();
     const newRow = [
       timestamp,
       ngayDiemDanh,
@@ -1157,16 +1240,17 @@ app.post('/api/diem-danh', async (req, res) => {
   }
 });
 
-// 7. API: Lịch sử điểm danh hôm nay (Tính theo chuẩn 75m & kiểm tra giờ trễ)
+// 7. API: Lịch sử điểm danh hôm nay (Đọc toàn bộ tab không lo lỗi giới hạn cột & trả về Vĩ độ, Kinh độ, Số phút trễ)
 app.get('/api/lich-su-diem-danh', async (req, res) => {
   try {
     recheckKhoangCachDiemDanhSheet();
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'LƯU ĐIỂM DANH'!A2:L2000",
+      range: "'LƯU ĐIỂM DANH'",
     });
-    const rows = response.data.values || [];
+    const allRows = response.data.values || [];
+    const rows = allRows.slice(1); // Bỏ dòng tiêu đề đầu tiên
 
     const now = new Date();
     const formatter = new Intl.DateTimeFormat('en-US', {
@@ -1180,36 +1264,53 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
     parts.forEach(({ type, value }) => { p[type] = value; });
     const homNayChuan = `${p.day}/${p.month}/${p.year}`;
     const homNayKhongSo0 = `${parseInt(p.day, 10)}/${parseInt(p.month, 10)}/${p.year}`;
+    const homNayIso = `${p.year}-${p.month}-${p.day}`;
 
     let list = rows
       .filter(r => {
+        if (!r || r.length === 0) return false;
+        const valA = (r[0] || '').toString().trim();
         const valB = (r[1] || '').toString().trim();
-        return valB === homNayChuan || valB === homNayKhongSo0 || chuanHoaNgayIso(valB) === `${p.year}-${p.month}-${p.day}`;
+        return valB === homNayChuan ||
+               valB === homNayKhongSo0 ||
+               chuanHoaNgayIso(valB) === homNayIso ||
+               valA.includes(homNayChuan) ||
+               valA.includes(homNayKhongSo0);
       })
       .map((r, idx) => {
-        const m = tinhKhoangCachMetTuToaDo(r[8], r[9]);
+        const rawViDo = (r[8] || '').toString().trim();
+        const rawKinhDo = (r[9] || '').toString().trim();
+        const m = tinhKhoangCachMetTuToaDo(rawViDo, rawKinhDo);
         const kc = m !== null ? `${m}m` : ((r[11] || '').toString().trim() || '—');
         const viTriChuan = m !== null ? (m <= MAX_KHO_DISTANCE_MET ? 'Trong kho' : 'Ngoài kho') : (r[10] || '');
 
-        // Kiểm tra trễ giờ dựa trên Cột G hoặc so sánh giờ điểm danh (Cột C) với giờ đóng cổng của Ca
         const caRow = (r[5] || '').toString().toUpperCase();
-        const gioRow = (r[2] || '').toString().trim().substring(0, 5); // HH:MM
+        const gioRow = (r[2] || '').toString().trim();
         const gioDongQuyDinh = caRow.includes('2') ? cauHinhHaiCa.COT2.gioDong : cauHinhHaiCa.COT1.gioDong;
+        let phutTre = tinhSoPhutTre(gioRow, gioDongQuyDinh);
+
         let trangThaiRow = (r[6] || 'Đã điểm danh').toString().trim();
-        if (gioRow && gioDongQuyDinh && gioRow > gioDongQuyDinh && !trangThaiRow.toLowerCase().includes('trễ')) {
-          trangThaiRow = 'Trễ giờ';
+        if (phutTre === 0 && trangThaiRow.toLowerCase().includes('trễ')) {
+          const matchPhut = trangThaiRow.match(/(\d+)/);
+          phutTre = matchPhut ? parseInt(matchPhut[1], 10) : 1;
+        }
+        if (phutTre > 0) {
+          trangThaiRow = `Trễ ${phutTre} phút`;
         }
 
         return {
           stt: idx + 1,
           thoiGian: r[0] || '',
           ngay: r[1] || '',
-          gio: r[2] || '',
+          gio: gioRow,
           id: r[3] || '',
           name: r[4] || '',
           ca: r[5] || '',
           trangThai: trangThaiRow,
+          soPhutTre: phutTre,
           ghiChu: r[7] || '',
+          viDo: rawViDo || '—',
+          kinhDo: rawKinhDo || '—',
           viTri: viTriChuan,
           khoangCach: kc
         };

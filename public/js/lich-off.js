@@ -1454,7 +1454,7 @@ window.suaLichSuGhepTuyen = function(bkId) {
   const restoredRoutes = lsItem.routes.map((rName, idx) => {
     let rType = 'OFF';
     if (window.loaiBackupHienTai === 'DELI') {
-      if (rName.includes('Phú Nhuận') || rName.includes('Tân Bình') || rName.includes('Thủ Đức') || rName.includes('Quận') || rName.includes('Bình Thạnh')) {
+      if (rName.includes('Quận 2') || rName.includes('Quận 4') || rName.includes('Quận 7') || rName.includes('Quận 9') || rName.includes('Bình Thạnh')) {
         if (rName.includes('P.')) rType = 'WARD'; 
       }
     }
@@ -1733,7 +1733,7 @@ window.chotLuuGhepBackupLenSheet = async function() {
     if (cartItem.routes.length === 0) return;
 
     let allRoutes = [];
-    let tuyenGanMap = window.loaiBackupHienTai === 'PICK' ? 'PICK' : 'Tân Bình'; 
+    let tuyenGanMap = window.loaiBackupHienTai === 'PICK' ? 'PICK' : 'Quận 2'; 
 
     cartItem.routes.forEach(rt => {
       backupMatches.push({
@@ -1745,8 +1745,11 @@ window.chotLuuGhepBackupLenSheet = async function() {
       allRoutes.push(rt.type === 'WARD' ? rt.route : `${rt.name} (${rt.route})`);
       
       if (window.loaiBackupHienTai === 'DELI') {
-        if (rt.route.includes('Phú Nhuận')) tuyenGanMap = 'Phú Nhuận';
-        if (rt.route.includes('Thủ Đức')) tuyenGanMap = 'Thủ Đức';
+      if (rt.route.includes('Quận 2')) tuyenGanMap = 'Quận 2';
+      else if (rt.route.includes('Quận 4')) tuyenGanMap = 'Quận 4';
+      else if (rt.route.includes('Quận 7')) tuyenGanMap = 'Quận 7';
+      else if (rt.route.includes('Quận 9')) tuyenGanMap = 'Quận 9';
+      else if (rt.route.includes('Bình Thạnh')) tuyenGanMap = 'Bình Thạnh';
 
         if (rt.type === 'OFF') {
           const oldNote = sessionDraftMap[rt.id]?.note ? `${sessionDraftMap[rt.id].note}, ` : 'Trực bù: ';

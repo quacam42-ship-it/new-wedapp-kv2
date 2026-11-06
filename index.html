@@ -474,7 +474,7 @@
         </div>
       </div>
 
-      <!-- 7 THẺ KPI MINI -->
+      <!-- CÁC THẺ KPI MINI (CHUẨN 5 QUẬN: Q2, Q4, Q7, Q9, BÌNH THẠNH) -->
       <div class="row g-2 mb-2" id="hangHoaKpiRow">
         <div class="col-6 col-md-3 col-lg">
           <div class="kpi-mini-card bg-danger text-white">
@@ -491,40 +491,40 @@
           <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(1)">
             <div class="kpi-label text-primary" id="lblKpi1">
               QUẬN 2
-              <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi('Quận 2', 'Quận Quận 2')" title="Xem chi tiết đơn">
+              <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi('Quận 2', 'Quận 2')" title="Xem chi tiết đơn">
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="kpi-val text-primary" id="kpiPhuNhuan">—</div>
+            <div class="kpi-val text-primary" id="kpiQ2">—</div>
           </div>
         </div>
         <div class="col-6 col-md-3 col-lg">
           <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
             <div class="kpi-label text-warning" id="lblKpi2">
               QUẬN 4
-              <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 4', 'Quận Quận 4')" title="Xem chi tiết đơn">
+              <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 4', 'Quận 4')" title="Xem chi tiết đơn">
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="kpi-val text-warning" id="kpiTanBinh">—</div>
+            <div class="kpi-val text-warning" id="kpiQ4">—</div>
           </div>
         </div>
         <div class="col-6 col-md-3 col-lg">
           <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
-            <div class="kpi-label text-warning" id="lblKpi2">
+            <div class="kpi-label text-info" id="lblKpi3">
               QUẬN 7
-              <button class="btn btn-outline-info text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 7', 'TP. Quận 7')" title="Xem chi tiết đơn">
+              <button class="btn btn-outline-info text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 7', 'Quận 7')" title="Xem chi tiết đơn">
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="kpi-val text-info" id="kpiThuDuc">—</div>
+            <div class="kpi-val text-info" id="kpiQ7">—</div>
           </div>
         </div>
         <div class="col-6 col-md-3 col-lg">
           <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
             <div class="kpi-label text-success" id="lblKpi4">
               QUẬN 9
-              <button class="btn btn-outline-success text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 9', 'Quận Quận 9')" title="Xem chi tiết đơn">
+              <button class="btn btn-outline-success text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 9', 'Quận 9')" title="Xem chi tiết đơn">
                 <i class="bi bi-search"></i>
               </button>
             </div>
@@ -612,16 +612,16 @@
         </div>
       </div>
 
-      <!-- 3 BẢNG QUẬN CHI TIẾT -->
+      <!-- 5 BẢNG QUẬN CHI TIẾT (QUẬN 2, QUẬN 4, QUẬN 7, QUẬN 9, BÌNH THẠNH) -->
       <div class="row g-2">
         <div class="col-12 col-lg-4">
           <div class="district-card shadow-sm h-100">
             <div class="district-header d-flex justify-content-between align-items-center border-bottom border-primary border-2 text-primary">
               <div>
                 <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 2
-                <span class="badge bg-primary district-badge ms-1" id="countPhuNhuanBadge">0</span>
+                <span class="badge bg-primary district-badge ms-1" id="countQ2Badge">0</span>
               </div>
-              <input type="text" id="searchPN" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('PN')">
+              <input type="text" id="searchQ2" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q2')">
             </div>
             <div>
               <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
@@ -632,7 +632,7 @@
                     <th style="width: 50px;">Xem</th>
                   </tr>
                 </thead>
-                <tbody id="tbodyPN">
+                <tbody id="tbodyQ2">
                   <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
                 </tbody>
               </table>
@@ -645,9 +645,9 @@
             <div class="district-header d-flex justify-content-between align-items-center border-bottom border-warning border-2 text-warning">
               <div>
                 <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 4
-                <span class="badge bg-warning text-dark district-badge ms-1" id="countTanBinhBadge">0</span>
+                <span class="badge bg-warning text-dark district-badge ms-1" id="countQ4Badge">0</span>
               </div>
-              <input type="text" id="searchTB" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('TB')">
+              <input type="text" id="searchQ4" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q4')">
             </div>
             <div>
               <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
@@ -658,7 +658,7 @@
                     <th style="width: 50px;">Xem</th>
                   </tr>
                 </thead>
-                <tbody id="tbodyTB">
+                <tbody id="tbodyQ4">
                   <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
                 </tbody>
               </table>
@@ -671,9 +671,9 @@
             <div class="district-header d-flex justify-content-between align-items-center border-bottom border-info border-2 text-info">
               <div>
                 <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 7
-                <span class="badge bg-info text-dark district-badge ms-1" id="countThuDucBadge">0</span>
+                <span class="badge bg-info text-dark district-badge ms-1" id="countQ7Badge">0</span>
               </div>
-              <input type="text" id="searchTD" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('TD')">
+              <input type="text" id="searchQ7" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q7')">
             </div>
             <div>
               <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
@@ -684,7 +684,7 @@
                     <th style="width: 50px;">Xem</th>
                   </tr>
                 </thead>
-                <tbody id="tbodyTD">
+                <tbody id="tbodyQ7">
                   <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
                 </tbody>
               </table>
@@ -1741,7 +1741,7 @@
     window.API_BASE = '/api';
     const API_BASE = '/api';
 
-    let ridersData = [], dateHeadersGlobal = [], listPN = [], listTB = [], listTD = [], cachedInboundOrders = [], currentModalShipmentIds = [];
+    let ridersData = [], dateHeadersGlobal = [], listQ2 = [], listQ4 = [], listQ7 = [], listQ9 = [], listBT = [], cachedInboundOrders = [], currentModalShipmentIds = [];
     let currentTab = 'tuyenRider';
     let loadedTabs = { tuyenRider: false, lichOff: false, performance: false, hangHoa: false };
     let isTop5Open = true;
@@ -1937,46 +1937,86 @@
 
     function capNhatGiaoDienDongHo(sec) { const el = document.getElementById('nextUpdateCountdown'); if (el) el.innerText = `${sec}s`; }
 
+    function capNhatKpiPendingTuCache(kFallback = {}) {
+      if (cachedInboundOrders && cachedInboundOrders.length > 0) {
+        const uniquePending = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
+        document.getElementById('kpiTongDon').innerText = uniquePending.length;
+        if (document.getElementById('kpiQ2')) document.getElementById('kpiQ2').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 2').length;
+        if (document.getElementById('kpiQ4')) document.getElementById('kpiQ4').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 4').length;
+        if (document.getElementById('kpiQ7')) document.getElementById('kpiQ7').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 7').length;
+        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 9').length;
+        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = uniquePending.filter(d => normQ(d.quan) === 'bình thạnh').length;
+        document.getElementById('kpiMp').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
+        document.getElementById('kpiWh').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
+        document.getElementById('kpiHv').innerText = uniquePending.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+      } else {
+        document.getElementById('kpiTongDon').innerText = kFallback.tongDon ?? '0';
+        if (document.getElementById('kpiQ2')) document.getElementById('kpiQ2').innerText = kFallback.q2 ?? '0';
+        if (document.getElementById('kpiQ4')) document.getElementById('kpiQ4').innerText = kFallback.q4 ?? '0';
+        if (document.getElementById('kpiQ7')) document.getElementById('kpiQ7').innerText = kFallback.q7 ?? '0';
+        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = kFallback.q9 ?? '0';
+        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = kFallback.bt ?? '0';
+        document.getElementById('kpiMp').innerText = kFallback.donMp ?? '0';
+        document.getElementById('kpiWh').innerText = kFallback.donWh ?? '0';
+        document.getElementById('kpiHv').innerText = kFallback.donHv ?? '0';
+      }
+    }
+
     async function loadHangHoaData(isBackgroundSync = false) {
-      if (isFetchingHangHoa) return; isFetchingHangHoa = true;
+      if (cachedInboundOrders && cachedInboundOrders.length > 0) {
+        capNhatKpiPendingTuCache();
+      }
+      if (isFetchingHangHoa) return;
+      isFetchingHangHoa = true;
+
       const refreshBtn = document.querySelector("button[onclick='triggerManualHangHoaSync()']");
-      if (refreshBtn && !isBackgroundSync) { refreshBtn.disabled = true; refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang nạp...'; }
+      if (refreshBtn && !isBackgroundSync) {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang nạp...';
+      }
 
       try {
-        const res = await fetch(`${API_BASE}/hang-hoa-data`); const data = await res.json();
-        loadedTabs.hangHoa = true; if (!data) return;
+        const res = await fetch(`${API_BASE}/hang-hoa-data`);
+        const data = await res.json();
+        loadedTabs.hangHoa = true;
+        if (!data) return;
         cachedInboundOrders = data.cachedInboundOrders || data.inboundOrdersCache || [];
 
-        const elFetch = document.getElementById('hangLastFetchTime'); if (elFetch) elFetch.innerText = getGioVietNamHienTai();
+        const elFetch = document.getElementById('hangLastFetchTime');
+        if (elFetch) elFetch.innerText = getGioVietNamHienTai();
         const elSheetTime = document.getElementById('hangSheetTimeLabel');
         if (elSheetTime && data.kpi && data.kpi.lastUpdate) elSheetTime.innerText = `(Ghi nhận: ${data.kpi.lastUpdate})`;
 
-        const k = data.kpi || {};
-        document.getElementById('kpiTongDon').innerText = k.tongDon || '0';
-        document.getElementById('kpiPhuNhuan').innerText = k.phuNhuan || '0';
-        document.getElementById('kpiTanBinh').innerText = k.tanBinh || '0';
-        document.getElementById('kpiThuDuc').innerText = k.thuDuc || '0';
-        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = k.q9 || '0';
-        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = k.bt || '0';
-        document.getElementById('kpiMp').innerText = k.donMp || '0';
-        document.getElementById('kpiWh').innerText = k.donWh || '0';
-        document.getElementById('kpiHv').innerText = k.donHv || '0';
+        capNhatKpiPendingTuCache(data.kpi || {});
 
         renderTop5Table(data.top5Phuong || []);
-        listPN = data.phuongPhuNhuan || []; listTB = data.phuongTanBinh || []; listTD = data.phuongThuDuc || [];
-        listQ9 = data.phuongQuan9 || []; listBT = data.phuongBinhThanh || [];
+        listQ2 = data.phuongQuan2 || [];
+        listQ4 = data.phuongQuan4 || [];
+        listQ7 = data.phuongQuan7 || [];
+        listQ9 = data.phuongQuan9 || [];
+        listBT = data.phuongBinhThanh || [];
 
-        document.getElementById('countPhuNhuanBadge').innerText = listPN.length;
-        document.getElementById('countTanBinhBadge').innerText = listTB.length;
-        document.getElementById('countThuDucBadge').innerText = listTD.length;
-        if (document.getElementById('countQ9Badge')) document.getElementById('countQ9Badge').innerText = listQ9.length;
-        if (document.getElementById('countBTBadge')) document.getElementById('countBTBadge').innerText = listBT.length;
+        // Hiển thị: [Số đơn rớt] đơn - [Tổng phường rớt] phường
+        const tinhTongDonQuan = (arr) => (arr || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
+        if (document.getElementById('countQ2Badge')) document.getElementById('countQ2Badge').innerText = `${tinhTongDonQuan(listQ2)} đơn - ${listQ2.length} phường`;
+        if (document.getElementById('countQ4Badge')) document.getElementById('countQ4Badge').innerText = `${tinhTongDonQuan(listQ4)} đơn - ${listQ4.length} phường`;
+        if (document.getElementById('countQ7Badge')) document.getElementById('countQ7Badge').innerText = `${tinhTongDonQuan(listQ7)} đơn - ${listQ7.length} phường`;
+        if (document.getElementById('countQ9Badge')) document.getElementById('countQ9Badge').innerText = `${tinhTongDonQuan(listQ9)} đơn - ${listQ9.length} phường`;
+        if (document.getElementById('countBTBadge')) document.getElementById('countBTBadge').innerText = `${tinhTongDonQuan(listBT)} đơn - ${listBT.length} phường`;
 
-        filterQuanList('PN'); filterQuanList('TB'); filterQuanList('TD'); filterQuanList('Q9'); filterQuanList('BT');
-      } catch (err) { console.error('Lỗi tải hàng hóa:', err); } 
-      finally {
+        filterQuanList('Q2');
+        filterQuanList('Q4');
+        filterQuanList('Q7');
+        filterQuanList('Q9');
+        filterQuanList('BT');
+      } catch (err) {
+        console.error('Lỗi tải hàng hóa:', err);
+      } finally {
         isFetchingHangHoa = false;
-        if (refreshBtn && !isBackgroundSync) { refreshBtn.disabled = false; refreshBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay'; }
+        if (refreshBtn && !isBackgroundSync) {
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay';
+        }
       }
     }
 
@@ -1997,9 +2037,9 @@
 
     function filterQuanList(quanCode) {
       let dataList = [], tbodyId = '', searchId = '';
-      if (quanCode === 'PN') { dataList = listPN; tbodyId = 'tbodyPN'; searchId = 'searchPN'; }
-      else if (quanCode === 'TB') { dataList = listTB; tbodyId = 'tbodyTB'; searchId = 'searchTB'; }
-      else if (quanCode === 'TD') { dataList = listTD; tbodyId = 'tbodyTD'; searchId = 'searchTD'; }
+      if (quanCode === 'Q2') { dataList = listQ2 || []; tbodyId = 'tbodyQ2'; searchId = 'searchQ2'; }
+      else if (quanCode === 'Q4') { dataList = listQ4 || []; tbodyId = 'tbodyQ4'; searchId = 'searchQ4'; }
+      else if (quanCode === 'Q7') { dataList = listQ7 || []; tbodyId = 'tbodyQ7'; searchId = 'searchQ7'; }
       else if (quanCode === 'Q9') { dataList = listQ9 || []; tbodyId = 'tbodyQ9'; searchId = 'searchQ9'; }
       else if (quanCode === 'BT') { dataList = listBT || []; tbodyId = 'tbodyBT'; searchId = 'searchBT'; }
 
@@ -2022,12 +2062,13 @@
     }
 
     function normQ(q) {
-      if (!q) return ''; const s = q.toString().toLowerCase();
-      if (s.includes('quận 2') || s.includes('pn')) return 'quận 2';
-      if (s.includes('quận 4') || s.includes('tb')) return 'quận 4';
-      if (s.includes('quận 7') || s.includes('td')) return 'quận 7';
-      if (s.includes('quận 9')) return 'quận 9';
-      if (s.includes('bình thạnh') || s.includes('bt')) return 'bình thạnh';
+      if (!q) return '';
+      const s = q.toString().toLowerCase();
+      if (s.includes('quận 2') || s === 'q2') return 'quận 2';
+      if (s.includes('quận 4') || s === 'q4') return 'quận 4';
+      if (s.includes('quận 7') || s === 'q7') return 'quận 7';
+      if (s.includes('quận 9') || s === 'q9') return 'quận 9';
+      if (s.includes('bình thạnh') || s === 'bt') return 'bình thạnh';
       return s.trim();
     }
 
@@ -2108,10 +2149,11 @@
     function phanLoaiDiemDanhItem(item) {
       const gopChuoi = `${item.trangThai || ''} ${item.ghiChu || ''} ${item.viTri || ''}`.toLowerCase();
       const soMet = parseInt(String(item.khoangCach || '').replace(/[^\d]/g, ''), 10);
+      const phutTre = Number(item.soPhutTre) || 0;
 
-      const isTre = gopChuoi.includes('trễ') || gopChuoi.includes('tre') || gopChuoi.includes('muộn');
+      const isTre = phutTre > 0 || gopChuoi.includes('trễ') || gopChuoi.includes('tre') || gopChuoi.includes('muộn');
       const isNgoai = (!isNaN(soMet) ? soMet > 75 : (gopChuoi.includes('ngoài') || gopChuoi.includes('ngoai')));
-      return { isTre, isNgoai };
+      return { isTre, isNgoai, phutTre };
     }
 
     async function loadLichSuDiemDanh() {
@@ -2134,8 +2176,8 @@
         const elTre = document.getElementById('ddCountTre'); if (elTre) elTre.innerText = tre;
         const elNgoai = document.getElementById('ddCountNgoai'); if (elNgoai) elNgoai.innerText = ngoai;
 
-        // Nếu đang mở sẵn bảng chi tiết thì tự động làm mới luôn
-        if (loaiDiemDanhDangXem) hienThiChiTietDD(loaiDiemDanhDangXem);
+        // Tự động hiển thị danh sách ngay khi mở tab Điểm Danh
+        hienThiChiTietDD(loaiDiemDanhDangXem || 'dunggio');
       } catch (e) { console.error(e); }
     }
 
@@ -2143,6 +2185,7 @@
       loaiDiemDanhDangXem = loai;
       const panel = document.getElementById('chiTietDiemDanh');
       const tbody = document.getElementById('tbodyChiTietDD');
+      const thead = panel ? panel.querySelector('thead') : null;
       if (!panel || !tbody) return;
       panel.style.display = 'block';
 
@@ -2155,29 +2198,98 @@
         filtered = danhSachDiemDanhHomNay.filter(i => !phanLoaiDiemDanhItem(i).isTre);
       }
 
+      // Đổi tiêu đề cột linh hoạt theo mục đang nhấn (Đúng giờ / Trễ giờ / Ngoài kho)
+      if (thead) {
+        if (loai === 'ngoai') {
+          thead.innerHTML = `
+            <tr>
+              <th style="width: 35px;">STT</th>
+              <th>Giờ</th>
+              <th>Mã RD</th>
+              <th>Họ và Tên</th>
+              <th style="width: 55px;">Ca</th>
+              <th>Vĩ Độ</th>
+              <th>Kinh Độ</th>
+              <th style="width: 75px;">Cách Kho</th>
+            </tr>`;
+        } else if (loai === 'tre') {
+          thead.innerHTML = `
+            <tr>
+              <th style="width: 35px;">STT</th>
+              <th>Giờ</th>
+              <th>Mã RD</th>
+              <th>Họ và Tên</th>
+              <th style="width: 55px;">Ca</th>
+              <th style="width: 95px;">Số Phút Trễ</th>
+              <th style="width: 75px;">Cách Kho</th>
+            </tr>`;
+        } else {
+          thead.innerHTML = `
+            <tr>
+              <th style="width: 35px;">STT</th>
+              <th>Giờ</th>
+              <th>Mã RD</th>
+              <th>Họ và Tên</th>
+              <th style="width: 60px;">Ca</th>
+              <th style="width: 75px;">Cách Kho</th>
+              <th style="width: 85px;">Trạng Thái</th>
+            </tr>`;
+        }
+      }
+
+      const colSpanCount = loai === 'ngoai' ? 8 : 7;
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${colSpanCount}" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
+        return;
+      }
+
       let html = '';
       filtered.forEach((item, idx) => {
-        const { isTre, isNgoai } = phanLoaiDiemDanhItem(item);
+        const { isTre, isNgoai, phutTre } = phanLoaiDiemDanhItem(item);
         const badgeKC = `<span class="badge ${isNgoai ? 'bg-danger' : 'bg-info text-dark'} font-monospace">${item.khoangCach || '—'}</span>`;
-        const badgeTT = isNgoai
-          ? `<span class="badge bg-danger">Ngoài kho</span>`
-          : (isTre ? `<span class="badge bg-warning text-dark">Trễ giờ</span>` : `<span class="badge bg-success">${item.trangThai || 'Trong kho'}</span>`);
+        const caBadge = `<span class="badge ${item.ca && item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span>`;
 
-        html += `
-          <tr>
-            <td class="text-muted small">${idx + 1}</td>
-            <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
-            <td class="font-monospace">${item.id}</td>
-            <td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td>
-            <td><span class="badge ${item.ca && item.ca.includes('2') ? 'bg-warning text-dark' : 'bg-primary'}">${item.ca || '—'}</span></td>
-            <td>${badgeKC}</td>
-            <td>${badgeTT}</td>
-          </tr>`;
+        if (loai === 'ngoai') {
+          html += `
+            <tr>
+              <td class="text-muted small">${idx + 1}</td>
+              <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
+              <td class="font-monospace">${item.id}</td>
+              <td class="fw-semibold text-start text-truncate" style="max-width:120px;">${item.name}</td>
+              <td>${caBadge}</td>
+              <td class="font-monospace small text-danger">${item.viDo || '—'}</td>
+              <td class="font-monospace small text-danger">${item.kinhDo || '—'}</td>
+              <td>${badgeKC}</td>
+            </tr>`;
+        } else if (loai === 'tre') {
+          const txtPhutTre = phutTre > 0 ? `Trễ ${phutTre} phút` : (item.trangThai || 'Trễ giờ');
+          html += `
+            <tr>
+              <td class="text-muted small">${idx + 1}</td>
+              <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
+              <td class="font-monospace">${item.id}</td>
+              <td class="fw-semibold text-start text-truncate" style="max-width:130px;">${item.name}</td>
+              <td>${caBadge}</td>
+              <td><span class="badge bg-warning text-dark fw-bold">${txtPhutTre}</span></td>
+              <td>${badgeKC}</td>
+            </tr>`;
+        } else {
+          const badgeTT = isNgoai
+            ? `<span class="badge bg-danger">Ngoài kho</span>`
+            : `<span class="badge bg-success">Đúng giờ</span>`;
+          html += `
+            <tr>
+              <td class="text-muted small">${idx + 1}</td>
+              <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
+              <td class="font-monospace">${item.id}</td>
+              <td class="fw-semibold text-start text-truncate" style="max-width:140px;">${item.name}</td>
+              <td>${caBadge}</td>
+              <td>${badgeKC}</td>
+              <td>${badgeTT}</td>
+            </tr>`;
+        }
       });
 
-      if (filtered.length === 0) {
-        html = `<tr><td colspan="7" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
-      }
       tbody.innerHTML = html;
     }
 
@@ -2605,68 +2717,124 @@ if (user.role === 'RIDER') {
       } catch (e) { alert("❌ Lỗi kết nối khi lưu phân quyền: " + e.message); }
     }
 
-    // ================= XỬ LÝ HÀNG HÓA VÀ TAB PENDING =================
+    // ================= XỬ LÝ HÀNG HÓA VÀ TAB PENDING (CHUẨN 5 QUẬN KV2) =================
     let currentKieuHangHoa = 'PENDING'; 
     let globalInboundCot1 = [];
     let globalInboundCot2 = [];
 
     function chuyenSubTabHangHoa(kieu) {
-      currentKieuHangHoa = kieu; chuyenTab('hangHoa'); 
+      currentKieuHangHoa = kieu;
       const titleEl = document.getElementById('titleKieuHangHoa');
-      
-      // XÓA TRẮNG DỮ LIỆU CŨ CHỐNG LỖI HIỂN THỊ CHỒNG CHÉO KHI CHỜ LOAD
-      document.getElementById('kpiTongDon').innerText = '...';
-      document.getElementById('kpiPhuNhuan').innerText = '...';
-      document.getElementById('kpiTanBinh').innerText = '...';
-      document.getElementById('kpiThuDuc').innerText = '...';
-      document.getElementById('kpiMp').innerText = '...';
-      document.getElementById('kpiWh').innerText = '...';
-      document.getElementById('kpiHv').innerText = '...';
+
+      if (!cachedInboundOrders || cachedInboundOrders.length === 0) {
+        ['kpiTongDon', 'kpiQ2', 'kpiQ4', 'kpiQ7', 'kpiQ9', 'kpiBT', 'kpiMp', 'kpiWh', 'kpiHv'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = '...';
+        });
+      }
 
       if (kieu === 'INBOUND') {
-        titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> PENDING'; titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm';
-        loadHangHoaData(false);
+        titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> PENDING';
+        titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm';
       } else {
-        titleEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT'; titleEl.className = 'badge bg-danger fs-6 py-1 px-2 shadow-sm';
-        document.getElementById('kpiThuDuc').parentElement.parentElement.style.display = ''; document.getElementById('kpiHv').parentElement.parentElement.style.display = ''; document.querySelector('.top5-card').style.display = ''; document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = '');
-        const lblPN = document.getElementById('lblKpi1'); if(lblPN) { lblPN.innerHTML = 'QUẬN 2 <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 2\', \'Quận Quận 2\')"><i class="bi bi-search"></i></button>'; lblPN.parentElement.onclick = null; }
-        const lblTB = document.getElementById('lblKpi2'); if(lblTB) { lblTB.innerHTML = 'QUẬN 4 <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 4\', \'Quận Quận 4\')"><i class="bi bi-search"></i></button>'; lblTB.parentElement.onclick = null; }
-        loadHangHoaData(false);
+        titleEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT';
+        titleEl.className = 'badge bg-danger fs-6 py-1 px-2 shadow-sm';
+        ['kpiQ7', 'kpiQ9', 'kpiBT', 'kpiHv'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.parentElement && el.parentElement.parentElement) el.parentElement.parentElement.style.display = '';
+        });
+        document.querySelector('.top5-card').style.display = '';
+        document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = '');
+        const lblQ2 = document.getElementById('lblKpi1');
+        if (lblQ2) {
+          lblQ2.innerHTML = 'QUẬN 2 <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 2\', \'Quận 2\')"><i class="bi bi-search"></i></button>';
+          lblQ2.parentElement.onclick = null;
+        }
+        const lblQ4 = document.getElementById('lblKpi2');
+        if (lblQ4) {
+          lblQ4.innerHTML = 'QUẬN 4 <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 4\', \'Quận 4\')"><i class="bi bi-search"></i></button>';
+          lblQ4.parentElement.onclick = null;
+        }
       }
+
+      chuyenTab('hangHoa');
+      capNhatKpiPendingTuCache();
     }
 
-async function fetchDataInboundThucTe() {
-      document.getElementById('kpiTongDon').innerText = '...'; document.getElementById('kpiPhuNhuan').innerText = '...'; document.getElementById('kpiTanBinh').innerText = '...'; document.getElementById('kpiMp').innerText = '...'; document.getElementById('kpiWh').innerText = '...';
-      document.getElementById('kpiThuDuc').parentElement.parentElement.style.display = 'none'; document.getElementById('kpiHv').parentElement.parentElement.style.display = 'none'; document.querySelector('.top5-card').style.display = 'none'; document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = 'none');
+    async function fetchDataInboundThucTe() {
+      ['kpiTongDon', 'kpiQ2', 'kpiQ4', 'kpiMp', 'kpiWh'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = '...';
+      });
+      ['kpiQ7', 'kpiHv'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.parentElement && el.parentElement.parentElement) el.parentElement.parentElement.style.display = 'none';
+      });
+      document.querySelector('.top5-card').style.display = 'none';
+      document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = 'none');
       try {
-        const res = await fetch(`${API_BASE}/hang-hoa-inbound`); const result = await res.json();
+        const res = await fetch(`${API_BASE}/hang-hoa-inbound`);
+        const result = await res.json();
         if (result.success && result.data) {
-          const d = result.data; globalInboundCot1 = d.chiTietCot1; globalInboundCot2 = d.chiTietCot2; document.getElementById('kpiTongDon').innerText = d.tongDonKhuVuc;
-          const lblPN = document.getElementById('lblKpi1'); if(lblPN) { lblPN.innerHTML = 'INBOUND COT 1 <i class="bi bi-hand-index-thumb ms-1"></i>'; lblPN.parentElement.onclick = () => showChiTietInbound(1); } document.getElementById('kpiPhuNhuan').innerText = d.tongCot1;
-          const lblTB = document.getElementById('lblKpi2'); if(lblTB) { lblTB.innerHTML = 'INBOUND COT 2 <i class="bi bi-hand-index-thumb ms-1"></i>'; lblTB.parentElement.onclick = () => showChiTietInbound(2); } document.getElementById('kpiTanBinh').innerText = d.tongCot2;
-          document.getElementById('kpiMp').innerText = d.tongMP; document.getElementById('kpiWh').innerText = d.tongWH; document.getElementById('hangLastFetchTime').innerText = new Date().toLocaleTimeString('vi-VN'); document.getElementById('hangSheetTimeLabel').innerText = '(Trích xuất từ TOTAL INBOUND)';
+          const d = result.data;
+          globalInboundCot1 = d.chiTietCot1;
+          globalInboundCot2 = d.chiTietCot2;
+          document.getElementById('kpiTongDon').innerText = d.tongDonKhuVuc;
+          const lblQ2 = document.getElementById('lblKpi1');
+          if (lblQ2) {
+            lblQ2.innerHTML = 'INBOUND COT 1 <i class="bi bi-hand-index-thumb ms-1"></i>';
+            lblQ2.parentElement.onclick = () => showChiTietInbound(1);
+          }
+          if (document.getElementById('kpiQ2')) document.getElementById('kpiQ2').innerText = d.tongCot1;
+          const lblQ4 = document.getElementById('lblKpi2');
+          if (lblQ4) {
+            lblQ4.innerHTML = 'INBOUND COT 2 <i class="bi bi-hand-index-thumb ms-1"></i>';
+            lblQ4.parentElement.onclick = () => showChiTietInbound(2);
+          }
+          if (document.getElementById('kpiQ4')) document.getElementById('kpiQ4').innerText = d.tongCot2;
+          document.getElementById('kpiMp').innerText = d.tongMP;
+          document.getElementById('kpiWh').innerText = d.tongWH;
+          document.getElementById('hangLastFetchTime').innerText = new Date().toLocaleTimeString('vi-VN');
+          document.getElementById('hangSheetTimeLabel').innerText = '(Trích xuất từ TOTAL INBOUND)';
         }
       } catch (error) { alert("Lỗi tải dữ liệu Inbound: " + error.message); }
     }
 
     function showChiTietInbound(cotType) {
       if (currentKieuHangHoa !== 'INBOUND') return; 
-      const data = cotType === 1 ? globalInboundCot1 : globalInboundCot2, title = cotType === 1 ? 'COT 1' : 'COT 2'; document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title}`; const container = document.getElementById('bodyChiTietInboundCot');
-      if (data.length === 0) { container.innerHTML = '<div class="col-12 text-center py-4 text-muted">Chưa có dữ liệu</div>'; } 
-      else {
-        const grouped = { 'Quận Quận 2': [], 'Quận Quận 4': [], 'Thành phố Quận 7': [] }; data.forEach(item => { if (grouped[item.quan]) grouped[item.quan].push(item); else grouped[item.quan] = [item]; });
-        const thuDucOrder = ["phường hiệp bình chánh", "phường hiệp bình phước", "phường linh đông", "phường bình chiểu", "phường tam bình", "phường tam phú", "phường linh chiểu", "phường bình thọ", "phường trường thọ", "phường linh trung", "phường linh xuân", "phường linh tây"];
-        const extractNumber = (str) => { const match = str.match(/\d+/); return match ? parseInt(match[0], 10) : 999; };
-        const layoutConfig = [ { name: 'Quận Quận 2', color: 'primary', icon: 'bi-geo-alt-fill', label: 'QUẬN 2' }, { name: 'Quận Quận 4', color: 'warning', icon: 'bi-geo-alt-fill', label: 'QUẬN 4' }, { name: 'Thành phố Quận 7', color: 'info', icon: 'bi-geo-alt-fill', label: 'QUẬN 7' } ];
+      const data = cotType === 1 ? globalInboundCot1 : globalInboundCot2;
+      const title = cotType === 1 ? 'COT 1' : 'COT 2';
+      document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title}`;
+      const container = document.getElementById('bodyChiTietInboundCot');
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="col-12 text-center py-4 text-muted">Chưa có dữ liệu</div>';
+      } else {
+        const grouped = { 'quận 2': [], 'quận 4': [], 'quận 7': [], 'quận 9': [], 'bình thạnh': [] };
+        data.forEach(item => {
+          const qKey = normQ(item.quan);
+          if (grouped[qKey]) grouped[qKey].push(item);
+        });
+        const extractNumber = (str) => { const match = (str || '').match(/\d+/); return match ? parseInt(match[0], 10) : 999; };
+        const layoutConfig = [
+          { key: 'quận 2', color: 'primary', icon: 'bi-geo-alt-fill', label: 'QUẬN 2' },
+          { key: 'quận 4', color: 'warning', icon: 'bi-geo-alt-fill', label: 'QUẬN 4' },
+          { key: 'quận 7', color: 'info', icon: 'bi-geo-alt-fill', label: 'QUẬN 7' },
+          { key: 'quận 9', color: 'success', icon: 'bi-geo-alt-fill', label: 'QUẬN 9' },
+          { key: 'bình thạnh', color: 'danger', icon: 'bi-geo-alt-fill', label: 'BÌNH THẠNH' }
+        ];
         let html = '';
         layoutConfig.forEach(config => {
-          let phuongList = grouped[config.name] || [];
-          if (config.name === 'Thành phố Quận 7') { phuongList.sort((a, b) => { const nameA = a.phuong.toLowerCase().trim(), nameB = b.phuong.toLowerCase().trim(); let idxA = thuDucOrder.findIndex(p => nameA.includes(p)), idxB = thuDucOrder.findIndex(p => nameB.includes(p)); if (idxA === -1) idxA = 99; if (idxB === -1) idxB = 99; return idxA - idxB; }); } 
-          else { phuongList.sort((a, b) => extractNumber(a.phuong) - extractNumber(b.phuong)); }
+          let phuongList = grouped[config.key] || [];
+          phuongList.sort((a, b) => extractNumber(a.phuong) - extractNumber(b.phuong));
           let totalDon = phuongList.reduce((sum, item) => sum + item.soLuong, 0);
           html += `<div class="col-12 col-lg-4"><div class="card h-100 shadow-sm border-${config.color}"><div class="card-header bg-white py-2 d-flex justify-content-between align-items-center border-bottom border-${config.color}"><span class="fw-bold text-${config.color}"><i class="bi ${config.icon} me-1"></i> ${config.label}</span><span class="badge bg-${config.color} ${config.color === 'warning' ? 'text-dark' : ''} fs-6">${totalDon}</span></div><div class="table-responsive" style="max-height: 60vh;"><table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 13px;"><thead class="table-light sticky-top"><tr><th class="text-start">Phường</th><th style="width: 80px;">Số Đơn</th></tr></thead><tbody>`;
-          if (phuongList.length === 0) { html += `<tr><td colspan="2" class="text-center text-muted py-3">Không có đơn</td></tr>`; } 
-          else { phuongList.forEach(item => { html += `<tr><td class="text-start fw-semibold">${item.phuong}</td><td class="text-danger fw-bold font-monospace">${item.soLuong}</td></tr>`; }); }
+          if (phuongList.length === 0) {
+            html += `<tr><td colspan="2" class="text-center text-muted py-3">Không có đơn</td></tr>`;
+          } else {
+            phuongList.forEach(item => {
+              html += `<tr><td class="text-start fw-semibold">${item.phuong}</td><td class="text-danger fw-bold font-monospace">${item.soLuong}</td></tr>`;
+            });
+          }
           html += `</tbody></table></div></div></div>`;
         });
         container.innerHTML = html;
@@ -2674,7 +2842,7 @@ async function fetchDataInboundThucTe() {
       bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietInbound')).show();
     }
 
-    function triggerManualHangHoaSync() { countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec); if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe(); else loadHangHoaData(false); }
+    function triggerManualHangHoaSync() { countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec); loadHangHoaData(false); }
     
     const originalLoadHangHoaData = loadHangHoaData;
     loadHangHoaData = async function(isBg) {
