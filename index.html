@@ -810,33 +810,27 @@
       </div>
 
       <!-- ================================================================================= -->
-      <!-- VÙNG 2: GIAO DIỆN DÀNH RIÊNG CHO INBOUND (ĐỌC GID=909229938 & LƯU DAILY 744743139) -->
+      <!-- VÙNG 2: GIAO DIỆN DÀNH RIÊNG CHO INBOUND (KPI HÔM NAY + BẢNG NGÀY + BẢNG TUẦN)   -->
       <!-- ================================================================================= -->
       <div id="vungGiaoDienInbound" style="display: none;">
-        <!-- THANH CHỌN NGÀY INBOUND (HÔM NAY LIVE HOẶC CÁC NGÀY LƯU TRONG LƯU DAILY) -->
-        <div class="card border-0 shadow-sm mb-2 bg-white">
-          <div class="card-body py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div class="d-flex align-items-center flex-wrap gap-2">
-              <span class="fw-bold text-primary" style="font-size: 0.85rem;">
-                <i class="bi bi-calendar-range-fill me-1"></i>ĐANG XEM DỮ LIỆU INBOUND:
-              </span>
-              <span class="badge bg-primary fs-6 px-3 py-1 shadow-sm" id="lblInboundActiveDateTitle">Hôm nay (Live)</span>
-            </div>
-            <div class="d-flex align-items-center flex-wrap gap-1" id="vungNutChonNgayInbound">
-              <button type="button" class="btn btn-sm btn-primary fw-bold py-0 px-2" onclick="chonNgayInboundHienThi('TODAY')">
-                📅 Hôm nay (Live)
-              </button>
-            </div>
-          </div>
-        </div>
+        <style>
+          .inb-cell-btn {
+            cursor: pointer;
+            transition: all 0.15s ease;
+          }
+          .inb-cell-btn:hover {
+            background-color: #e0f2fe !important;
+            transform: scale(1.02);
+          }
+        </style>
 
-        <!-- HÀNG 1 KPI INBOUND: TỔNG INBOUND KV2, INBOUND CA COT 1, INBOUND CA COT 2 -->
+        <!-- HÀNG 1 KPI INBOUND (CHỈ HIỂN THỊ NGÀY HÔM NAY): TỔNG INBOUND KV2, INBOUND CA COT 1, INBOUND CA COT 2 -->
         <div class="row g-2 mb-2">
           <div class="col-12 col-md-4">
-            <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="showChiTietInbound('ALL')">
+            <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="showChiTietInbound('ALL', 'TODAY')">
               <div class="sheet-kpi-title">
-                <span>TỔNG ĐƠN INBOUND</span>
-                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); showChiTietInbound('ALL')">
+                <span>TỔNG ĐƠN INBOUND (HÔM NAY)</span>
+                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); showChiTietInbound('ALL', 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -845,10 +839,10 @@
             </div>
           </div>
           <div class="col-6 col-md-4">
-            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="showChiTietInbound(1)">
+            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="showChiTietInbound(1, 'TODAY')">
               <div class="sheet-kpi-title">
-                <span><i class="bi bi-sun-fill text-warning me-1"></i>INBOUND CA COT 1</span>
-                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); showChiTietInbound(1)">
+                <span><i class="bi bi-sun-fill text-warning me-1"></i>INBOUND CA COT 1 (HÔM NAY)</span>
+                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); showChiTietInbound(1, 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -857,10 +851,10 @@
             </div>
           </div>
           <div class="col-6 col-md-4">
-            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="showChiTietInbound(2)">
+            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="showChiTietInbound(2, 'TODAY')">
               <div class="sheet-kpi-title">
-                <span><i class="bi bi-moon-stars-fill text-danger me-1"></i>INBOUND CA COT 2</span>
-                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); showChiTietInbound(2)">
+                <span><i class="bi bi-moon-stars-fill text-danger me-1"></i>INBOUND CA COT 2 (HÔM NAY)</span>
+                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); showChiTietInbound(2, 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -870,13 +864,13 @@
           </div>
         </div>
 
-        <!-- HÀNG 2 KPI INBOUND: 5 QUẬN ĐỘC LẬP HOÀN TOÀN VỚI PENDING ATTEMPT -->
-        <div class="row row-cols-2 row-cols-md-5 g-2 mb-2">
+        <!-- HÀNG 2 KPI INBOUND (CHỈ HIỂN THỊ NGÀY HÔM NAY): 5 QUẬN -->
+        <div class="row row-cols-2 row-cols-md-5 g-2 mb-3">
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="showChiTietInboundQuan('Quận 2')">
+            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="showChiTietInboundQuan('Quận 2', 'TODAY')">
               <div class="sheet-kpi-title">
                 <span>INBOUND QUẬN 2</span>
-                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 2')">
+                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 2', 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -885,10 +879,10 @@
             </div>
           </div>
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="showChiTietInboundQuan('Quận 4')">
+            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="showChiTietInboundQuan('Quận 4', 'TODAY')">
               <div class="sheet-kpi-title">
                 <span>INBOUND QUẬN 4</span>
-                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 4')">
+                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 4', 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -897,10 +891,10 @@
             </div>
           </div>
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q7 shadow-sm" onclick="showChiTietInboundQuan('Quận 7')">
+            <div class="sheet-kpi-card sheet-kpi-q7 shadow-sm" onclick="showChiTietInboundQuan('Quận 7', 'TODAY')">
               <div class="sheet-kpi-title">
                 <span>INBOUND QUẬN 7</span>
-                <button type="button" class="btn btn-light text-info text-dark kpi-mini-btn border-info" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 7')">
+                <button type="button" class="btn btn-light text-info text-dark kpi-mini-btn border-info" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 7', 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -909,10 +903,10 @@
             </div>
           </div>
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q9 shadow-sm" onclick="showChiTietInboundQuan('Quận 9')">
+            <div class="sheet-kpi-card sheet-kpi-q9 shadow-sm" onclick="showChiTietInboundQuan('Quận 9', 'TODAY')">
               <div class="sheet-kpi-title">
                 <span>INBOUND QUẬN 9</span>
-                <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 9')">
+                <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 9', 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -921,10 +915,10 @@
             </div>
           </div>
           <div class="col-12 col-md">
-            <div class="sheet-kpi-card sheet-kpi-bt shadow-sm" onclick="showChiTietInboundQuan('Bình Thạnh')">
+            <div class="sheet-kpi-card sheet-kpi-bt shadow-sm" onclick="showChiTietInboundQuan('Bình Thạnh', 'TODAY')">
               <div class="sheet-kpi-title">
                 <span>INBOUND BÌNH THẠNH</span>
-                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); showChiTietInboundQuan('Bình Thạnh')">
+                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); showChiTietInboundQuan('Bình Thạnh', 'TODAY')">
                   <i class="bi bi-search"></i>
                 </button>
               </div>
@@ -934,12 +928,15 @@
           </div>
         </div>
 
-        <!-- BẢNG 1: THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (ĐỌC TỪ LƯU DAILY GID=744743139) -->
-        <div class="card border-0 shadow-sm mb-2">
-          <div class="card-header bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
-            <span class="fw-bold" style="font-size: 0.84rem;">
-              <i class="bi bi-bar-chart-line-fill text-warning me-1"></i>THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (LƯU DAILY)
-            </span>
+        <!-- BẢNG 1: THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (NHẤN VÀO TỪNG Ô QUẬN ĐỂ XEM PHƯỜNG & COT) -->
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-header bg-primary text-white py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <span class="fw-bold" style="font-size: 0.84rem;">
+                <i class="bi bi-bar-chart-line-fill text-warning me-1"></i>THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (LƯU DAILY)
+              </span>
+              <span class="small ms-2 opacity-75 d-none d-md-inline">(💡 Nhấn trực tiếp vào từng ô Quận hoặc COT để xem chi tiết Phường & COT)</span>
+            </div>
             <span class="badge bg-light text-primary fw-bold" id="badgeCountDaysInbound">0 ngày</span>
           </div>
           <div class="table-responsive">
@@ -955,7 +952,7 @@
                   <th>Quận 7 (C1 / C2)</th>
                   <th>Quận 9 (C1 / C2)</th>
                   <th>Bình Thạnh (C1 / C2)</th>
-                  <th style="width: 110px;">Chi Tiết</th>
+                  <th style="width: 95px;">Chi Tiết</th>
                 </tr>
               </thead>
               <tbody id="tbodyLichSuNgayInbound">
@@ -965,8 +962,39 @@
           </div>
         </div>
 
-        <!-- BẢNG 2: CHI TIẾT PHƯỜNG INBOUND 5 QUẬN CỦA NGÀY ĐANG CHỌN -->
-        <div class="row g-2" id="vung5BangQuanInbound"></div>
+        <!-- BẢNG 2: THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND THEO TUẦN (DẠNG DD/MM - DD/MM) -->
+        <div class="card border-0 shadow-sm mb-2">
+          <div class="card-header text-white py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2" style="background: linear-gradient(135deg, #0d3b66, #1d4ed8);">
+            <div>
+              <span class="fw-bold" style="font-size: 0.84rem;">
+                <i class="bi bi-calendar2-week-fill text-warning me-1"></i>THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND THEO TUẦN (THỨ 2 ➔ CHỦ NHẬT)
+              </span>
+              <span class="small ms-2 opacity-75 d-none d-md-inline">(💡 Nhấn vào từng ô Quận để xem lũy kế Phường & COT trong tuần)</span>
+            </div>
+            <span class="badge bg-warning text-dark fw-bold" id="badgeCountWeeksInbound">0 tuần</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover table-sm align-middle mb-0 text-center" style="font-size: 0.8rem;">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-start">Tuần (dd/mm - dd/mm)</th>
+                  <th>Tổng Inbound Tuần</th>
+                  <th>Ca COT 1</th>
+                  <th>Ca COT 2</th>
+                  <th>Quận 2 (C1 / C2)</th>
+                  <th>Quận 4 (C1 / C2)</th>
+                  <th>Quận 7 (C1 / C2)</th>
+                  <th>Quận 9 (C1 / C2)</th>
+                  <th>Bình Thạnh (C1 / C2)</th>
+                  <th style="width: 95px;">Chi Tiết</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyLichSuTuanInbound">
+                <tr><td colspan="10" class="py-3 text-muted">Đang tổng hợp dữ liệu Inbound theo tuần...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     <!-- ==================== 5. ĐIỂM DANH ==================== -->
@@ -3268,9 +3296,8 @@ if (user.role === 'RIDER') {
 
     // ================= XỬ LÝ HÀNG HÓA INBOUND & PENDING ATTEMPT ĐỘC LẬP 100% =================
     let currentKieuHangHoa = 'PENDING';
-    let globalInboundData = null;      // Chứa { homNay, lichSuNgay }
-    let activeInboundDayObj = null;    // Ngày đang được chọn hiển thị trên KPI Inbound
-    let activeInboundDayKey = 'TODAY'; // 'TODAY' hoặc index trong lichSuNgay
+    let globalInboundData = null;   // Chứa { homNay, lichSuNgay }
+    let globalInboundWeeks = [];    // Danh sách tổng hợp theo tuần (dd/mm - dd/mm)
 
     function chuyenSubTabHangHoa(kieu) {
       currentKieuHangHoa = kieu;
@@ -3305,14 +3332,12 @@ if (user.role === 'RIDER') {
         refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang nạp Inbound...';
       }
 
-      // Khôi phục tạm từ localStorage nếu chưa tải lần nào
       if (!globalInboundData) {
         try {
           const cached = localStorage.getItem('KV2_LAST_VALID_INBOUND_V2');
           if (cached) {
             globalInboundData = JSON.parse(cached);
-            chonNgayInboundHienThi(activeInboundDayKey);
-            veBangLichSuNgayInbound();
+            capNhatToanBoGiaoDienInbound();
           }
         } catch (e) {}
       }
@@ -3329,9 +3354,7 @@ if (user.role === 'RIDER') {
           document.getElementById('hangLastFetchTime').innerText = getGioVietNamHienTai();
           document.getElementById('hangSheetTimeLabel').innerText = `(Hôm nay: ${result.data.titleTodaySheet || 'Live'} | Lịch sử: ${result.data.titleDailySheet || 'LƯU DAILY'})`;
 
-          veThanhChonNgayInbound();
-          veBangLichSuNgayInbound();
-          chonNgayInboundHienThi(activeInboundDayKey);
+          capNhatToanBoGiaoDienInbound();
         }
       } catch (error) {
         console.error('Lỗi tải dữ liệu Inbound:', error);
@@ -3343,77 +3366,84 @@ if (user.role === 'RIDER') {
       }
     }
 
-    function veThanhChonNgayInbound() {
-      const container = document.getElementById('vungNutChonNgayInbound');
-      if (!container || !globalInboundData) return;
-
-      const ls = globalInboundData.lichSuNgay || [];
-      let html = `
-        <button type="button" class="btn btn-xs ${activeInboundDayKey === 'TODAY' ? 'btn-primary' : 'btn-outline-primary'} fw-bold py-1 px-2" onclick="chonNgayInboundHienThi('TODAY')">
-          📅 Hôm nay (Live)
-        </button>`;
-
-      ls.forEach((dayItem, idx) => {
-        const isAct = (String(activeInboundDayKey) === String(idx));
-        html += `
-          <button type="button" class="btn btn-xs ${isAct ? 'btn-primary' : 'btn-outline-secondary'} fw-bold py-1 px-2" onclick="chonNgayInboundHienThi(${idx})" title="${dayItem.rawTitle}">
-            🗓️ ${dayItem.ngay} (${(dayItem.tongDonKhuVuc || 0).toLocaleString('vi-VN')})
-          </button>`;
-      });
-
-      container.innerHTML = html;
+    function capNhatToanBoGiaoDienInbound() {
+      if (!globalInboundData) return;
+      capNhatKpiInboundHomNay();
+      veBangLichSuNgayInbound();
+      tinhVaVeBangTuanInbound();
     }
 
-    function chonNgayInboundHienThi(dayKey) {
-      if (!globalInboundData) return;
-      activeInboundDayKey = dayKey;
-
-      const ls = globalInboundData.lichSuNgay || [];
-      if (dayKey === 'TODAY' || !ls[dayKey]) {
-        activeInboundDayObj = globalInboundData.homNay || globalInboundData;
-      } else {
-        activeInboundDayObj = ls[dayKey];
-      }
-
-      veThanhChonNgayInbound();
-      veBangLichSuNgayInbound();
-
-      const d = activeInboundDayObj || {};
+    // 1. CẬP NHẬT THẺ KPI INBOUND (CHỈ HIỂN THỊ NGÀY HÔM NAY)
+    function capNhatKpiInboundHomNay() {
+      const d = (globalInboundData && globalInboundData.homNay) ? globalInboundData.homNay : (globalInboundData || {});
       const tong = Number(d.tongDonKhuVuc) || 0;
       const c1 = Number(d.tongCot1) || 0;
       const c2 = Number(d.tongCot2) || 0;
       const pct = (val) => tong > 0 ? `${((val / tong) * 100).toFixed(1)}%` : '0.0%';
 
-      const titleBadge = document.getElementById('lblInboundActiveDateTitle');
-      if (titleBadge) titleBadge.innerText = d.rawTitle || d.ngay || 'Hôm nay';
+      if (document.getElementById('inbKpiTong')) document.getElementById('inbKpiTong').innerText = tong.toLocaleString('vi-VN');
+      if (document.getElementById('inbSubTong')) document.getElementById('inbSubTong').innerText = `Toàn bộ khu vực • ${d.tongPhuong || 0} phường`;
 
-      document.getElementById('inbKpiTong').innerText = tong.toLocaleString('vi-VN');
-      document.getElementById('inbSubTong').innerText = `Toàn bộ khu vực • ${d.tongPhuong || 0} phường`;
+      if (document.getElementById('inbKpiCot1')) document.getElementById('inbKpiCot1').innerText = c1.toLocaleString('vi-VN');
+      if (document.getElementById('inbSubCot1')) document.getElementById('inbSubCot1').innerText = `${pct(c1)} tổng Inbound`;
 
-      document.getElementById('inbKpiCot1').innerText = c1.toLocaleString('vi-VN');
-      document.getElementById('inbSubCot1').innerText = `${pct(c1)} tổng Inbound`;
+      if (document.getElementById('inbKpiCot2')) document.getElementById('inbKpiCot2').innerText = c2.toLocaleString('vi-VN');
+      if (document.getElementById('inbSubCot2')) document.getElementById('inbSubCot2').innerText = `${pct(c2)} tổng Inbound`;
 
-      document.getElementById('inbKpiCot2').innerText = c2.toLocaleString('vi-VN');
-      document.getElementById('inbSubCot2').innerText = `${pct(c2)} tổng Inbound`;
+      if (document.getElementById('inbKpiQ2')) document.getElementById('inbKpiQ2').innerText = (d.q2 || 0).toLocaleString('vi-VN');
+      if (document.getElementById('inbSubQ2')) document.getElementById('inbSubQ2').innerText = `C1: ${d.q2Cot1 || 0} | C2: ${d.q2Cot2 || 0} (${pct(d.q2 || 0)})`;
 
-      document.getElementById('inbKpiQ2').innerText = (d.q2 || 0).toLocaleString('vi-VN');
-      document.getElementById('inbSubQ2').innerText = `C1: ${d.q2Cot1 || 0} | C2: ${d.q2Cot2 || 0} (${pct(d.q2 || 0)})`;
+      if (document.getElementById('inbKpiQ4')) document.getElementById('inbKpiQ4').innerText = (d.q4 || 0).toLocaleString('vi-VN');
+      if (document.getElementById('inbSubQ4')) document.getElementById('inbSubQ4').innerText = `C1: ${d.q4Cot1 || 0} | C2: ${d.q4Cot2 || 0} (${pct(d.q4 || 0)})`;
 
-      document.getElementById('inbKpiQ4').innerText = (d.q4 || 0).toLocaleString('vi-VN');
-      document.getElementById('inbSubQ4').innerText = `C1: ${d.q4Cot1 || 0} | C2: ${d.q4Cot2 || 0} (${pct(d.q4 || 0)})`;
+      if (document.getElementById('inbKpiQ7')) document.getElementById('inbKpiQ7').innerText = (d.q7 || 0).toLocaleString('vi-VN');
+      if (document.getElementById('inbSubQ7')) document.getElementById('inbSubQ7').innerText = `C1: ${d.q7Cot1 || 0} | C2: ${d.q7Cot2 || 0} (${pct(d.q7 || 0)})`;
 
-      document.getElementById('inbKpiQ7').innerText = (d.q7 || 0).toLocaleString('vi-VN');
-      document.getElementById('inbSubQ7').innerText = `C1: ${d.q7Cot1 || 0} | C2: ${d.q7Cot2 || 0} (${pct(d.q7 || 0)})`;
+      if (document.getElementById('inbKpiQ9')) document.getElementById('inbKpiQ9').innerText = (d.q9 || 0).toLocaleString('vi-VN');
+      if (document.getElementById('inbSubQ9')) document.getElementById('inbSubQ9').innerText = `C1: ${d.q9Cot1 || 0} | C2: ${d.q9Cot2 || 0} (${pct(d.q9 || 0)})`;
 
-      document.getElementById('inbKpiQ9').innerText = (d.q9 || 0).toLocaleString('vi-VN');
-      document.getElementById('inbSubQ9').innerText = `C1: ${d.q9Cot1 || 0} | C2: ${d.q9Cot2 || 0} (${pct(d.q9 || 0)})`;
-
-      document.getElementById('inbKpiBT').innerText = (d.bt || 0).toLocaleString('vi-VN');
-      document.getElementById('inbSubBT').innerText = `C1: ${d.btCot1 || 0} | C2: ${d.btCot2 || 0} (${pct(d.bt || 0)})`;
-
-      ve5BangQuanInbound(d);
+      if (document.getElementById('inbKpiBT')) document.getElementById('inbKpiBT').innerText = (d.bt || 0).toLocaleString('vi-VN');
+      if (document.getElementById('inbSubBT')) document.getElementById('inbSubBT').innerText = `C1: ${d.btCot1 || 0} | C2: ${d.btCot2 || 0} (${pct(d.bt || 0)})`;
     }
 
+    // Hàm tạo 1 dòng HTML cho bảng Ngày hoặc bảng Tuần (Tích hợp click vào từng ô Quận & COT)
+    function taoDongBangInbound(d, sourceKey, firstColHtml, isHighlight = false) {
+      return `
+        <tr class="${isHighlight ? 'table-primary' : ''}">
+          <td class="text-start">${firstColHtml}</td>
+          <td class="font-monospace fw-bold text-danger fs-6 inb-cell-btn" onclick="showChiTietInbound('ALL', '${sourceKey}')" title="Nhấn để xem chi tiết toàn bộ 5 quận">
+            ${(d.tongDonKhuVuc || 0).toLocaleString('vi-VN')}
+          </td>
+          <td class="font-monospace text-primary fw-bold inb-cell-btn" onclick="showChiTietInbound(1, '${sourceKey}')" title="Nhấn để xem chi tiết Phường Ca COT 1">
+            ${(d.tongCot1 || 0).toLocaleString('vi-VN')}
+          </td>
+          <td class="font-monospace fw-bold inb-cell-btn" style="color:#b45309;" onclick="showChiTietInbound(2, '${sourceKey}')" title="Nhấn để xem chi tiết Phường Ca COT 2">
+            ${(d.tongCot2 || 0).toLocaleString('vi-VN')}
+          </td>
+          <td class="font-monospace inb-cell-btn" onclick="showChiTietInboundQuan('Quận 2', '${sourceKey}')" title="Nhấn để xem chi tiết Phường & COT của Quận 2">
+            <b class="text-primary">${(d.q2 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q2Cot1 || 0}/${d.q2Cot2 || 0})</span> <i class="bi bi-search text-primary" style="font-size:10px;"></i>
+          </td>
+          <td class="font-monospace inb-cell-btn" onclick="showChiTietInboundQuan('Quận 4', '${sourceKey}')" title="Nhấn để xem chi tiết Phường & COT của Quận 4">
+            <b class="text-dark">${(d.q4 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q4Cot1 || 0}/${d.q4Cot2 || 0})</span> <i class="bi bi-search text-warning text-dark" style="font-size:10px;"></i>
+          </td>
+          <td class="font-monospace inb-cell-btn" onclick="showChiTietInboundQuan('Quận 7', '${sourceKey}')" title="Nhấn để xem chi tiết Phường & COT của Quận 7">
+            <b class="text-info text-dark">${(d.q7 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q7Cot1 || 0}/${d.q7Cot2 || 0})</span> <i class="bi bi-search text-info text-dark" style="font-size:10px;"></i>
+          </td>
+          <td class="font-monospace inb-cell-btn" onclick="showChiTietInboundQuan('Quận 9', '${sourceKey}')" title="Nhấn để xem chi tiết Phường & COT của Quận 9">
+            <b class="text-success">${(d.q9 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q9Cot1 || 0}/${d.q9Cot2 || 0})</span> <i class="bi bi-search text-success" style="font-size:10px;"></i>
+          </td>
+          <td class="font-monospace inb-cell-btn" onclick="showChiTietInboundQuan('Bình Thạnh', '${sourceKey}')" title="Nhấn để xem chi tiết Phường & COT của Bình Thạnh">
+            <b class="text-danger">${(d.bt || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.btCot1 || 0}/${d.btCot2 || 0})</span> <i class="bi bi-search text-danger" style="font-size:10px;"></i>
+          </td>
+          <td>
+            <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold" onclick="showChiTietInbound('ALL', '${sourceKey}')">
+              <i class="bi bi-search me-1"></i>Tất cả
+            </button>
+          </td>
+        </tr>`;
+    }
+
+    // 2. VẼ BẢNG THỐNG KÊ TỪNG NGÀY (LƯU DAILY)
     function veBangLichSuNgayInbound() {
       const tbody = document.getElementById('tbodyLichSuNgayInbound');
       if (!tbody || !globalInboundData) return;
@@ -3424,117 +3454,168 @@ if (user.role === 'RIDER') {
       if (badgeDays) badgeDays.innerText = `${ls.length} ngày lưu`;
 
       let html = '';
-
-      // Dòng đầu tiên: Hôm nay (Live từ gid=909229938)
       if (homNay) {
-        const isTodayAct = (activeInboundDayKey === 'TODAY');
-        html += `
-          <tr class="${isTodayAct ? 'table-primary fw-bold' : ''}" style="cursor:pointer;" onclick="chonNgayInboundHienThi('TODAY')">
-            <td class="text-start">
-              <span class="badge bg-success me-1">LIVE HÔM NAY</span>
-              <span class="text-dark fw-bold">${homNay.ngay || 'Hôm nay'}</span>
-            </td>
-            <td class="font-monospace fw-bold text-danger fs-6">${(homNay.tongDonKhuVuc || 0).toLocaleString('vi-VN')}</td>
-            <td class="font-monospace text-primary fw-bold">${(homNay.tongCot1 || 0).toLocaleString('vi-VN')}</td>
-            <td class="font-monospace text-warning text-dark fw-bold">${(homNay.tongCot2 || 0).toLocaleString('vi-VN')}</td>
-            <td class="font-monospace"><b>${homNay.q2 || 0}</b> <span class="text-muted small">(${homNay.q2Cot1 || 0}/${homNay.q2Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${homNay.q4 || 0}</b> <span class="text-muted small">(${homNay.q4Cot1 || 0}/${homNay.q4Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${homNay.q7 || 0}</b> <span class="text-muted small">(${homNay.q7Cot1 || 0}/${homNay.q7Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${homNay.q9 || 0}</b> <span class="text-muted small">(${homNay.q9Cot1 || 0}/${homNay.q9Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${homNay.bt || 0}</b> <span class="text-muted small">(${homNay.btCot1 || 0}/${homNay.btCot2 || 0})</span></td>
-            <td>
-              <button type="button" class="btn btn-xs ${isTodayAct ? 'btn-primary' : 'btn-outline-primary'} py-0 px-2 fw-bold" onclick="event.stopPropagation(); chonNgayInboundHienThi('TODAY'); showChiTietInbound('ALL');">
-                <i class="bi bi-search me-1"></i>Xem
-              </button>
-            </td>
-          </tr>`;
+        const firstCol = `<span class="badge bg-success me-1">LIVE HÔM NAY</span><span class="text-dark fw-bold">${homNay.ngay || 'Hôm nay'}</span>`;
+        html += taoDongBangInbound(homNay, 'TODAY', firstCol, true);
       }
 
-      // Các dòng lịch sử từng ngày từ LƯU DAILY (gid=744743139)
       ls.forEach((d, idx) => {
-        const isAct = (String(activeInboundDayKey) === String(idx));
-        html += `
-          <tr class="${isAct ? 'table-primary fw-bold' : ''}" style="cursor:pointer;" onclick="chonNgayInboundHienThi(${idx})">
-            <td class="text-start fw-semibold text-dark">
-              <i class="bi bi-calendar3 text-secondary me-1"></i>${d.rawTitle || d.ngay}
-            </td>
-            <td class="font-monospace fw-bold text-danger fs-6">${(d.tongDonKhuVuc || 0).toLocaleString('vi-VN')}</td>
-            <td class="font-monospace text-primary fw-bold">${(d.tongCot1 || 0).toLocaleString('vi-VN')}</td>
-            <td class="font-monospace text-warning text-dark fw-bold">${(d.tongCot2 || 0).toLocaleString('vi-VN')}</td>
-            <td class="font-monospace"><b>${d.q2 || 0}</b> <span class="text-muted small">(${d.q2Cot1 || 0}/${d.q2Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${d.q4 || 0}</b> <span class="text-muted small">(${d.q4Cot1 || 0}/${d.q4Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${d.q7 || 0}</b> <span class="text-muted small">(${d.q7Cot1 || 0}/${d.q7Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${d.q9 || 0}</b> <span class="text-muted small">(${d.q9Cot1 || 0}/${d.q9Cot2 || 0})</span></td>
-            <td class="font-monospace"><b>${d.bt || 0}</b> <span class="text-muted small">(${d.btCot1 || 0}/${d.btCot2 || 0})</span></td>
-            <td>
-              <button type="button" class="btn btn-xs ${isAct ? 'btn-primary' : 'btn-outline-primary'} py-0 px-2 fw-bold" onclick="event.stopPropagation(); chonNgayInboundHienThi(${idx}); showChiTietInbound('ALL');">
-                <i class="bi bi-search me-1"></i>Xem
-              </button>
-            </td>
-          </tr>`;
+        const firstCol = `<i class="bi bi-calendar3 text-secondary me-1"></i><span class="fw-semibold text-dark">${d.rawTitle || d.ngay}</span>`;
+        html += taoDongBangInbound(d, `DAY_${idx}`, firstCol, false);
       });
 
       tbody.innerHTML = html || '<tr><td colspan="10" class="py-3 text-muted">Chưa có dữ liệu lịch sử ngày</td></tr>';
     }
 
-    function ve5BangQuanInbound(d) {
-      const container = document.getElementById('vung5BangQuanInbound');
-      if (!container || !d) return;
+    // Hàm phụ: Trích xuất ngày chuẩn DD/MM/YYYY và tính Tuần (Thứ 2 -> Chủ Nhật: dd/mm - dd/mm)
+    function phanTichTuanTuChuoiNgay(str) {
+      const match = (str || '').match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+      if (!match) return null;
+      const d = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10);
+      let y = parseInt(match[3], 10);
+      if (y < 100) y += 2000;
 
-      const configs = [
-        { label: 'QUẬN 2', color: 'primary', list: d.phuongQ2 || [], tong: d.q2 || 0, c1: d.q2Cot1 || 0, c2: d.q2Cot2 || 0 },
-        { label: 'QUẬN 4', color: 'warning', list: d.phuongQ4 || [], tong: d.q4 || 0, c1: d.q4Cot1 || 0, c2: d.q4Cot2 || 0 },
-        { label: 'QUẬN 7', color: 'info', list: d.phuongQ7 || [], tong: d.q7 || 0, c1: d.q7Cot1 || 0, c2: d.q7Cot2 || 0 },
-        { label: 'QUẬN 9', color: 'success', list: d.phuongQ9 || [], tong: d.q9 || 0, c1: d.q9Cot1 || 0, c2: d.q9Cot2 || 0 },
-        { label: 'BÌNH THẠNH', color: 'danger', list: d.phuongBT || [], tong: d.bt || 0, c1: d.btCot1 || 0, c2: d.btCot2 || 0 }
-      ];
+      const dt = new Date(y, m - 1, d);
+      if (isNaN(dt.getTime())) return null;
 
-      let html = '';
-      configs.forEach(cfg => {
-        const textCls = cfg.color === 'warning' || cfg.color === 'info' ? 'text-dark' : '';
-        html += `
-          <div class="col-12 col-lg-4">
-            <div class="district-card shadow-sm h-100">
-              <div class="district-header d-flex justify-content-between align-items-center border-bottom border-${cfg.color} border-2 text-${cfg.color}">
-                <div>
-                  <i class="bi bi-geo-alt-fill me-1"></i>${cfg.label}
-                  <span class="badge bg-${cfg.color} ${textCls} district-badge ms-1">${cfg.tong.toLocaleString('vi-VN')} đơn • ${cfg.list.length} phường</span>
-                </div>
-                <span class="small text-muted font-monospace" style="font-size:0.7rem;">C1: ${cfg.c1} | C2: ${cfg.c2}</span>
-              </div>
-              <div class="table-responsive" style="max-height: 340px;">
-                <table class="table table-hover table-bordered table-sm district-table align-middle mb-0 text-center">
-                  <thead>
-                    <tr>
-                      <th class="text-start">Phường</th>
-                      <th style="width: 62px;">COT 1</th>
-                      <th style="width: 62px;">COT 2</th>
-                      <th style="width: 72px;">Tổng</th>
-                    </tr>
-                  </thead>
-                  <tbody>`;
+      const dayOfWeek = dt.getDay(); // 0 = CN, 1 = T2 ...
+      const diffToMon = dt.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const mon = new Date(dt.getFullYear(), dt.getMonth(), diffToMon);
+      const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
 
-        if (cfg.list.length === 0) {
-          html += `<tr><td colspan="4" class="text-center py-3 text-muted small">Không có dữ liệu</td></tr>`;
-        } else {
-          cfg.list.forEach(p => {
-            html += `
-              <tr>
-                <td class="text-start fw-semibold">${p.phuong}</td>
-                <td class="font-monospace text-primary">${p.cot1 || 0}</td>
-                <td class="font-monospace" style="color:#b45309;">${p.cot2 || 0}</td>
-                <td class="font-monospace fw-bold text-danger">${p.soLuong || 0}</td>
-              </tr>`;
-          });
-        }
-        html += `</tbody></table></div></div></div>`;
-      });
+      const pad = (n) => String(n).padStart(2, '0');
+      const dateKey = `${pad(d)}/${pad(m)}/${y}`;
+      const weekKey = `${mon.getFullYear()}-${pad(mon.getMonth() + 1)}-${pad(mon.getDate())}`;
+      const weekLabel = `${pad(mon.getDate())}/${pad(mon.getMonth() + 1)} - ${pad(sun.getDate())}/${pad(sun.getMonth() + 1)}`;
 
-      container.innerHTML = html;
+      return { dateKey, weekKey, weekLabel };
     }
 
-    function showChiTietInboundQuan(quanName) {
-      const d = activeInboundDayObj || (globalInboundData && globalInboundData.homNay) || {};
+    // Hàm gộp danh sách phường của nhiều ngày trong cùng 1 tuần
+    function gopPhuongTrongTuan(existingList, newList) {
+      const map = {};
+      [...(existingList || []), ...(newList || [])].forEach(item => {
+        if (!item || !item.phuong) return;
+        const key = item.phuong.trim();
+        if (!map[key]) {
+          map[key] = { quan: item.quan || '', phuong: key, cot1: 0, cot2: 0, soLuong: 0 };
+        }
+        map[key].cot1 += Number(item.cot1) || 0;
+        map[key].cot2 += Number(item.cot2) || 0;
+        map[key].soLuong += Number(item.soLuong) || 0;
+      });
+      return Object.values(map);
+    }
+
+    // 3. TÍNH VÀ VẼ BẢNG THỐNG KÊ THEO TUẦN (DẠNG DD/MM - DD/MM)
+    function tinhVaVeBangTuanInbound() {
+      const tbody = document.getElementById('tbodyLichSuTuanInbound');
+      if (!tbody || !globalInboundData) return;
+
+      const ls = globalInboundData.lichSuNgay || [];
+      const homNay = globalInboundData.homNay;
+
+      // Lọc trùng theo ngày DD/MM/YYYY (Nếu ngày hôm nay chưa có trong LƯU DAILY thì gộp thêm vào, nếu đã có trong LƯU DAILY thì lấy bản có số lượng mới nhất)
+      const uniqueDaysMap = new Map();
+      ls.forEach(d => {
+        const info = phanTichTuanTuChuoiNgay(d.ngay || d.rawTitle);
+        if (info && !uniqueDaysMap.has(info.dateKey)) {
+          uniqueDaysMap.set(info.dateKey, { info, data: d });
+        }
+      });
+
+      if (homNay && !homNay.isFallbackFromDaily && (homNay.tongDonKhuVuc || 0) > 0) {
+        const infoToday = phanTichTuanTuChuoiNgay(homNay.ngay || homNay.rawTitle);
+        if (infoToday) {
+          const existing = uniqueDaysMap.get(infoToday.dateKey);
+          if (!existing || (homNay.tongDonKhuVuc || 0) >= (existing.data.tongDonKhuVuc || 0)) {
+            uniqueDaysMap.set(infoToday.dateKey, { info: infoToday, data: homNay });
+          }
+        }
+      }
+
+      const weekMap = new Map();
+      uniqueDaysMap.forEach(({ info, data }) => {
+        if (!weekMap.has(info.weekKey)) {
+          weekMap.set(info.weekKey, {
+            weekKey: info.weekKey,
+            ngay: `Tuần ${info.weekLabel}`,
+            rawTitle: `Tuần: ${info.weekLabel}`,
+            weekLabel: info.weekLabel,
+            daysCount: 0,
+            daysList: [],
+            tongDonKhuVuc: 0,
+            tongCot1: 0,
+            tongCot2: 0,
+            q2: 0, q2Cot1: 0, q2Cot2: 0, phuongQ2: [],
+            q4: 0, q4Cot1: 0, q4Cot2: 0, phuongQ4: [],
+            q7: 0, q7Cot1: 0, q7Cot2: 0, phuongQ7: [],
+            q9: 0, q9Cot1: 0, q9Cot2: 0, phuongQ9: [],
+            bt: 0, btCot1: 0, btCot2: 0, phuongBT: []
+          });
+        }
+        const w = weekMap.get(info.weekKey);
+        w.daysCount++;
+        w.daysList.push(info.dateKey.substring(0, 5));
+        w.tongDonKhuVuc += Number(data.tongDonKhuVuc) || 0;
+        w.tongCot1 += Number(data.tongCot1) || 0;
+        w.tongCot2 += Number(data.tongCot2) || 0;
+
+        w.q2 += Number(data.q2) || 0; w.q2Cot1 += Number(data.q2Cot1) || 0; w.q2Cot2 += Number(data.q2Cot2) || 0;
+        w.q4 += Number(data.q4) || 0; w.q4Cot1 += Number(data.q4Cot1) || 0; w.q4Cot2 += Number(data.q4Cot2) || 0;
+        w.q7 += Number(data.q7) || 0; w.q7Cot1 += Number(data.q7Cot1) || 0; w.q7Cot2 += Number(data.q7Cot2) || 0;
+        w.q9 += Number(data.q9) || 0; w.q9Cot1 += Number(data.q9Cot1) || 0; w.q9Cot2 += Number(data.q9Cot2) || 0;
+        w.bt += Number(data.bt) || 0; w.btCot1 += Number(data.btCot1) || 0; w.btCot2 += Number(data.btCot2) || 0;
+
+        w.phuongQ2 = gopPhuongTrongTuan(w.phuongQ2, data.phuongQ2);
+        w.phuongQ4 = gopPhuongTrongTuan(w.phuongQ4, data.phuongQ4);
+        w.phuongQ7 = gopPhuongTrongTuan(w.phuongQ7, data.phuongQ7);
+        w.phuongQ9 = gopPhuongTrongTuan(w.phuongQ9, data.phuongQ9);
+        w.phuongBT = gopPhuongTrongTuan(w.phuongBT, data.phuongBT);
+      });
+
+      globalInboundWeeks = Array.from(weekMap.values()).sort((a, b) => b.weekKey.localeCompare(a.weekKey));
+
+      const badgeWeeks = document.getElementById('badgeCountWeeksInbound');
+      if (badgeWeeks) badgeWeeks.innerText = `${globalInboundWeeks.length} tuần`;
+
+      if (globalInboundWeeks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="py-3 text-muted">Chưa có dữ liệu tổng hợp tuần</td></tr>';
+        return;
+      }
+
+      let html = '';
+      globalInboundWeeks.forEach((w, idx) => {
+        const firstCol = `
+          <span class="badge bg-primary font-monospace fs-6 me-1">${w.weekLabel}</span>
+          <span class="badge bg-light text-secondary border">${w.daysCount} ngày (${w.daysList.join(', ')})</span>`;
+        html += taoDongBangInbound(w, `WEEK_${idx}`, firstCol, idx === 0);
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    // Hàm lấy đúng đối tượng dữ liệu (Hôm nay / Ngày thứ idx / Tuần thứ idx) khi người dùng bấm vào ô
+    function layDuLieuInboundTheoKey(sourceKey = 'TODAY') {
+      if (!globalInboundData) return {};
+      if (!sourceKey || sourceKey === 'TODAY') {
+        return globalInboundData.homNay || globalInboundData;
+      }
+      if (String(sourceKey).startsWith('DAY_')) {
+        const idx = parseInt(String(sourceKey).replace('DAY_', ''), 10);
+        return (globalInboundData.lichSuNgay && globalInboundData.lichSuNgay[idx]) ? globalInboundData.lichSuNgay[idx] : (globalInboundData.homNay || {});
+      }
+      if (String(sourceKey).startsWith('WEEK_')) {
+        const idx = parseInt(String(sourceKey).replace('WEEK_', ''), 10);
+        return globalInboundWeeks[idx] || (globalInboundData.homNay || {});
+      }
+      return globalInboundData.homNay || globalInboundData;
+    }
+
+    // 4. HIỂN THỊ POPUP CHI TIẾT PHƯỜNG & COT KHI BẤM VÀO Ô QUẬN
+    function showChiTietInboundQuan(quanName, sourceKey = 'TODAY') {
+      const d = layDuLieuInboundTheoKey(sourceKey);
       let list = [];
       if (quanName === 'Quận 2') list = d.phuongQ2 || [];
       else if (quanName === 'Quận 4') list = d.phuongQ4 || [];
@@ -3547,24 +3628,24 @@ if (user.role === 'RIDER') {
       const totalC2 = list.reduce((s, i) => s + (i.cot2 || 0), 0);
 
       document.getElementById('titleModalInbound').innerHTML = `
-        <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT INBOUND ${quanName.toUpperCase()} — ${d.ngay || 'Hôm nay'} (${totalQuan.toLocaleString('vi-VN')} đơn - ${list.length} phường)`;
+        <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT INBOUND ${quanName.toUpperCase()} — ${d.rawTitle || d.ngay || 'Hôm nay'} (${totalQuan.toLocaleString('vi-VN')} đơn - ${list.length} phường)`;
 
       let html = `
         <div class="col-12">
           <div class="d-flex flex-wrap gap-2 mb-2">
-            <span class="badge bg-danger fs-6">Tổng: ${totalQuan.toLocaleString('vi-VN')} đơn</span>
-            <span class="badge bg-primary fs-6">COT 1: ${totalC1.toLocaleString('vi-VN')} đơn</span>
-            <span class="badge bg-warning text-dark fs-6">COT 2: ${totalC2.toLocaleString('vi-VN')} đơn</span>
+            <span class="badge bg-danger fs-6">Tổng ${quanName}: ${totalQuan.toLocaleString('vi-VN')} đơn</span>
+            <span class="badge bg-primary fs-6">Ca COT 1: ${totalC1.toLocaleString('vi-VN')} đơn</span>
+            <span class="badge bg-warning text-dark fs-6">Ca COT 2: ${totalC2.toLocaleString('vi-VN')} đơn</span>
           </div>
           <div class="table-responsive bg-white rounded shadow-sm border">
             <table class="table table-hover table-bordered table-sm align-middle mb-0 text-center" style="font-size: 13px;">
               <thead class="table-light">
                 <tr>
                   <th style="width: 45px;">STT</th>
-                  <th class="text-start">Phường</th>
-                  <th>COT 1</th>
-                  <th>COT 2</th>
-                  <th>Tổng Đơn</th>
+                  <th class="text-start">Phường (${quanName})</th>
+                  <th>Số Lượng COT 1</th>
+                  <th>Số Lượng COT 2</th>
+                  <th>Tổng Đơn Phường</th>
                   <th>Tỷ Trọng</th>
                 </tr>
               </thead>
@@ -3578,10 +3659,10 @@ if (user.role === 'RIDER') {
           html += `
             <tr>
               <td class="text-muted small">${idx + 1}</td>
-              <td class="text-start fw-bold">${p.phuong}</td>
-              <td class="font-monospace text-primary fw-semibold">${p.cot1 || 0}</td>
-              <td class="font-monospace fw-semibold" style="color:#b45309;">${p.cot2 || 0}</td>
-              <td class="font-monospace fw-bold text-danger fs-6">${p.soLuong || 0}</td>
+              <td class="text-start fw-bold text-dark">${p.phuong}</td>
+              <td class="font-monospace text-primary fw-bold">${(p.cot1 || 0).toLocaleString('vi-VN')}</td>
+              <td class="font-monospace fw-bold" style="color:#b45309;">${(p.cot2 || 0).toLocaleString('vi-VN')}</td>
+              <td class="font-monospace fw-bold text-danger fs-6">${(p.soLuong || 0).toLocaleString('vi-VN')}</td>
               <td class="font-monospace small text-muted">${pct}</td>
             </tr>`;
         });
@@ -3592,10 +3673,11 @@ if (user.role === 'RIDER') {
       bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietInbound')).show();
     }
 
-    function showChiTietInbound(cotType) {
-      const d = activeInboundDayObj || (globalInboundData && globalInboundData.homNay) || {};
+    // 5. HIỂN THỊ POPUP CHI TIẾT TOÀN BỘ 5 QUẬN (THEO CA COT 1, COT 2 HOẶC TẤT CẢ)
+    function showChiTietInbound(cotType, sourceKey = 'TODAY') {
+      const d = layDuLieuInboundTheoKey(sourceKey);
       const title = cotType === 1 ? 'CA COT 1' : (cotType === 2 ? 'CA COT 2' : 'TOÀN KHU VỰC 2 (COT 1 + COT 2)');
-      document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title} (${d.ngay || 'Hôm nay'})`;
+      document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title} — ${d.rawTitle || d.ngay || 'Hôm nay'}`;
 
       const container = document.getElementById('bodyChiTietInboundCot');
       const configs = [
@@ -3610,6 +3692,8 @@ if (user.role === 'RIDER') {
       configs.forEach(cfg => {
         const rows = cfg.list.map(p => ({
           phuong: p.phuong,
+          cot1: p.cot1 || 0,
+          cot2: p.cot2 || 0,
           soLuong: cotType === 1 ? (p.cot1 || 0) : (cotType === 2 ? (p.cot2 || 0) : (p.soLuong || 0))
         })).filter(x => x.soLuong > 0);
 
@@ -3624,17 +3708,26 @@ if (user.role === 'RIDER') {
                 <span class="badge bg-${cfg.color} ${textCls} fs-6">${totalDon.toLocaleString('vi-VN')} đơn - ${rows.length} phường</span>
               </div>
               <div class="table-responsive" style="max-height: 55vh;">
-                <table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 13px;">
+                <table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 12.5px;">
                   <thead class="table-light sticky-top">
-                    <tr><th class="text-start">Phường</th><th style="width: 85px;">Số Đơn</th></tr>
+                    <tr>
+                      <th class="text-start">Phường</th>
+                      ${cotType === 'ALL' ? '<th>COT 1</th><th>COT 2</th>' : ''}
+                      <th>Tổng</th>
+                    </tr>
                   </thead>
                   <tbody>`;
 
         if (rows.length === 0) {
-          html += `<tr><td colspan="2" class="text-center text-muted py-3">Không có đơn</td></tr>`;
+          html += `<tr><td colspan="${cotType === 'ALL' ? 4 : 2}" class="text-center text-muted py-3">Không có đơn</td></tr>`;
         } else {
           rows.forEach(item => {
-            html += `<tr><td class="text-start fw-semibold">${item.phuong}</td><td class="text-danger fw-bold font-monospace">${item.soLuong}</td></tr>`;
+            html += `
+              <tr>
+                <td class="text-start fw-semibold">${item.phuong}</td>
+                ${cotType === 'ALL' ? `<td class="font-monospace text-primary">${item.cot1}</td><td class="font-monospace" style="color:#b45309;">${item.cot2}</td>` : ''}
+                <td class="text-danger fw-bold font-monospace">${item.soLuong}</td>
+              </tr>`;
           });
         }
         html += `</tbody></table></div></div></div>`;
