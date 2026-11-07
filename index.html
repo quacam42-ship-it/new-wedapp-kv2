@@ -501,7 +501,29 @@
           opacity: 0.9;
         }
         .sheet-kpi-total { background-color: #f4cccc; border: 1px solid #ea9999; color: #990000; }
-        .sheet-kpi-hv    { background-color: #f4cccc; border: 1px solid #ea9999; color: #990000; }
+        .sheet-kpi-hv {
+          background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%);
+          border: 2px solid #facc15 !important;
+          color: #ffffff;
+          box-shadow: 0 0 14px rgba(250, 204, 21, 0.45);
+          animation: hvPulseGlow 2.2s infinite ease-in-out;
+        }
+        .sheet-kpi-hv .sheet-kpi-title {
+          color: #fde047;
+          letter-spacing: 0.4px;
+        }
+        .sheet-kpi-hv .sheet-kpi-val {
+          color: #ffffff;
+          text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+        }
+        .sheet-kpi-hv .sheet-kpi-sub {
+          color: #fef08a;
+          opacity: 1;
+        }
+        @keyframes hvPulseGlow {
+          0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.35), inset 0 0 8px rgba(250, 204, 21, 0.15); }
+          50% { box-shadow: 0 0 20px rgba(250, 204, 21, 0.75), inset 0 0 12px rgba(250, 204, 21, 0.25); }
+        }
         .sheet-kpi-mp    { background-color: #d9ead3; border: 1px solid #b6d7a8; color: #274e13; }
         .sheet-kpi-wh    { background-color: #e2e8f0; border: 1px solid #cbd5e1; color: #1e293b; }
         .sheet-kpi-q2    { background-color: #cfe2f3; border: 1px solid #9fc5e8; color: #073763; }
@@ -595,10 +617,10 @@
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="sheet-kpi-card sheet-kpi-hv shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')">
+          <div class="sheet-kpi-card sheet-kpi-hv" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')">
             <div class="sheet-kpi-title">
-              <span><i class="bi bi-shield-fill-exclamation me-1"></i>ĐƠN RỚT HV</span>
-              <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn HV">
+              <span><i class="bi bi-shield-fill-exclamation text-warning me-1"></i>ĐƠN RỚT HV <span class="badge bg-warning text-dark ms-1" style="font-size: 0.58rem; padding: 2px 4px;">VIP</span></span>
+              <button type="button" class="btn btn-warning text-dark fw-bold kpi-mini-btn border-warning shadow-sm" onclick="event.stopPropagation(); xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn giá trị cao (HV)">
                 <i class="bi bi-search"></i>
               </button>
             </div>
