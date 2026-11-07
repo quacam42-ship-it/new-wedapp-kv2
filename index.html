@@ -604,151 +604,204 @@
         </div>
       </div>
 
-      <!-- HÀNG 1: TỔNG ĐƠN RỚT, ĐƠN RỚT HV, ĐƠN MP, ĐƠN WH (GIỐNG GOOGLE SHEET) -->
-      <div class="row g-2 mb-2" id="hangHoaKpiTopRow">
-        <div class="col-6 col-md-3">
-          <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')">
-            <div class="sheet-kpi-title">
-              <span>TỔNG ĐƠN RỚT</span>
-              <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')" title="Xem chi tiết phường & mã đơn">
-                <i class="bi bi-search"></i>
-              </button>
+      <!-- ================================================================================= -->
+      <!-- VÙNG 1: GIAO DIỆN DÀNH RIÊNG CHO PENDING ATTEMPT (KHÔNG DÙNG CHUNG VỚI INBOUND) -->
+      <!-- ================================================================================= -->
+      <div id="vungGiaoDienPending">
+        <!-- HÀNG 1: TỔNG ĐƠN RỚT, ĐƠN RỚT HV, ĐƠN MP, ĐƠN WH -->
+        <div class="row g-2 mb-2" id="hangHoaKpiTopRow">
+          <div class="col-6 col-md-3">
+            <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')">
+              <div class="sheet-kpi-title">
+                <span>TỔNG ĐƠN RỚT</span>
+                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')" title="Xem chi tiết phường & mã đơn">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiTongDon">0</div>
+              <div class="sheet-kpi-sub" id="subKpiTongDon">Toàn bộ khu vực (0 phường)</div>
             </div>
-            <div class="sheet-kpi-val" id="kpiTongDon">0</div>
-            <div class="sheet-kpi-sub" id="subKpiTongDon">Toàn bộ khu vực (0 phường)</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="sheet-kpi-card sheet-kpi-hv" onclick="xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')">
+              <div class="sheet-kpi-title">
+                <span><i class="bi bi-shield-fill-exclamation text-warning me-1"></i>ĐƠN RỚT HV</span>
+                <button type="button" class="btn btn-warning text-dark fw-bold kpi-mini-btn border-warning shadow-sm" onclick="event.stopPropagation(); xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn giá trị cao (HV)">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiHv">0</div>
+              <div class="sheet-kpi-sub" id="subKpiHv">0.0% tổng đơn</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="sheet-kpi-card sheet-kpi-mp shadow-sm" onclick="xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')">
+              <div class="sheet-kpi-title">
+                <span>ĐƠN MP</span>
+                <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Xem chi tiết đơn MP">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiMp">0</div>
+              <div class="sheet-kpi-sub" id="subKpiMp">0.0% tổng đơn</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="sheet-kpi-card sheet-kpi-wh shadow-sm" onclick="xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')">
+              <div class="sheet-kpi-title">
+                <span>ĐƠN WH</span>
+                <button type="button" class="btn btn-light text-secondary kpi-mini-btn border-secondary" onclick="event.stopPropagation(); xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Xem chi tiết đơn WH">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiWh">0</div>
+              <div class="sheet-kpi-sub" id="subKpiWh">0.0% tổng đơn</div>
+            </div>
           </div>
         </div>
-        <div class="col-6 col-md-3">
-          <div class="sheet-kpi-card sheet-kpi-hv" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')">
-            <div class="sheet-kpi-title">
-              <span><i class="bi bi-shield-fill-exclamation text-warning me-1"></i>ĐƠN RỚT HV</span>
-              <button type="button" class="btn btn-warning text-dark fw-bold kpi-mini-btn border-warning shadow-sm" onclick="event.stopPropagation(); xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn giá trị cao (HV)">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="sheet-kpi-val" id="kpiHv">0</div>
-            <div class="sheet-kpi-sub" id="subKpiHv">0.0% tổng đơn</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="sheet-kpi-card sheet-kpi-mp shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')">
-            <div class="sheet-kpi-title">
-              <span>ĐƠN MP</span>
-              <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Xem chi tiết đơn MP">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="sheet-kpi-val" id="kpiMp">0</div>
-            <div class="sheet-kpi-sub" id="subKpiMp">0.0% tổng đơn</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3">
-          <div class="sheet-kpi-card sheet-kpi-wh shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')">
-            <div class="sheet-kpi-title">
-              <span>ĐƠN WH</span>
-              <button type="button" class="btn btn-light text-secondary kpi-mini-btn border-secondary" onclick="event.stopPropagation(); xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Xem chi tiết đơn WH">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="sheet-kpi-val" id="kpiWh">0</div>
-            <div class="sheet-kpi-sub" id="subKpiWh">0.0% tổng đơn</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- HÀNG 2: 5 THẺ QUẬN (QUẬN 2, QUẬN 4, QUẬN 7, QUẬN 9, BÌNH THẠNH) TÍCH HỢP CHI TIẾT PHƯỜNG VÀO KÍNH LÚP -->
-      <div class="row row-cols-2 row-cols-md-5 g-2 mb-2" id="hangHoaKpiRow">
-        <div class="col">
-          <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(1); else xemDonTheoKpi('Quận 2', 'Quận 2');">
-            <div class="sheet-kpi-title" id="lblKpi1">
-              <span>QUẬN 2</span>
-              <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 2', 'Quận 2')" title="Xem chi tiết phường & mã đơn Quận 2">
-                <i class="bi bi-search"></i>
-              </button>
+        <!-- HÀNG 2: 5 THẺ QUẬN CỦA PENDING ATTEMPT -->
+        <div class="row row-cols-2 row-cols-md-5 g-2 mb-2" id="hangHoaKpiRow">
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="xemDonTheoKpi('Quận 2', 'Quận 2')">
+              <div class="sheet-kpi-title" id="lblKpi1">
+                <span>QUẬN 2</span>
+                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 2', 'Quận 2')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiQ2">0</div>
+              <div class="sheet-kpi-sub" id="subKpiQ2">0.0% tổng đơn • 0 phường</div>
             </div>
-            <div class="sheet-kpi-val" id="kpiQ2">0</div>
-            <div class="sheet-kpi-sub" id="subKpiQ2">0.0% tổng đơn • 0 phường</div>
+          </div>
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="xemDonTheoKpi('Quận 4', 'Quận 4')">
+              <div class="sheet-kpi-title" id="lblKpi2">
+                <span>QUẬN 4</span>
+                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 4', 'Quận 4')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiQ4">0</div>
+              <div class="sheet-kpi-sub" id="subKpiQ4">0.0% tổng đơn • 0 phường</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q7 shadow-sm" onclick="xemDonTheoKpi('Quận 7', 'Quận 7')">
+              <div class="sheet-kpi-title" id="lblKpi3">
+                <span>QUẬN 7</span>
+                <button type="button" class="btn btn-light text-info text-dark kpi-mini-btn border-info" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 7', 'Quận 7')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiQ7">0</div>
+              <div class="sheet-kpi-sub" id="subKpiQ7">0.0% tổng đơn • 0 phường</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q9 shadow-sm" onclick="xemDonTheoKpi('Quận 9', 'Quận 9')">
+              <div class="sheet-kpi-title" id="lblKpi4">
+                <span>QUẬN 9</span>
+                <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 9', 'Quận 9')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiQ9">0</div>
+              <div class="sheet-kpi-sub" id="subKpiQ9">0.0% tổng đơn • 0 phường</div>
+            </div>
+          </div>
+          <div class="col-12 col-md">
+            <div class="sheet-kpi-card sheet-kpi-bt shadow-sm" onclick="xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')">
+              <div class="sheet-kpi-title" id="lblKpi5">
+                <span>BÌNH THẠNH</span>
+                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="kpiBT">0</div>
+              <div class="sheet-kpi-sub" id="subKpiBT">0.0% tổng đơn • 0 phường</div>
+            </div>
           </div>
         </div>
-        <div class="col">
-          <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Quận 4', 'Quận 4');">
-            <div class="sheet-kpi-title" id="lblKpi2">
-              <span>QUẬN 4</span>
-              <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 4', 'Quận 4')" title="Xem chi tiết phường & mã đơn Quận 4">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="sheet-kpi-val" id="kpiQ4">0</div>
-            <div class="sheet-kpi-sub" id="subKpiQ4">0.0% tổng đơn • 0 phường</div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="sheet-kpi-card sheet-kpi-q7 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Quận 7', 'Quận 7');">
-            <div class="sheet-kpi-title" id="lblKpi3">
-              <span>QUẬN 7</span>
-              <button type="button" class="btn btn-light text-info text-dark kpi-mini-btn border-info" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 7', 'Quận 7')" title="Xem chi tiết phường & mã đơn Quận 7">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="sheet-kpi-val" id="kpiQ7">0</div>
-            <div class="sheet-kpi-sub" id="subKpiQ7">0.0% tổng đơn • 0 phường</div>
-          </div>
-        </div>
-        <div class="col">
-          <div class="sheet-kpi-card sheet-kpi-q9 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Quận 9', 'Quận 9');">
-            <div class="sheet-kpi-title" id="lblKpi4">
-              <span>QUẬN 9</span>
-              <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 9', 'Quận 9')" title="Xem chi tiết phường & mã đơn Quận 9">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="sheet-kpi-val" id="kpiQ9">0</div>
-            <div class="sheet-kpi-sub" id="subKpiQ9">0.0% tổng đơn • 0 phường</div>
-          </div>
-        </div>
-        <div class="col-12 col-md">
-          <div class="sheet-kpi-card sheet-kpi-bt shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh');">
-            <div class="sheet-kpi-title" id="lblKpi5">
-              <span>BÌNH THẠNH</span>
-              <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')" title="Xem chi tiết phường & mã đơn Bình Thạnh">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="sheet-kpi-val" id="kpiBT">0</div>
-            <div class="sheet-kpi-sub" id="subKpiBT">0.0% tổng đơn • 0 phường</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- BẢNG TOP PHƯỜNG RỚT NHIỀU NHẤT -->
-      <div class="card shadow-sm border-0 mb-2 top5-card">
-        <div class="card-header bg-transparent py-1 px-3 d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-2">
-            <span class="fw-bold text-danger" style="font-size: 0.78rem;">
-              <i class="bi bi-fire me-1"></i>TOP PHƯỜNG RỚT NHIỀU NHẤT
-            </span>
-            <span class="text-muted d-none d-sm-inline" style="font-size: 0.7rem;">(Điểm nóng cần ưu tiên xử lý)</span>
+        <!-- BẢNG TOP PHƯỜNG RỚT NHIỀU NHẤT -->
+        <div class="card shadow-sm border-0 mb-2 top5-card">
+          <div class="card-header bg-transparent py-1 px-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+              <span class="fw-bold text-danger" style="font-size: 0.78rem;">
+                <i class="bi bi-fire me-1"></i>TOP PHƯỜNG RỚT NHIỀU NHẤT
+              </span>
+              <span class="text-muted d-none d-sm-inline" style="font-size: 0.7rem;">(Điểm nóng cần ưu tiên xử lý)</span>
+            </div>
+            <button class="btn btn-outline-danger top5-toggle-btn d-flex align-items-center gap-1" type="button" onclick="dongMoTop5()" id="btnToggleTop5">
+              <i class="bi bi-chevron-up" id="iconToggleTop5"></i>
+              <span id="textToggleTop5">Thu gọn</span>
+            </button>
           </div>
-          <button class="btn btn-outline-danger top5-toggle-btn d-flex align-items-center gap-1" type="button" onclick="dongMoTop5()" id="btnToggleTop5">
-            <i class="bi bi-chevron-up" id="iconToggleTop5"></i>
-            <span id="textToggleTop5">Thu gọn</span>
-          </button>
+          <div id="collapseTop5">
+            <div class="card-body p-1 border-top border-danger-subtle">
+              <div class="table-responsive">
+                <table class="table table-hover table-bordered table-sm top5-table align-middle mb-0 bg-white">
+                  <thead class="table-light">
+                    <tr class="text-center">
+                      <th style="width: 48px;">Hạng</th>
+                      <th>Phường</th>
+                      <th style="width: 90px;">Số Đơn</th>
+                      <th style="width: 65px;">Tỷ Trọng</th>
+                      <th style="width: 50px;">Xem</th>
+                    </tr>
+                  </thead>
+                  <tbody id="bangTop5Body">
+                    <tr><td colspan="5" class="text-center py-2 text-muted">Đang nạp Top...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="collapseTop5">
-          <div class="card-body p-1 border-top border-danger-subtle">
-            <div class="table-responsive">
-              <table class="table table-hover table-bordered table-sm top5-table align-middle mb-0 bg-white">
-                <thead class="table-light">
-                  <tr class="text-center">
-                    <th style="width: 48px;">Hạng</th>
-                    <th>Phường</th>
-                    <th style="width: 90px;">Số Đơn</th>
-                    <th style="width: 65px;">Tỷ Trọng</th>
-                    <th style="width: 50px;">Xem</th>
+
+        <!-- BẢNG BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV -->
+        <div class="hv-handover-card shadow-sm mb-2" id="cardBanGiaoHv">
+          <div class="hv-handover-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px;">
+                <i class="bi bi-shield-check text-warning me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
+              </span>
+              <span class="badge bg-warning text-dark fw-bold" id="badgeCountBanGiaoHv">0 đơn</span>
+              <span class="badge bg-success-subtle text-success border border-success-subtle" id="badgeCountHvDelivered" style="font-size: 0.7rem;">0 Giao thành công</span>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle" id="badgeCountHvIp" style="font-size: 0.7rem;">0 đơn IP</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <input type="text" id="searchBanGiaoHv" class="form-control form-control-sm" style="width: 210px; height: 26px; font-size: 0.75rem;" placeholder="🔍 Tìm mã đơn, RD, phường, trạng thái..." oninput="renderBangBanGiaoHv()">
+              <button type="button" class="btn btn-xs btn-outline-light py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="toggleZoomBanGiaoHv()" id="btnZoomBanGiaoHv" title="Phóng to toàn màn hình / Thu nhỏ">
+                <i class="bi bi-arrows-fullscreen" id="iconZoomBanGiaoHv"></i>
+                <span id="txtZoomBanGiaoHv">Phóng to</span>
+              </button>
+              <button type="button" class="btn btn-xs btn-warning text-dark fw-bold py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="dongMoBanGiaoHv()" id="btnToggleBanGiaoHv">
+                <i class="bi bi-chevron-up" id="iconToggleBanGiaoHv"></i>
+                <span id="txtToggleBanGiaoHv">Thu gọn</span>
+              </button>
+            </div>
+          </div>
+          <div id="collapseBanGiaoHv">
+            <div class="table-responsive" id="tableWrapBanGiaoHv" style="max-height: 520px; overflow-y: auto;">
+              <table class="table table-bordered table-hover table-sm hv-handover-table align-middle mb-0 text-center">
+                <thead class="sticky-top">
+                  <tr>
+                    <th style="width: 42px;">STT</th>
+                    <th>Mã đơn</th>
+                    <th>Zone ID</th>
+                    <th>Quận / Phường cũ</th>
+                    <th>ID RD</th>
+                    <th>Tên RD</th>
+                    <th>COT RD</th>
+                    <th>Thời gian quét giao</th>
+                    <th>Trạng thái hiện tại</th>
+                    <th>Lý do onhold</th>
                   </tr>
                 </thead>
-                <tbody id="bangTop5Body">
-                  <tr><td colspan="5" class="text-center py-2 text-muted">Đang nạp Top...</td></tr>
+                <tbody id="tbodyBanGiaoHv">
+                  <tr><td colspan="10" class="text-center py-3 text-muted">Đang tải bảng bàn giao đơn hàng HV...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -756,54 +809,165 @@
         </div>
       </div>
 
-      <!-- BẢNG BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV (THAY THẾ BẢNG PHƯỜNG CŨ, CÓ NÚT THU PHÓNG) -->
-      <div class="hv-handover-card shadow-sm mb-2" id="cardBanGiaoHv">
-        <div class="hv-handover-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <div class="d-flex align-items-center flex-wrap gap-2">
-            <span class="fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px;">
-              <i class="bi bi-shield-check text-warning me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
-            </span>
-            <span class="badge bg-warning text-dark fw-bold" id="badgeCountBanGiaoHv">0 đơn</span>
-            <span class="badge bg-success-subtle text-success border border-success-subtle" id="badgeCountHvDelivered" style="font-size: 0.7rem;">0 Giao thành công</span>
-            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" id="badgeCountHvIp" style="font-size: 0.7rem;">0 đơn IP</span>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <input type="text" id="searchBanGiaoHv" class="form-control form-control-sm" style="width: 210px; height: 26px; font-size: 0.75rem;" placeholder="🔍 Tìm mã đơn, RD, phường, trạng thái..." oninput="renderBangBanGiaoHv()">
-            <button type="button" class="btn btn-xs btn-outline-light py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="toggleZoomBanGiaoHv()" id="btnZoomBanGiaoHv" title="Phóng to toàn màn hình / Thu nhỏ">
-              <i class="bi bi-arrows-fullscreen" id="iconZoomBanGiaoHv"></i>
-              <span id="txtZoomBanGiaoHv">Phóng to</span>
-            </button>
-            <button type="button" class="btn btn-xs btn-warning text-dark fw-bold py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="dongMoBanGiaoHv()" id="btnToggleBanGiaoHv">
-              <i class="bi bi-chevron-up" id="iconToggleBanGiaoHv"></i>
-              <span id="txtToggleBanGiaoHv">Thu gọn</span>
-            </button>
+      <!-- ================================================================================= -->
+      <!-- VÙNG 2: GIAO DIỆN DÀNH RIÊNG CHO INBOUND (ĐỌC GID=909229938 & LƯU DAILY 744743139) -->
+      <!-- ================================================================================= -->
+      <div id="vungGiaoDienInbound" style="display: none;">
+        <!-- THANH CHỌN NGÀY INBOUND (HÔM NAY LIVE HOẶC CÁC NGÀY LƯU TRONG LƯU DAILY) -->
+        <div class="card border-0 shadow-sm mb-2 bg-white">
+          <div class="card-body py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="fw-bold text-primary" style="font-size: 0.85rem;">
+                <i class="bi bi-calendar-range-fill me-1"></i>ĐANG XEM DỮ LIỆU INBOUND:
+              </span>
+              <span class="badge bg-primary fs-6 px-3 py-1 shadow-sm" id="lblInboundActiveDateTitle">Hôm nay (Live)</span>
+            </div>
+            <div class="d-flex align-items-center flex-wrap gap-1" id="vungNutChonNgayInbound">
+              <button type="button" class="btn btn-sm btn-primary fw-bold py-0 px-2" onclick="chonNgayInboundHienThi('TODAY')">
+                📅 Hôm nay (Live)
+              </button>
+            </div>
           </div>
         </div>
-        <div id="collapseBanGiaoHv">
-          <div class="table-responsive" id="tableWrapBanGiaoHv" style="max-height: 520px; overflow-y: auto;">
-            <table class="table table-bordered table-hover table-sm hv-handover-table align-middle mb-0 text-center">
-              <thead class="sticky-top">
+
+        <!-- HÀNG 1 KPI INBOUND: TỔNG INBOUND KV2, INBOUND CA COT 1, INBOUND CA COT 2 -->
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-4">
+            <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="showChiTietInbound('ALL')">
+              <div class="sheet-kpi-title">
+                <span>TỔNG ĐƠN INBOUND</span>
+                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); showChiTietInbound('ALL')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="inbKpiTong">0</div>
+              <div class="sheet-kpi-sub" id="inbSubTong">Toàn bộ khu vực (0 phường)</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="showChiTietInbound(1)">
+              <div class="sheet-kpi-title">
+                <span><i class="bi bi-sun-fill text-warning me-1"></i>INBOUND CA COT 1</span>
+                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); showChiTietInbound(1)">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val text-primary" id="inbKpiCot1">0</div>
+              <div class="sheet-kpi-sub" id="inbSubCot1">0.0% tổng Inbound</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="showChiTietInbound(2)">
+              <div class="sheet-kpi-title">
+                <span><i class="bi bi-moon-stars-fill text-danger me-1"></i>INBOUND CA COT 2</span>
+                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); showChiTietInbound(2)">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" style="color:#b45309;" id="inbKpiCot2">0</div>
+              <div class="sheet-kpi-sub" id="inbSubCot2">0.0% tổng Inbound</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HÀNG 2 KPI INBOUND: 5 QUẬN ĐỘC LẬP HOÀN TOÀN VỚI PENDING ATTEMPT -->
+        <div class="row row-cols-2 row-cols-md-5 g-2 mb-2">
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="showChiTietInboundQuan('Quận 2')">
+              <div class="sheet-kpi-title">
+                <span>INBOUND QUẬN 2</span>
+                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 2')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="inbKpiQ2">0</div>
+              <div class="sheet-kpi-sub" id="inbSubQ2">COT 1: 0 | COT 2: 0</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="showChiTietInboundQuan('Quận 4')">
+              <div class="sheet-kpi-title">
+                <span>INBOUND QUẬN 4</span>
+                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 4')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="inbKpiQ4">0</div>
+              <div class="sheet-kpi-sub" id="inbSubQ4">COT 1: 0 | COT 2: 0</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q7 shadow-sm" onclick="showChiTietInboundQuan('Quận 7')">
+              <div class="sheet-kpi-title">
+                <span>INBOUND QUẬN 7</span>
+                <button type="button" class="btn btn-light text-info text-dark kpi-mini-btn border-info" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 7')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="inbKpiQ7">0</div>
+              <div class="sheet-kpi-sub" id="inbSubQ7">COT 1: 0 | COT 2: 0</div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="sheet-kpi-card sheet-kpi-q9 shadow-sm" onclick="showChiTietInboundQuan('Quận 9')">
+              <div class="sheet-kpi-title">
+                <span>INBOUND QUẬN 9</span>
+                <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 9')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="inbKpiQ9">0</div>
+              <div class="sheet-kpi-sub" id="inbSubQ9">COT 1: 0 | COT 2: 0</div>
+            </div>
+          </div>
+          <div class="col-12 col-md">
+            <div class="sheet-kpi-card sheet-kpi-bt shadow-sm" onclick="showChiTietInboundQuan('Bình Thạnh')">
+              <div class="sheet-kpi-title">
+                <span>INBOUND BÌNH THẠNH</span>
+                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); showChiTietInboundQuan('Bình Thạnh')">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+              <div class="sheet-kpi-val" id="inbKpiBT">0</div>
+              <div class="sheet-kpi-sub" id="inbSubBT">COT 1: 0 | COT 2: 0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG 1: THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (ĐỌC TỪ LƯU DAILY GID=744743139) -->
+        <div class="card border-0 shadow-sm mb-2">
+          <div class="card-header bg-primary text-white py-2 px-3 d-flex justify-content-between align-items-center">
+            <span class="fw-bold" style="font-size: 0.84rem;">
+              <i class="bi bi-bar-chart-line-fill text-warning me-1"></i>THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (LƯU DAILY)
+            </span>
+            <span class="badge bg-light text-primary fw-bold" id="badgeCountDaysInbound">0 ngày</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover table-sm align-middle mb-0 text-center" style="font-size: 0.8rem;">
+              <thead class="table-light">
                 <tr>
-                  <th style="width: 42px;">STT</th>
-                  <th>Mã đơn</th>
-                  <th>Zone ID</th>
-                  <th>Quận / Phường cũ</th>
-                  <th>ID RD</th>
-                  <th>Tên RD</th>
-                  <th>COT RD</th>
-                  <th>Thời gian quét giao</th>
-                  <th>Trạng thái hiện tại</th>
-                  <th>Lý do onhold</th>
+                  <th class="text-start">Ngày / Thời Gian Lưu</th>
+                  <th>Tổng Inbound</th>
+                  <th>Ca COT 1</th>
+                  <th>Ca COT 2</th>
+                  <th>Quận 2 (C1 / C2)</th>
+                  <th>Quận 4 (C1 / C2)</th>
+                  <th>Quận 7 (C1 / C2)</th>
+                  <th>Quận 9 (C1 / C2)</th>
+                  <th>Bình Thạnh (C1 / C2)</th>
+                  <th style="width: 110px;">Chi Tiết</th>
                 </tr>
               </thead>
-              <tbody id="tbodyBanGiaoHv">
-                <tr><td colspan="10" class="text-center py-3 text-muted">Đang tải bảng bàn giao đơn hàng HV...</td></tr>
+              <tbody id="tbodyLichSuNgayInbound">
+                <tr><td colspan="10" class="py-3 text-muted">Đang tải dữ liệu Inbound từng ngày...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
+
+        <!-- BẢNG 2: CHI TIẾT PHƯỜNG INBOUND 5 QUẬN CỦA NGÀY ĐANG CHỌN -->
+        <div class="row g-2" id="vung5BangQuanInbound"></div>
       </div>
-    </div>
 
     <!-- ==================== 5. ĐIỂM DANH ==================== -->
     <div id="section-diemDanh" class="content-section">
@@ -1841,7 +2005,10 @@
           if (typeof filterOffData === 'function') filterOffData();
         }
       } else if (tabId === 'performance') { loadPerformanceData(); } 
-      else if (tabId === 'hangHoa') { loadHangHoaData(); if (currentKieuHangHoa === 'PENDING') loadHangHoaData(); } 
+      else if (tabId === 'hangHoa') {
+      if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
+      else loadHangHoaData();
+    } 
       else if (tabId === 'diemDanh') { khoiTaoTabDiemDanh(); }
       else if (tabId === 'thongTinRider') { loadThongTinChungData(); }
     }
@@ -1849,7 +2016,10 @@
     function lamMoiDuLieu() {
       if (currentTab === 'tuyenRider' || currentTab === 'lichOff') { loadedTabs.tuyenRider = false; loadRiderData(true); } 
       else if (currentTab === 'performance') { loadPerformanceData(); } 
-      else if (currentTab === 'hangHoa') { loadHangHoaData(); } 
+      else if (currentTab === 'hangHoa') {
+      if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
+      else loadHangHoaData();
+    } 
       else if (currentTab === 'diemDanh') { loadLichSuDiemDanh(); }
     }
 
@@ -3096,149 +3266,390 @@ if (user.role === 'RIDER') {
       } catch (e) { alert("❌ Lỗi kết nối khi lưu phân quyền: " + e.message); }
     }
 
-    // ================= XỬ LÝ HÀNG HÓA VÀ TAB PENDING (CHUẨN 5 QUẬN KV2) =================
-    let currentKieuHangHoa = 'PENDING'; 
-    let globalInboundCot1 = [];
-    let globalInboundCot2 = [];
+    // ================= XỬ LÝ HÀNG HÓA INBOUND & PENDING ATTEMPT ĐỘC LẬP 100% =================
+    let currentKieuHangHoa = 'PENDING';
+    let globalInboundData = null;      // Chứa { homNay, lichSuNgay }
+    let activeInboundDayObj = null;    // Ngày đang được chọn hiển thị trên KPI Inbound
+    let activeInboundDayKey = 'TODAY'; // 'TODAY' hoặc index trong lichSuNgay
 
     function chuyenSubTabHangHoa(kieu) {
       currentKieuHangHoa = kieu;
       const titleEl = document.getElementById('titleKieuHangHoa');
-
-      if (!cachedInboundOrders || cachedInboundOrders.length === 0) {
-        ['kpiTongDon', 'kpiQ2', 'kpiQ4', 'kpiQ7', 'kpiQ9', 'kpiBT', 'kpiMp', 'kpiWh', 'kpiHv'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.innerText = '...';
-        });
-      }
+      const vungPending = document.getElementById('vungGiaoDienPending');
+      const vungInbound = document.getElementById('vungGiaoDienInbound');
 
       if (kieu === 'INBOUND') {
-        titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> PENDING';
-        titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm';
+        if (titleEl) {
+          titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> INBOUND';
+          titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm';
+        }
+        if (vungPending) vungPending.style.display = 'none';
+        if (vungInbound) vungInbound.style.display = 'block';
+        chuyenTab('hangHoa');
       } else {
-        titleEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT';
-        titleEl.className = 'badge bg-danger fs-6 py-1 px-2 shadow-sm';
-        ['kpiQ7', 'kpiQ9', 'kpiBT', 'kpiHv'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el && el.parentElement && el.parentElement.parentElement) el.parentElement.parentElement.style.display = '';
-        });
-        document.querySelector('.top5-card').style.display = '';
-        document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = '');
-        const lblQ2 = document.getElementById('lblKpi1');
-        if (lblQ2) {
-          lblQ2.innerHTML = '<span>QUẬN 2</span> <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); xemDonTheoKpi(\'Quận 2\', \'Quận 2\')" title="Xem chi tiết phường & mã đơn Quận 2"><i class="bi bi-search"></i></button>';
-          lblQ2.parentElement.onclick = () => xemDonTheoKpi('Quận 2', 'Quận 2');
+        if (titleEl) {
+          titleEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT';
+          titleEl.className = 'badge bg-danger fs-6 py-1 px-2 shadow-sm';
         }
-        const lblQ4 = document.getElementById('lblKpi2');
-        if (lblQ4) {
-          lblQ4.innerHTML = '<span>QUẬN 4</span> <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); xemDonTheoKpi(\'Quận 4\', \'Quận 4\')" title="Xem chi tiết phường & mã đơn Quận 4"><i class="bi bi-search"></i></button>';
-          lblQ4.parentElement.onclick = () => xemDonTheoKpi('Quận 4', 'Quận 4');
-        }
+        if (vungInbound) vungInbound.style.display = 'none';
+        if (vungPending) vungPending.style.display = 'block';
+        chuyenTab('hangHoa');
+        capNhatKpiPendingTuCache();
       }
-
-      chuyenTab('hangHoa');
-      capNhatKpiPendingTuCache();
     }
 
     async function fetchDataInboundThucTe() {
-      ['kpiTongDon', 'kpiQ2', 'kpiQ4', 'kpiMp', 'kpiWh'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerText = '...';
-      });
-      ['kpiQ7', 'kpiHv'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el && el.parentElement && el.parentElement.parentElement) el.parentElement.parentElement.style.display = 'none';
-      });
-      document.querySelector('.top5-card').style.display = 'none';
-      document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = 'none');
+      const refreshBtn = document.getElementById('btnManualSyncHangHoa');
+      if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang nạp Inbound...';
+      }
+
+      // Khôi phục tạm từ localStorage nếu chưa tải lần nào
+      if (!globalInboundData) {
+        try {
+          const cached = localStorage.getItem('KV2_LAST_VALID_INBOUND_V2');
+          if (cached) {
+            globalInboundData = JSON.parse(cached);
+            chonNgayInboundHienThi(activeInboundDayKey);
+            veBangLichSuNgayInbound();
+          }
+        } catch (e) {}
+      }
+
       try {
-        const res = await fetch(`${API_BASE}/hang-hoa-inbound`);
+        const res = await fetch(`${API_BASE}/hang-hoa-inbound?_t=${Date.now()}`);
         const result = await res.json();
         if (result.success && result.data) {
-          const d = result.data;
-          globalInboundCot1 = d.chiTietCot1;
-          globalInboundCot2 = d.chiTietCot2;
-          document.getElementById('kpiTongDon').innerText = d.tongDonKhuVuc;
-          const lblQ2 = document.getElementById('lblKpi1');
-          if (lblQ2) {
-            lblQ2.innerHTML = 'INBOUND COT 1 <i class="bi bi-hand-index-thumb ms-1"></i>';
-            lblQ2.parentElement.onclick = () => showChiTietInbound(1);
-          }
-          if (document.getElementById('kpiQ2')) document.getElementById('kpiQ2').innerText = d.tongCot1;
-          const lblQ4 = document.getElementById('lblKpi2');
-          if (lblQ4) {
-            lblQ4.innerHTML = 'INBOUND COT 2 <i class="bi bi-hand-index-thumb ms-1"></i>';
-            lblQ4.parentElement.onclick = () => showChiTietInbound(2);
-          }
-          if (document.getElementById('kpiQ4')) document.getElementById('kpiQ4').innerText = d.tongCot2;
-          document.getElementById('kpiMp').innerText = d.tongMP;
-          document.getElementById('kpiWh').innerText = d.tongWH;
-          document.getElementById('hangLastFetchTime').innerText = new Date().toLocaleTimeString('vi-VN');
-          document.getElementById('hangSheetTimeLabel').innerText = '(Trích xuất từ TOTAL INBOUND)';
+          globalInboundData = result.data;
+          try {
+            localStorage.setItem('KV2_LAST_VALID_INBOUND_V2', JSON.stringify(result.data));
+          } catch (e) {}
+
+          document.getElementById('hangLastFetchTime').innerText = getGioVietNamHienTai();
+          document.getElementById('hangSheetTimeLabel').innerText = `(Hôm nay: ${result.data.titleTodaySheet || 'Live'} | Lịch sử: ${result.data.titleDailySheet || 'LƯU DAILY'})`;
+
+          veThanhChonNgayInbound();
+          veBangLichSuNgayInbound();
+          chonNgayInboundHienThi(activeInboundDayKey);
         }
-      } catch (error) { alert("Lỗi tải dữ liệu Inbound: " + error.message); }
+      } catch (error) {
+        console.error('Lỗi tải dữ liệu Inbound:', error);
+      } finally {
+        if (refreshBtn) {
+          refreshBtn.disabled = false;
+          refreshBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay';
+        }
+      }
     }
 
-    function showChiTietInbound(cotType) {
-      if (currentKieuHangHoa !== 'INBOUND') return; 
-      const data = cotType === 1 ? globalInboundCot1 : globalInboundCot2;
-      const title = cotType === 1 ? 'COT 1' : 'COT 2';
-      document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title}`;
-      const container = document.getElementById('bodyChiTietInboundCot');
-      if (!data || data.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center py-4 text-muted">Chưa có dữ liệu</div>';
+    function veThanhChonNgayInbound() {
+      const container = document.getElementById('vungNutChonNgayInbound');
+      if (!container || !globalInboundData) return;
+
+      const ls = globalInboundData.lichSuNgay || [];
+      let html = `
+        <button type="button" class="btn btn-xs ${activeInboundDayKey === 'TODAY' ? 'btn-primary' : 'btn-outline-primary'} fw-bold py-1 px-2" onclick="chonNgayInboundHienThi('TODAY')">
+          📅 Hôm nay (Live)
+        </button>`;
+
+      ls.forEach((dayItem, idx) => {
+        const isAct = (String(activeInboundDayKey) === String(idx));
+        html += `
+          <button type="button" class="btn btn-xs ${isAct ? 'btn-primary' : 'btn-outline-secondary'} fw-bold py-1 px-2" onclick="chonNgayInboundHienThi(${idx})" title="${dayItem.rawTitle}">
+            🗓️ ${dayItem.ngay} (${(dayItem.tongDonKhuVuc || 0).toLocaleString('vi-VN')})
+          </button>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function chonNgayInboundHienThi(dayKey) {
+      if (!globalInboundData) return;
+      activeInboundDayKey = dayKey;
+
+      const ls = globalInboundData.lichSuNgay || [];
+      if (dayKey === 'TODAY' || !ls[dayKey]) {
+        activeInboundDayObj = globalInboundData.homNay || globalInboundData;
       } else {
-        const grouped = { 'quận 2': [], 'quận 4': [], 'quận 7': [], 'quận 9': [], 'bình thạnh': [] };
-        data.forEach(item => {
-          const qKey = normQ(item.quan);
-          if (grouped[qKey]) grouped[qKey].push(item);
-        });
-        const extractNumber = (str) => { const match = (str || '').match(/\d+/); return match ? parseInt(match[0], 10) : 999; };
-        const layoutConfig = [
-          { key: 'quận 2', color: 'primary', icon: 'bi-geo-alt-fill', label: 'QUẬN 2' },
-          { key: 'quận 4', color: 'warning', icon: 'bi-geo-alt-fill', label: 'QUẬN 4' },
-          { key: 'quận 7', color: 'info', icon: 'bi-geo-alt-fill', label: 'QUẬN 7' },
-          { key: 'quận 9', color: 'success', icon: 'bi-geo-alt-fill', label: 'QUẬN 9' },
-          { key: 'bình thạnh', color: 'danger', icon: 'bi-geo-alt-fill', label: 'BÌNH THẠNH' }
-        ];
-        let html = '';
-        layoutConfig.forEach(config => {
-          let phuongList = grouped[config.key] || [];
-          phuongList.sort((a, b) => extractNumber(a.phuong) - extractNumber(b.phuong));
-          let totalDon = phuongList.reduce((sum, item) => sum + item.soLuong, 0);
-          html += `<div class="col-12 col-lg-4"><div class="card h-100 shadow-sm border-${config.color}"><div class="card-header bg-white py-2 d-flex justify-content-between align-items-center border-bottom border-${config.color}"><span class="fw-bold text-${config.color}"><i class="bi ${config.icon} me-1"></i> ${config.label}</span><span class="badge bg-${config.color} ${config.color === 'warning' ? 'text-dark' : ''} fs-6">${totalDon}</span></div><div class="table-responsive" style="max-height: 60vh;"><table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 13px;"><thead class="table-light sticky-top"><tr><th class="text-start">Phường</th><th style="width: 80px;">Số Đơn</th></tr></thead><tbody>`;
-          if (phuongList.length === 0) {
-            html += `<tr><td colspan="2" class="text-center text-muted py-3">Không có đơn</td></tr>`;
-          } else {
-            phuongList.forEach(item => {
-              html += `<tr><td class="text-start fw-semibold">${item.phuong}</td><td class="text-danger fw-bold font-monospace">${item.soLuong}</td></tr>`;
-            });
-          }
-          html += `</tbody></table></div></div></div>`;
-        });
-        container.innerHTML = html;
+        activeInboundDayObj = ls[dayKey];
       }
+
+      veThanhChonNgayInbound();
+      veBangLichSuNgayInbound();
+
+      const d = activeInboundDayObj || {};
+      const tong = Number(d.tongDonKhuVuc) || 0;
+      const c1 = Number(d.tongCot1) || 0;
+      const c2 = Number(d.tongCot2) || 0;
+      const pct = (val) => tong > 0 ? `${((val / tong) * 100).toFixed(1)}%` : '0.0%';
+
+      const titleBadge = document.getElementById('lblInboundActiveDateTitle');
+      if (titleBadge) titleBadge.innerText = d.rawTitle || d.ngay || 'Hôm nay';
+
+      document.getElementById('inbKpiTong').innerText = tong.toLocaleString('vi-VN');
+      document.getElementById('inbSubTong').innerText = `Toàn bộ khu vực • ${d.tongPhuong || 0} phường`;
+
+      document.getElementById('inbKpiCot1').innerText = c1.toLocaleString('vi-VN');
+      document.getElementById('inbSubCot1').innerText = `${pct(c1)} tổng Inbound`;
+
+      document.getElementById('inbKpiCot2').innerText = c2.toLocaleString('vi-VN');
+      document.getElementById('inbSubCot2').innerText = `${pct(c2)} tổng Inbound`;
+
+      document.getElementById('inbKpiQ2').innerText = (d.q2 || 0).toLocaleString('vi-VN');
+      document.getElementById('inbSubQ2').innerText = `C1: ${d.q2Cot1 || 0} | C2: ${d.q2Cot2 || 0} (${pct(d.q2 || 0)})`;
+
+      document.getElementById('inbKpiQ4').innerText = (d.q4 || 0).toLocaleString('vi-VN');
+      document.getElementById('inbSubQ4').innerText = `C1: ${d.q4Cot1 || 0} | C2: ${d.q4Cot2 || 0} (${pct(d.q4 || 0)})`;
+
+      document.getElementById('inbKpiQ7').innerText = (d.q7 || 0).toLocaleString('vi-VN');
+      document.getElementById('inbSubQ7').innerText = `C1: ${d.q7Cot1 || 0} | C2: ${d.q7Cot2 || 0} (${pct(d.q7 || 0)})`;
+
+      document.getElementById('inbKpiQ9').innerText = (d.q9 || 0).toLocaleString('vi-VN');
+      document.getElementById('inbSubQ9').innerText = `C1: ${d.q9Cot1 || 0} | C2: ${d.q9Cot2 || 0} (${pct(d.q9 || 0)})`;
+
+      document.getElementById('inbKpiBT').innerText = (d.bt || 0).toLocaleString('vi-VN');
+      document.getElementById('inbSubBT').innerText = `C1: ${d.btCot1 || 0} | C2: ${d.btCot2 || 0} (${pct(d.bt || 0)})`;
+
+      ve5BangQuanInbound(d);
+    }
+
+    function veBangLichSuNgayInbound() {
+      const tbody = document.getElementById('tbodyLichSuNgayInbound');
+      if (!tbody || !globalInboundData) return;
+
+      const ls = globalInboundData.lichSuNgay || [];
+      const homNay = globalInboundData.homNay;
+      const badgeDays = document.getElementById('badgeCountDaysInbound');
+      if (badgeDays) badgeDays.innerText = `${ls.length} ngày lưu`;
+
+      let html = '';
+
+      // Dòng đầu tiên: Hôm nay (Live từ gid=909229938)
+      if (homNay) {
+        const isTodayAct = (activeInboundDayKey === 'TODAY');
+        html += `
+          <tr class="${isTodayAct ? 'table-primary fw-bold' : ''}" style="cursor:pointer;" onclick="chonNgayInboundHienThi('TODAY')">
+            <td class="text-start">
+              <span class="badge bg-success me-1">LIVE HÔM NAY</span>
+              <span class="text-dark fw-bold">${homNay.ngay || 'Hôm nay'}</span>
+            </td>
+            <td class="font-monospace fw-bold text-danger fs-6">${(homNay.tongDonKhuVuc || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace text-primary fw-bold">${(homNay.tongCot1 || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace text-warning text-dark fw-bold">${(homNay.tongCot2 || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace"><b>${homNay.q2 || 0}</b> <span class="text-muted small">(${homNay.q2Cot1 || 0}/${homNay.q2Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${homNay.q4 || 0}</b> <span class="text-muted small">(${homNay.q4Cot1 || 0}/${homNay.q4Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${homNay.q7 || 0}</b> <span class="text-muted small">(${homNay.q7Cot1 || 0}/${homNay.q7Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${homNay.q9 || 0}</b> <span class="text-muted small">(${homNay.q9Cot1 || 0}/${homNay.q9Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${homNay.bt || 0}</b> <span class="text-muted small">(${homNay.btCot1 || 0}/${homNay.btCot2 || 0})</span></td>
+            <td>
+              <button type="button" class="btn btn-xs ${isTodayAct ? 'btn-primary' : 'btn-outline-primary'} py-0 px-2 fw-bold" onclick="event.stopPropagation(); chonNgayInboundHienThi('TODAY'); showChiTietInbound('ALL');">
+                <i class="bi bi-search me-1"></i>Xem
+              </button>
+            </td>
+          </tr>`;
+      }
+
+      // Các dòng lịch sử từng ngày từ LƯU DAILY (gid=744743139)
+      ls.forEach((d, idx) => {
+        const isAct = (String(activeInboundDayKey) === String(idx));
+        html += `
+          <tr class="${isAct ? 'table-primary fw-bold' : ''}" style="cursor:pointer;" onclick="chonNgayInboundHienThi(${idx})">
+            <td class="text-start fw-semibold text-dark">
+              <i class="bi bi-calendar3 text-secondary me-1"></i>${d.rawTitle || d.ngay}
+            </td>
+            <td class="font-monospace fw-bold text-danger fs-6">${(d.tongDonKhuVuc || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace text-primary fw-bold">${(d.tongCot1 || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace text-warning text-dark fw-bold">${(d.tongCot2 || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace"><b>${d.q2 || 0}</b> <span class="text-muted small">(${d.q2Cot1 || 0}/${d.q2Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${d.q4 || 0}</b> <span class="text-muted small">(${d.q4Cot1 || 0}/${d.q4Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${d.q7 || 0}</b> <span class="text-muted small">(${d.q7Cot1 || 0}/${d.q7Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${d.q9 || 0}</b> <span class="text-muted small">(${d.q9Cot1 || 0}/${d.q9Cot2 || 0})</span></td>
+            <td class="font-monospace"><b>${d.bt || 0}</b> <span class="text-muted small">(${d.btCot1 || 0}/${d.btCot2 || 0})</span></td>
+            <td>
+              <button type="button" class="btn btn-xs ${isAct ? 'btn-primary' : 'btn-outline-primary'} py-0 px-2 fw-bold" onclick="event.stopPropagation(); chonNgayInboundHienThi(${idx}); showChiTietInbound('ALL');">
+                <i class="bi bi-search me-1"></i>Xem
+              </button>
+            </td>
+          </tr>`;
+      });
+
+      tbody.innerHTML = html || '<tr><td colspan="10" class="py-3 text-muted">Chưa có dữ liệu lịch sử ngày</td></tr>';
+    }
+
+    function ve5BangQuanInbound(d) {
+      const container = document.getElementById('vung5BangQuanInbound');
+      if (!container || !d) return;
+
+      const configs = [
+        { label: 'QUẬN 2', color: 'primary', list: d.phuongQ2 || [], tong: d.q2 || 0, c1: d.q2Cot1 || 0, c2: d.q2Cot2 || 0 },
+        { label: 'QUẬN 4', color: 'warning', list: d.phuongQ4 || [], tong: d.q4 || 0, c1: d.q4Cot1 || 0, c2: d.q4Cot2 || 0 },
+        { label: 'QUẬN 7', color: 'info', list: d.phuongQ7 || [], tong: d.q7 || 0, c1: d.q7Cot1 || 0, c2: d.q7Cot2 || 0 },
+        { label: 'QUẬN 9', color: 'success', list: d.phuongQ9 || [], tong: d.q9 || 0, c1: d.q9Cot1 || 0, c2: d.q9Cot2 || 0 },
+        { label: 'BÌNH THẠNH', color: 'danger', list: d.phuongBT || [], tong: d.bt || 0, c1: d.btCot1 || 0, c2: d.btCot2 || 0 }
+      ];
+
+      let html = '';
+      configs.forEach(cfg => {
+        const textCls = cfg.color === 'warning' || cfg.color === 'info' ? 'text-dark' : '';
+        html += `
+          <div class="col-12 col-lg-4">
+            <div class="district-card shadow-sm h-100">
+              <div class="district-header d-flex justify-content-between align-items-center border-bottom border-${cfg.color} border-2 text-${cfg.color}">
+                <div>
+                  <i class="bi bi-geo-alt-fill me-1"></i>${cfg.label}
+                  <span class="badge bg-${cfg.color} ${textCls} district-badge ms-1">${cfg.tong.toLocaleString('vi-VN')} đơn • ${cfg.list.length} phường</span>
+                </div>
+                <span class="small text-muted font-monospace" style="font-size:0.7rem;">C1: ${cfg.c1} | C2: ${cfg.c2}</span>
+              </div>
+              <div class="table-responsive" style="max-height: 340px;">
+                <table class="table table-hover table-bordered table-sm district-table align-middle mb-0 text-center">
+                  <thead>
+                    <tr>
+                      <th class="text-start">Phường</th>
+                      <th style="width: 62px;">COT 1</th>
+                      <th style="width: 62px;">COT 2</th>
+                      <th style="width: 72px;">Tổng</th>
+                    </tr>
+                  </thead>
+                  <tbody>`;
+
+        if (cfg.list.length === 0) {
+          html += `<tr><td colspan="4" class="text-center py-3 text-muted small">Không có dữ liệu</td></tr>`;
+        } else {
+          cfg.list.forEach(p => {
+            html += `
+              <tr>
+                <td class="text-start fw-semibold">${p.phuong}</td>
+                <td class="font-monospace text-primary">${p.cot1 || 0}</td>
+                <td class="font-monospace" style="color:#b45309;">${p.cot2 || 0}</td>
+                <td class="font-monospace fw-bold text-danger">${p.soLuong || 0}</td>
+              </tr>`;
+          });
+        }
+        html += `</tbody></table></div></div></div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function showChiTietInboundQuan(quanName) {
+      const d = activeInboundDayObj || (globalInboundData && globalInboundData.homNay) || {};
+      let list = [];
+      if (quanName === 'Quận 2') list = d.phuongQ2 || [];
+      else if (quanName === 'Quận 4') list = d.phuongQ4 || [];
+      else if (quanName === 'Quận 7') list = d.phuongQ7 || [];
+      else if (quanName === 'Quận 9') list = d.phuongQ9 || [];
+      else if (quanName === 'Bình Thạnh') list = d.phuongBT || [];
+
+      const totalQuan = list.reduce((s, i) => s + (i.soLuong || 0), 0);
+      const totalC1 = list.reduce((s, i) => s + (i.cot1 || 0), 0);
+      const totalC2 = list.reduce((s, i) => s + (i.cot2 || 0), 0);
+
+      document.getElementById('titleModalInbound').innerHTML = `
+        <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT INBOUND ${quanName.toUpperCase()} — ${d.ngay || 'Hôm nay'} (${totalQuan.toLocaleString('vi-VN')} đơn - ${list.length} phường)`;
+
+      let html = `
+        <div class="col-12">
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <span class="badge bg-danger fs-6">Tổng: ${totalQuan.toLocaleString('vi-VN')} đơn</span>
+            <span class="badge bg-primary fs-6">COT 1: ${totalC1.toLocaleString('vi-VN')} đơn</span>
+            <span class="badge bg-warning text-dark fs-6">COT 2: ${totalC2.toLocaleString('vi-VN')} đơn</span>
+          </div>
+          <div class="table-responsive bg-white rounded shadow-sm border">
+            <table class="table table-hover table-bordered table-sm align-middle mb-0 text-center" style="font-size: 13px;">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 45px;">STT</th>
+                  <th class="text-start">Phường</th>
+                  <th>COT 1</th>
+                  <th>COT 2</th>
+                  <th>Tổng Đơn</th>
+                  <th>Tỷ Trọng</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+      if (list.length === 0) {
+        html += `<tr><td colspan="6" class="py-3 text-muted">Không có dữ liệu</td></tr>`;
+      } else {
+        list.forEach((p, idx) => {
+          const pct = totalQuan > 0 ? `${(((p.soLuong || 0) / totalQuan) * 100).toFixed(1)}%` : '0.0%';
+          html += `
+            <tr>
+              <td class="text-muted small">${idx + 1}</td>
+              <td class="text-start fw-bold">${p.phuong}</td>
+              <td class="font-monospace text-primary fw-semibold">${p.cot1 || 0}</td>
+              <td class="font-monospace fw-semibold" style="color:#b45309;">${p.cot2 || 0}</td>
+              <td class="font-monospace fw-bold text-danger fs-6">${p.soLuong || 0}</td>
+              <td class="font-monospace small text-muted">${pct}</td>
+            </tr>`;
+        });
+      }
+      html += `</tbody></table></div></div>`;
+
+      document.getElementById('bodyChiTietInboundCot').innerHTML = html;
       bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietInbound')).show();
     }
 
-    function triggerManualHangHoaSync() { countdownSec = REFRESH_INTERVAL_SEC; capNhatGiaoDienDongHo(countdownSec); loadHangHoaData(false); }
-    
-    const originalLoadHangHoaData = loadHangHoaData;
-    loadHangHoaData = async function(isBg) {
-      await originalLoadHangHoaData(isBg);
-      if (currentKieuHangHoa === 'INBOUND' && cachedInboundOrders && cachedInboundOrders.length > 0) {
-        const uniquePending = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
-        document.getElementById('kpiTongDon').innerText = uniquePending.length;
-        document.getElementById('kpiPhuNhuan').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 2').length;
-        document.getElementById('kpiTanBinh').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 4').length;
-        document.getElementById('kpiThuDuc').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 7').length;
-        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 9').length;
-        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = uniquePending.filter(d => normQ(d.quan) === 'bình thạnh').length;
-        document.getElementById('kpiMp').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
-        document.getElementById('kpiWh').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
-        document.getElementById('kpiHv').innerText = uniquePending.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
-      }
-    };
+    function showChiTietInbound(cotType) {
+      const d = activeInboundDayObj || (globalInboundData && globalInboundData.homNay) || {};
+      const title = cotType === 1 ? 'CA COT 1' : (cotType === 2 ? 'CA COT 2' : 'TOÀN KHU VỰC 2 (COT 1 + COT 2)');
+      document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title} (${d.ngay || 'Hôm nay'})`;
+
+      const container = document.getElementById('bodyChiTietInboundCot');
+      const configs = [
+        { label: 'QUẬN 2', color: 'primary', list: d.phuongQ2 || [] },
+        { label: 'QUẬN 4', color: 'warning', list: d.phuongQ4 || [] },
+        { label: 'QUẬN 7', color: 'info', list: d.phuongQ7 || [] },
+        { label: 'QUẬN 9', color: 'success', list: d.phuongQ9 || [] },
+        { label: 'BÌNH THẠNH', color: 'danger', list: d.phuongBT || [] }
+      ];
+
+      let html = '';
+      configs.forEach(cfg => {
+        const rows = cfg.list.map(p => ({
+          phuong: p.phuong,
+          soLuong: cotType === 1 ? (p.cot1 || 0) : (cotType === 2 ? (p.cot2 || 0) : (p.soLuong || 0))
+        })).filter(x => x.soLuong > 0);
+
+        const totalDon = rows.reduce((s, item) => s + item.soLuong, 0);
+        const textCls = cfg.color === 'warning' || cfg.color === 'info' ? 'text-dark' : '';
+
+        html += `
+          <div class="col-12 col-lg-4">
+            <div class="card h-100 shadow-sm border-${cfg.color}">
+              <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center border-bottom border-${cfg.color}">
+                <span class="fw-bold text-${cfg.color}"><i class="bi bi-geo-alt-fill me-1"></i> ${cfg.label}</span>
+                <span class="badge bg-${cfg.color} ${textCls} fs-6">${totalDon.toLocaleString('vi-VN')} đơn - ${rows.length} phường</span>
+              </div>
+              <div class="table-responsive" style="max-height: 55vh;">
+                <table class="table table-hover table-bordered align-middle mb-0 text-center" style="font-size: 13px;">
+                  <thead class="table-light sticky-top">
+                    <tr><th class="text-start">Phường</th><th style="width: 85px;">Số Đơn</th></tr>
+                  </thead>
+                  <tbody>`;
+
+        if (rows.length === 0) {
+          html += `<tr><td colspan="2" class="text-center text-muted py-3">Không có đơn</td></tr>`;
+        } else {
+          rows.forEach(item => {
+            html += `<tr><td class="text-start fw-semibold">${item.phuong}</td><td class="text-danger fw-bold font-monospace">${item.soLuong}</td></tr>`;
+          });
+        }
+        html += `</tbody></table></div></div></div>`;
+      });
+
+      container.innerHTML = html;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietInbound')).show();
+    }
+
+    function triggerManualHangHoaSync() {
+      countdownSec = REFRESH_INTERVAL_SEC;
+      capNhatGiaoDienDongHo(countdownSec);
+      if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
+      else loadHangHoaData(false);
+    }
 
     document.addEventListener('change', function(e) {
       if (e.target.tagName === 'SELECT' && e.target.innerHTML.includes('-- Chọn tuyến --')) {

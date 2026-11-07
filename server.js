@@ -479,85 +479,318 @@ app.get('/api/hang-hoa-data', async (req, res) => {
   }
 });
 
-// 3.5 API: ĐỌC DỮ LIỆU INBOUND TỪ SHEET MỚI (ĐẾM THEO QUẬN CŨ - PHƯỜNG CŨ)
+// 3.5 API: ĐỌC DỮ LIỆU HÀNG HÓA INBOUND (TỪNG NGÀY TỪ GID=744743139 & HÔM NAY TỪ GID=909229938)
+const SPREADSHEET_BAO_CAO_INBOUND_ID = '15zUl_3k3AEYL1Otl0pjSCAxoZiK-ND-sQU2MqsfGfAY';
+const GID_INBOUND_LUU_DAILY = 744743139;
+const GID_INBOUND_HOM_NAY = 909229938;
+let lastValidInboundResponse = null;
+
+// Hàm chuẩn hóa tên Quận về 5 quận KV2
+function chuanHoaQuanKV2(rawQ) {
+  const s = (rawQ || '').toString().toLowerCase().trim();
+  if (s.includes('quận 2') || s === 'q2') return 'Quận 2';
+  if (s.includes('quận 4') || s === 'q4') return 'Quận 4';
+  if (s.includes('quận 7') || s === 'q7') return 'Quận 7';
+  if (s.includes('quận 9') || s === 'q9') return 'Quận 9';
+  if (s.includes('bình thạnh') || s === 'bt') return 'Bình Thạnh';
+  return (rawQ || '').toString().trim();
+}
+
+// Hàm sắp xếp Phường từ nhỏ tới lớn theo chuẩn KV2
+function sapXepPhuongKV2(listPhuong, quanKeyword) {
+  const orderQ2 = ['an khánh', 'an lợi đông', 'an phú', 'thảo điền', 'thủ thiêm', 'bình trưng đông', 'bình trưng tây', 'thạnh mỹ lợi', 'cát lái'];
+  const orderQ7 = ['phú thuận', 'tân hưng', 'tân kiểng', 'tân phong', 'tân quy', 'tân phú', 'tân thuận đông', 'tân thuận tây', 'bình thuận', 'phú mỹ'];
+  const orderQ9 = ['phước bình', 'phước long a', 'phước long b'];
+  const kw = (quanKeyword || '').toLowerCase();
+
+  return [...(listPhuong || [])].sort((a, b) => {
+    const pA = (a.phuong || '').toLowerCase();
+    const pB = (b.phuong || '').toLowerCase();
+    let idxA = 999, idxB = 999;
+
+    if (kw.includes('quận 2')) {
+      idxA = orderQ2.findIndex(item => pA.includes(item));
+      idxB = orderQ2.findIndex(item => pB.includes(item));
+    } else if (kw.includes('quận 7')) {
+      idxA = orderQ7.findIndex(item => pA.includes(item));
+      idxB = orderQ7.findIndex(item => pB.includes(item));
+    } else if (kw.includes('quận 9')) {
+      idxA = orderQ9.findIndex(item => pA.includes(item));
+      idxB = orderQ9.findIndex(item => pB.includes(item));
+    }
+
+    if (idxA === -1) idxA = 999;
+    if (idxB === -1) idxB = 999;
+    if (idxA !== 999 || idxB !== 999) {
+      if (idxA !== idxB) return idxA - idxB;
+    }
+
+    const numA = parseInt((pA.match(/\d+/) || [])[0], 10);
+    const numB = parseInt((pB.match(/\d+/) || [])[0], 10);
+    if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+
+    return pA.localeCompare(pB, 'vi');
+  });
+}
+
+// Hàm bóc tách 1 khối Pivot (4 cột: Quận cũ | COT RC | Phường cũ | COUNTA of shipment_id)
+function parseKhoiPivotInbound(rows, headerRowIdx, startCol, rawTitle = '') {
+  let currentQuan = '';
+  let currentCot = 'COT 1';
+  let sumCot1 = 0, sumCot2 = 0;
+  const wardMap = {}; // key: quan||phuong -> { quan, phuong, cot1, cot2, soLuong }
+  const mapCot1 = {};
+  const mapCot2 = {};
+
+  for (let r = headerRowIdx + 1; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const qRaw = (row[startCol] || '').toString().trim();
+    const cotRaw = (row[startCol + 1] || '').toString().trim();
+    const phuongRaw = (row[startCol + 2] || '').toString().trim();
+    const countRaw = (row[startCol + 3] || '').toString().trim();
+    const soLuong = parseInt(countRaw.replace(/[^\d]/g, ''), 10) || 0;
+
+    if (!qRaw && !cotRaw && !phuongRaw && !countRaw) continue;
+
+    const qLower = qRaw.toLowerCase();
+    const cotLower = cotRaw.toLowerCase();
+    const pLower = phuongRaw.toLowerCase();
+
+    if (qLower.includes('grand total') || qLower.includes('tổng cộng')) break;
+    if (qLower.includes('total') || qLower.includes('tổng')) continue;
+
+    if (qRaw !== '' && !qLower.includes('quận cũ')) {
+      currentQuan = chuanHoaQuanKV2(qRaw);
+    }
+
+    if (cotLower.includes('total') || cotLower.includes('tổng')) continue;
+    if (cotRaw !== '' && !cotLower.includes('cot rc')) {
+      currentCot = cotRaw.toUpperCase().includes('2') ? 'COT 2' : 'COT 1';
+    }
+
+    if (phuongRaw !== '' && !pLower.includes('phường cũ') && !pLower.includes('total') && soLuong > 0 && currentQuan) {
+      const key = `${currentQuan}||${phuongRaw}`;
+      if (!wardMap[key]) {
+        wardMap[key] = { quan: currentQuan, phuong: phuongRaw, cot1: 0, cot2: 0, soLuong: 0 };
+      }
+      if (currentCot === 'COT 2') {
+        wardMap[key].cot2 += soLuong;
+        sumCot2 += soLuong;
+        mapCot2[key] = (mapCot2[key] || 0) + soLuong;
+      } else {
+        wardMap[key].cot1 += soLuong;
+        sumCot1 += soLuong;
+        mapCot1[key] = (mapCot1[key] || 0) + soLuong;
+      }
+      wardMap[key].soLuong += soLuong;
+    }
+  }
+
+  return buildInboundDayObject(rawTitle, wardMap, mapCot1, mapCot2, sumCot1, sumCot2);
+}
+
+// Hàm đóng gói dữ liệu 1 ngày Inbound chuẩn cho Frontend
+function buildInboundDayObject(rawTitle, wardMap, mapCot1, mapCot2, sumCot1, sumCot2, extra = {}) {
+  const allWards = Object.values(wardMap);
+  const byQuan = (qName) => {
+    const list = sapXepPhuongKV2(allWards.filter(w => w.quan === qName), qName);
+    const cot1 = list.reduce((s, i) => s + i.cot1, 0);
+    const cot2 = list.reduce((s, i) => s + i.cot2, 0);
+    return { list, cot1, cot2, tong: cot1 + cot2 };
+  };
+
+  const dQ2 = byQuan('Quận 2');
+  const dQ4 = byQuan('Quận 4');
+  const dQ7 = byQuan('Quận 7');
+  const dQ9 = byQuan('Quận 9');
+  const dBT = byQuan('Bình Thạnh');
+
+  const tongDon = sumCot1 + sumCot2;
+
+  const formatCotList = (mObj) => Object.keys(mObj).map(k => {
+    const [quan, phuong] = k.split('||');
+    return { quan, phuong, soLuong: mObj[k] };
+  });
+
+  // Trích xuất ngày DD/MM/YYYY từ tiêu đề "--- DỮ LIỆU LƯU NGÀY: Thứ Năm - 05/11/2026 18:01:40 ---"
+  const cleanTitle = (rawTitle || '').replace(/^-+\s*|\s*-+$/g, '').replace(/^DỮ LIỆU LƯU NGÀY:\s*/i, '').trim();
+  const dateMatch = cleanTitle.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/);
+  const ngayStr = dateMatch ? dateMatch[1] : (cleanTitle || 'Hôm nay');
+  const shortNgay = dateMatch ? dateMatch[1].substring(0, 5) : ngayStr;
+
+  return {
+    rawTitle: cleanTitle || 'Hôm nay',
+    ngay: ngayStr,
+    shortNgay: shortNgay,
+    tongDonKhuVuc: tongDon,
+    tongCot1: sumCot1,
+    tongCot2: sumCot2,
+    tongMP: extra.tongMP || 0,
+    tongWH: extra.tongWH || 0,
+    tongHV: extra.tongHV || 0,
+    q2: dQ2.tong, q2Cot1: dQ2.cot1, q2Cot2: dQ2.cot2, phuongQ2: dQ2.list,
+    q4: dQ4.tong, q4Cot1: dQ4.cot1, q4Cot2: dQ4.cot2, phuongQ4: dQ4.list,
+    q7: dQ7.tong, q7Cot1: dQ7.cot1, q7Cot2: dQ7.cot2, phuongQ7: dQ7.list,
+    q9: dQ9.tong, q9Cot1: dQ9.cot1, q9Cot2: dQ9.cot2, phuongQ9: dQ9.list,
+    bt: dBT.tong, btCot1: dBT.cot1, btCot2: dBT.cot2, phuongBT: dBT.list,
+    tongPhuong: dQ2.list.length + dQ4.list.length + dQ7.list.length + dQ9.list.length + dBT.list.length,
+    chiTietCot1: formatCotList(mapCot1),
+    chiTietCot2: formatCotList(mapCot2)
+  };
+}
+
+// Hàm tự động nhận diện và đọc dữ liệu từ 1 Sheet (Hỗ trợ cả LƯU DAILY nhiều cột, Pivot Table 1 khối, hoặc Bảng Raw Shipment_ID)
+function parseInboundSheetUniversal(rows, defaultTitle = 'Hôm nay') {
+  if (!rows || rows.length === 0) return [];
+
+  // 1. Kiểm tra nếu là bảng Raw Orders (Cột A là shipment_id)
+  const firstRowStr = (rows[0] || []).map(c => (c || '').toString().toLowerCase().trim());
+  if (firstRowStr.includes('shipment_id')) {
+    const idxShip = firstRowStr.indexOf('shipment_id');
+    const idxWhs = firstRowStr.findIndex(h => h.includes('whs_id'));
+    const idxHv = firstRowStr.findIndex(h => h === 'hv' || h.includes('is_hv'));
+    const idxCot = firstRowStr.findIndex(h => h.includes('cot'));
+    const idxQuan = firstRowStr.findIndex(h => h.includes('quận'));
+    const idxPhuong = firstRowStr.findIndex(h => h.includes('phường'));
+
+    const seenIds = new Set();
+    const wardMap = {};
+    const mapCot1 = {}, mapCot2 = {};
+    let sumCot1 = 0, sumCot2 = 0, tongMP = 0, tongWH = 0, tongHV = 0;
+
+    for (let r = 1; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const sId = (row[idxShip] || '').toString().trim();
+      if (!sId || seenIds.has(sId)) continue;
+      seenIds.add(sId);
+
+      const qName = chuanHoaQuanKV2(idxQuan !== -1 ? row[idxQuan] : row[14]);
+      const pName = ((idxPhuong !== -1 ? row[idxPhuong] : row[15]) || 'Chưa rõ').toString().trim();
+      const cotVal = ((idxCot !== -1 ? row[idxCot] : row[13]) || '').toString().toUpperCase();
+      const whsVal = ((idxWhs !== -1 ? row[idxWhs] : row[9]) || '').toString().trim();
+      const hvVal = ((idxHv !== -1 ? row[idxHv] : row[12]) || '').toString().trim().toLowerCase();
+
+      if (!qName) continue;
+      if (whsVal && whsVal !== '0' && whsVal.toLowerCase() !== 'nan') tongWH++; else tongMP++;
+      if (hvVal === 'yes') tongHV++;
+
+      const key = `${qName}||${pName}`;
+      if (!wardMap[key]) wardMap[key] = { quan: qName, phuong: pName, cot1: 0, cot2: 0, soLuong: 0 };
+
+      if (cotVal.includes('2')) {
+        wardMap[key].cot2++;
+        sumCot2++;
+        mapCot2[key] = (mapCot2[key] || 0) + 1;
+      } else {
+        wardMap[key].cot1++;
+        sumCot1++;
+        mapCot1[key] = (mapCot1[key] || 0) + 1;
+      }
+      wardMap[key].soLuong++;
+    }
+
+    return [buildInboundDayObject(defaultTitle, wardMap, mapCot1, mapCot2, sumCot1, sumCot2, { tongMP, tongWH, tongHV })];
+  }
+
+  // 2. Quét ngang tìm tất cả các khối Pivot (LƯU DAILY có nhiều khối ngày hoặc Pivot Table INBOUND có 1 khối)
+  const blocks = [];
+  const maxScanRow = Math.min(5, rows.length);
+  for (let r = 0; r < maxScanRow; r++) {
+    const rowArr = rows[r] || [];
+    for (let c = 0; c < rowArr.length; c++) {
+      const cell = (rowArr[c] || '').toString().trim().toLowerCase();
+      const nextCell1 = (rowArr[c + 1] || '').toString().trim().toLowerCase();
+      const nextCell2 = (rowArr[c + 2] || '').toString().trim().toLowerCase();
+      if (
+        (cell === 'quận cũ' || cell === 'quận') &&
+        (nextCell1.includes('cot') || nextCell2.includes('phường'))
+      ) {
+        let blockTitle = defaultTitle;
+        if (r > 0 && rows[r - 1] && rows[r - 1][c]) {
+          blockTitle = rows[r - 1][c].toString().trim();
+        }
+        blocks.push({ headerRowIdx: r, startCol: c, title: blockTitle });
+      }
+    }
+    if (blocks.length > 0) break;
+  }
+
+  const parsedDays = blocks
+    .map(b => parseKhoiPivotInbound(rows, b.headerRowIdx, b.startCol, b.title))
+    .filter(d => d.tongDonKhuVuc > 0);
+
+  return parsedDays;
+}
+
 app.get('/api/hang-hoa-inbound', async (req, res) => {
   try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_INBOUND_COT_ID, 
-      range: "'TOTAL INBOUND'!A2:R99000",
+    const meta = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_BAO_CAO_INBOUND_ID,
+      fields: 'sheets.properties(title,sheetId)'
+    });
+    const allSheets = meta.data.sheets || [];
+    const sheetDailyObj = allSheets.find(s => s.properties.sheetId === GID_INBOUND_LUU_DAILY);
+    const sheetTodayObj = allSheets.find(s => s.properties.sheetId === GID_INBOUND_HOM_NAY);
+
+    const titleDaily = sheetDailyObj ? sheetDailyObj.properties.title : 'LƯU DAILY';
+    const titleToday = sheetTodayObj ? sheetTodayObj.properties.title : 'Pivot Table INBOUND';
+
+    const batchRes = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId: SPREADSHEET_BAO_CAO_INBOUND_ID,
+      ranges: [
+        `'${titleDaily}'!A1:ZZ200`,
+        `'${titleToday}'!A1:Z99000`
+      ]
     });
 
-    const rows = response.data.values || [];
-    const uniqueOrders = new Map();
+    const valueRanges = batchRes.data.valueRanges || [];
+    const rowsDaily = valueRanges[0]?.values || [];
+    const rowsToday = valueRanges[1]?.values || [];
 
-    // 1. ĐỌC DỮ LIỆU VÀ LỌC TRÙNG SHIPMENT ID
-    rows.forEach(r => {
-      if (!r || !r[0]) return;
-      
-      const shipmentId = (r[0] || '').toString().trim();      // Cột A
-      const whsId = (r[9] || '').toString().trim();           // Cột J
-      const statusV1 = (r[12] || '').toString().trim();       // Cột M
-      const cotRC = (r[14] || '').toString().trim();          // Cột O
-      const quanCu = (r[16] || '').toString().trim();         // Cột Q (Quận Cũ)
-      const phuongCu = (r[17] || '').toString().trim();       // Cột R (Phường Cũ)
+    // 1. Đọc lịch sử từng ngày từ gid=744743139 (LƯU DAILY)
+    const lichSuNgay = parseInboundSheetUniversal(rowsDaily, 'Lịch sử ngày');
 
-      // Chỉ lấy đơn có trạng thái LMHub_Received
-      if (statusV1 === 'LMHub_Received') {
-        if (!uniqueOrders.has(shipmentId)) {
-          uniqueOrders.set(shipmentId, {
-            cotRC, whsId, quanCu, phuongCu
-          });
-        }
+    // 2. Đọc dữ liệu Inbound hôm nay từ gid=909229938
+    const todayParsedList = parseInboundSheetUniversal(rowsToday, `Hôm nay (${new Date().toLocaleDateString('vi-VN')})`);
+    let homNayData = todayParsedList.length > 0 ? todayParsedList[todayParsedList.length - 1] : null;
+
+    // Nếu tab hôm nay đang trống tạm thời lúc đầu ngày -> Lấy ngày mới nhất trong LƯU DAILY làm dự phòng nhưng vẫn giữ nhãn rõ ràng
+    if (!homNayData || homNayData.tongDonKhuVuc === 0) {
+      if (lichSuNgay.length > 0) {
+        const latestSaved = lichSuNgay[lichSuNgay.length - 1];
+        homNayData = {
+          ...latestSaved,
+          rawTitle: `Hôm nay (Chưa phát sinh đơn mới - Hiển thị kỳ gần nhất: ${latestSaved.ngay})`,
+          isFallbackFromDaily: true
+        };
+      } else {
+        homNayData = buildInboundDayObject(`Hôm nay (${new Date().toLocaleDateString('vi-VN')})`, {}, {}, {}, 0, 0);
       }
-    });
+    } else {
+      homNayData.rawTitle = `Hôm nay - ${new Date().toLocaleDateString('vi-VN')} (Trích xuất từ ${titleToday})`;
+    }
 
-    let mapCot1 = {};
-    let mapCot2 = {};
-    let tongWH = 0, tongMP = 0;
-    let sumCot1 = 0, sumCot2 = 0;
-
-    // 2. DUYỆT QUA CÁC ĐƠN ĐÃ LỌC TRÙNG ĐỂ ĐẾM VÀ GOM NHÓM THEO PHƯỜNG CŨ
-    uniqueOrders.forEach((data, shipmentId) => {
-      const quan = data.quanCu || 'Chưa rõ';
-      const phuong = data.phuongCu || 'Chưa rõ';
-      const keyGroup = `${quan}|${phuong}`;
-
-      if (data.cotRC === 'COT 1') {
-         mapCot1[keyGroup] = (mapCot1[keyGroup] || 0) + 1;
-         sumCot1++;
-      } else if (data.cotRC === 'COT 2') {
-         mapCot2[keyGroup] = (mapCot2[keyGroup] || 0) + 1;
-         sumCot2++;
-      }
-
-      // MP là khi cột J trống
-      if (data.whsId === '' || data.whsId.toLowerCase() === 'nan') tongMP++;
-      else tongWH++;
-    });
-
-    // 3. CHUYỂN ĐỔI MAP THÀNH ARRAY ĐỂ TRẢ VỀ CHO POPUP
-    const formatList = (mapObj) => {
-      return Object.keys(mapObj).map(k => {
-        const parts = k.split('|');
-        return { quan: parts[0], phuong: parts[1], soLuong: mapObj[k] };
-      }).sort((a, b) => b.soLuong - a.soLuong);
-    };
-
-    res.json({
+    const responsePayload = {
       success: true,
       data: {
-        tongDonKhuVuc: uniqueOrders.size,
-        tongCot1: sumCot1,
-        tongCot2: sumCot2,
-        tongWH: tongWH,
-        tongMP: tongMP,
-        chiTietCot1: formatList(mapCot1),
-        chiTietCot2: formatList(mapCot2)
+        ...homNayData,
+        titleTodaySheet: titleToday,
+        titleDailySheet: titleDaily,
+        homNay: homNayData,
+        lichSuNgay: [...lichSuNgay].reverse() // Xếp ngày mới nhất lên đầu
       }
-    });
+    };
 
+    if (homNayData.tongDonKhuVuc > 0 || lichSuNgay.length > 0) {
+      lastValidInboundResponse = responsePayload;
+    }
+
+    res.json(responsePayload);
   } catch (error) {
     console.error('Lỗi API Hàng Hóa INBOUND:', error.message);
+    if (lastValidInboundResponse) {
+      return res.json({ ...lastValidInboundResponse, restoredFromCache: true });
+    }
     res.status(500).json({ success: false, message: error.message });
   }
 });
