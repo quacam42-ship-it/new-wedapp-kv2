@@ -3126,13 +3126,13 @@ if (user.role === 'RIDER') {
         document.querySelectorAll('.district-card').forEach(el => el.parentElement.style.display = '');
         const lblQ2 = document.getElementById('lblKpi1');
         if (lblQ2) {
-          lblQ2.innerHTML = 'QUẬN 2 <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 2\', \'Quận 2\')"><i class="bi bi-search"></i></button>';
-          lblQ2.parentElement.onclick = null;
+          lblQ2.innerHTML = '<span>QUẬN 2</span> <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); xemDonTheoKpi(\'Quận 2\', \'Quận 2\')" title="Xem chi tiết phường & mã đơn Quận 2"><i class="bi bi-search"></i></button>';
+          lblQ2.parentElement.onclick = () => xemDonTheoKpi('Quận 2', 'Quận 2');
         }
         const lblQ4 = document.getElementById('lblKpi2');
         if (lblQ4) {
-          lblQ4.innerHTML = 'QUẬN 4 <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi(\'Quận 4\', \'Quận 4\')"><i class="bi bi-search"></i></button>';
-          lblQ4.parentElement.onclick = null;
+          lblQ4.innerHTML = '<span>QUẬN 4</span> <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); xemDonTheoKpi(\'Quận 4\', \'Quận 4\')" title="Xem chi tiết phường & mã đơn Quận 4"><i class="bi bi-search"></i></button>';
+          lblQ4.parentElement.onclick = () => xemDonTheoKpi('Quận 4', 'Quận 4');
         }
       }
 
