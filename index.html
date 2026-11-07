@@ -459,8 +459,110 @@
     </div>
 
     <!-- ==================== 4. HÀNG HÓA ==================== -->
-    <!-- ==================== 4. HÀNG HÓA ==================== -->
     <div id="section-hangHoa" class="content-section">
+      <style>
+        /* CSS THẺ KPI CHUẨN GOOGLE SHEET */
+        .sheet-kpi-card {
+          border-radius: 6px;
+          padding: 8px 10px;
+          text-align: center;
+          position: relative;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          cursor: pointer;
+          min-height: 84px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+        }
+        .sheet-kpi-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .sheet-kpi-title {
+          font-size: 0.72rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          width: 100%;
+        }
+        .sheet-kpi-val {
+          font-size: 1.55rem;
+          font-weight: 800;
+          line-height: 1.15;
+          margin: 3px 0;
+        }
+        .sheet-kpi-sub {
+          font-size: 0.7rem;
+          font-weight: 600;
+          opacity: 0.9;
+        }
+        .sheet-kpi-total { background-color: #f4cccc; border: 1px solid #ea9999; color: #990000; }
+        .sheet-kpi-hv    { background-color: #f4cccc; border: 1px solid #ea9999; color: #990000; }
+        .sheet-kpi-mp    { background-color: #d9ead3; border: 1px solid #b6d7a8; color: #274e13; }
+        .sheet-kpi-wh    { background-color: #e2e8f0; border: 1px solid #cbd5e1; color: #1e293b; }
+        .sheet-kpi-q2    { background-color: #cfe2f3; border: 1px solid #9fc5e8; color: #073763; }
+        .sheet-kpi-q4    { background-color: #fff2cc; border: 1px solid #ffe599; color: #7f6000; }
+        .sheet-kpi-q7    { background-color: #d9d2e9; border: 1px solid #b4a7d6; color: #20124d; }
+        .sheet-kpi-q9    { background-color: #d0e0e3; border: 1px solid #a2c4c9; color: #0c343d; }
+        .sheet-kpi-bt    { background-color: #f9cb9c; border: 1px solid #f6b26b; color: #783f04; }
+
+        /* CSS BẢNG BÀN GIAO HV CHUẨN GOOGLE SHEET */
+        .hv-handover-card {
+          border-radius: 6px;
+          border: 1px solid #1b4965;
+          background: #ffffff;
+          overflow: hidden;
+        }
+        .hv-handover-card.fullscreen-mode {
+          position: fixed !important;
+          top: 8px;
+          left: 8px;
+          right: 8px;
+          bottom: 8px;
+          z-index: 2000;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+        }
+        .hv-handover-header {
+          background-color: #0b2e59;
+          color: #ffffff;
+          padding: 7px 12px;
+        }
+        .hv-handover-table th {
+          background-color: #1b4965 !important;
+          color: #ffffff !important;
+          font-size: 0.74rem;
+          padding: 6px 8px !important;
+          white-space: nowrap;
+        }
+        .hv-handover-table td {
+          font-size: 0.76rem;
+          padding: 4px 8px !important;
+          white-space: nowrap;
+        }
+        .hv-cell-ip {
+          background-color: #f4cccc !important;
+          color: #990000 !important;
+          font-weight: 700 !important;
+        }
+        .hv-status-success {
+          background-color: #d9ead3 !important;
+          color: #137333 !important;
+          font-weight: 700 !important;
+        }
+        .hv-status-onhold {
+          background-color: #fce8e6 !important;
+          color: #c5221f !important;
+          font-weight: 700 !important;
+        }
+      </style>
+
+      <!-- THANH ĐỒNG BỘ + NÚT CẬP NHẬT NGAY -->
       <div class="sync-bar shadow-sm mb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div class="d-flex align-items-center flex-wrap gap-2">
           <span class="badge bg-danger fs-6 py-1 px-2 shadow-sm" id="titleKieuHangHoa"><i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT</span>
@@ -468,116 +570,133 @@
           <span class="fw-bold text-dark me-1">Tự động đồng bộ Inbound:</span>
           <span class="text-muted">Nạp lúc: <strong class="text-primary font-monospace" id="hangLastFetchTime">—</strong></span>
           <span class="text-secondary small ms-1" id="hangSheetTimeLabel"></span>
-          <span class="badge bg-info text-dark ms-2" id="nextUpdateCountdown">30s</span>
+          <span class="badge bg-info text-dark ms-1" id="nextUpdateCountdown">30s</span>
+          <span class="badge bg-warning text-dark d-none" id="badgeCacheHangHoa" title="Đang giữ dữ liệu lưu ngầm do Sheet đang cập nhật"><i class="bi bi-shield-check me-1"></i>Lưu ngầm</span>
         </div>
         <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-primary fw-bold py-1 px-3 shadow-sm" id="btnManualSyncHangHoa" onclick="triggerManualHangHoaSync()">
+            <i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay
+          </button>
         </div>
       </div>
 
-      <!-- CÁC THẺ KPI MINI (CHUẨN 5 QUẬN: Q2, Q4, Q7, Q9, BÌNH THẠNH) -->
-      <div class="row g-2 mb-2" id="hangHoaKpiRow">
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card bg-danger text-white">
-            <div class="kpi-label opacity-90">
-              TỔNG ĐƠN
-              <button class="btn btn-light text-danger kpi-mini-btn" onclick="xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')" title="Xem chi tiết đơn">
+      <!-- HÀNG 1: TỔNG ĐƠN RỚT, ĐƠN RỚT HV, ĐƠN MP, ĐƠN WH (GIỐNG GOOGLE SHEET) -->
+      <div class="row g-2 mb-2" id="hangHoaKpiTopRow">
+        <div class="col-6 col-md-3">
+          <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')">
+            <div class="sheet-kpi-title">
+              <span>TỔNG ĐƠN RỚT</span>
+              <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')" title="Xem chi tiết phường & mã đơn">
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="kpi-val" id="kpiTongDon">—</div>
+            <div class="sheet-kpi-val" id="kpiTongDon">0</div>
+            <div class="sheet-kpi-sub" id="subKpiTongDon">Toàn bộ khu vực (0 phường)</div>
           </div>
         </div>
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(1)">
-            <div class="kpi-label text-primary" id="lblKpi1">
-              QUẬN 2
-              <button class="btn btn-outline-primary kpi-mini-btn" onclick="xemDonTheoKpi('Quận 2', 'Quận 2')" title="Xem chi tiết đơn">
+        <div class="col-6 col-md-3">
+          <div class="sheet-kpi-card sheet-kpi-hv shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')">
+            <div class="sheet-kpi-title">
+              <span><i class="bi bi-shield-fill-exclamation me-1"></i>ĐƠN RỚT HV</span>
+              <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn HV">
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="kpi-val text-primary" id="kpiQ2">—</div>
+            <div class="sheet-kpi-val" id="kpiHv">0</div>
+            <div class="sheet-kpi-sub" id="subKpiHv">0.0% tổng đơn</div>
           </div>
         </div>
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
-            <div class="kpi-label text-warning" id="lblKpi2">
-              QUẬN 4
-              <button class="btn btn-outline-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 4', 'Quận 4')" title="Xem chi tiết đơn">
+        <div class="col-6 col-md-3">
+          <div class="sheet-kpi-card sheet-kpi-mp shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')">
+            <div class="sheet-kpi-title">
+              <span>ĐƠN MP</span>
+              <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Xem chi tiết đơn MP">
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="kpi-val text-warning" id="kpiQ4">—</div>
+            <div class="sheet-kpi-val" id="kpiMp">0</div>
+            <div class="sheet-kpi-sub" id="subKpiMp">0.0% tổng đơn</div>
           </div>
         </div>
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
-            <div class="kpi-label text-info" id="lblKpi3">
-              QUẬN 7
-              <button class="btn btn-outline-info text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 7', 'Quận 7')" title="Xem chi tiết đơn">
+        <div class="col-6 col-md-3">
+          <div class="sheet-kpi-card sheet-kpi-wh shadow-sm" onclick="if(currentKieuHangHoa !== 'INBOUND') xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')">
+            <div class="sheet-kpi-title">
+              <span>ĐƠN WH</span>
+              <button type="button" class="btn btn-light text-secondary kpi-mini-btn border-secondary" onclick="event.stopPropagation(); xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Xem chi tiết đơn WH">
                 <i class="bi bi-search"></i>
               </button>
             </div>
-            <div class="kpi-val text-info" id="kpiQ7">—</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
-            <div class="kpi-label text-success" id="lblKpi4">
-              QUẬN 9
-              <button class="btn btn-outline-success text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Quận 9', 'Quận 9')" title="Xem chi tiết đơn">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="kpi-val text-success" id="kpiQ9">—</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card" style="cursor:pointer;" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2)">
-            <div class="kpi-label text-danger" id="lblKpi5">
-              BÌNH THẠNH
-              <button class="btn btn-outline-danger text-dark kpi-mini-btn" onclick="xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')" title="Xem chi tiết đơn">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="kpi-val text-danger" id="kpiBT">—</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card">
-            <div class="kpi-label text-success">
-              ĐƠN MP
-              <button class="btn btn-outline-success text-dark kpi-mini-btn" onclick="xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Xem chi tiết đơn MP">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="kpi-val text-success" id="kpiMp">—</div>
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg">
-          <div class="kpi-mini-card">
-            <div class="kpi-label text-secondary">
-              ĐƠN WH
-              <button class="btn btn-outline-secondary text-dark kpi-mini-btn" onclick="xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Xem chi tiết đơn WH">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="kpi-val text-secondary" id="kpiWh">—</div>
-          </div>
-        </div>
-        <div class="col-12 col-md-3 col-lg">
-          <div class="kpi-mini-card card-hv-mini shadow-sm">
-            <div class="kpi-label text-warning">
-              <i class="bi bi-shield-fill-exclamation"></i> ĐƠN HV
-              <button class="btn btn-warning text-dark kpi-mini-btn" onclick="xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn HV">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-            <div class="kpi-val text-white" id="kpiHv">0</div>
+            <div class="sheet-kpi-val" id="kpiWh">0</div>
+            <div class="sheet-kpi-sub" id="subKpiWh">0.0% tổng đơn</div>
           </div>
         </div>
       </div>
 
-      <!-- BẢNG TOP PHƯỜNG RỚT -->
+      <!-- HÀNG 2: 5 THẺ QUẬN (QUẬN 2, QUẬN 4, QUẬN 7, QUẬN 9, BÌNH THẠNH) TÍCH HỢP CHI TIẾT PHƯỜNG VÀO KÍNH LÚP -->
+      <div class="row row-cols-2 row-cols-md-5 g-2 mb-2" id="hangHoaKpiRow">
+        <div class="col">
+          <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(1); else xemDonTheoKpi('Quận 2', 'Quận 2');">
+            <div class="sheet-kpi-title" id="lblKpi1">
+              <span>QUẬN 2</span>
+              <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 2', 'Quận 2')" title="Xem chi tiết phường & mã đơn Quận 2">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="sheet-kpi-val" id="kpiQ2">0</div>
+            <div class="sheet-kpi-sub" id="subKpiQ2">0.0% tổng đơn • 0 phường</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Quận 4', 'Quận 4');">
+            <div class="sheet-kpi-title" id="lblKpi2">
+              <span>QUẬN 4</span>
+              <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 4', 'Quận 4')" title="Xem chi tiết phường & mã đơn Quận 4">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="sheet-kpi-val" id="kpiQ4">0</div>
+            <div class="sheet-kpi-sub" id="subKpiQ4">0.0% tổng đơn • 0 phường</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="sheet-kpi-card sheet-kpi-q7 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Quận 7', 'Quận 7');">
+            <div class="sheet-kpi-title" id="lblKpi3">
+              <span>QUẬN 7</span>
+              <button type="button" class="btn btn-light text-info text-dark kpi-mini-btn border-info" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 7', 'Quận 7')" title="Xem chi tiết phường & mã đơn Quận 7">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="sheet-kpi-val" id="kpiQ7">0</div>
+            <div class="sheet-kpi-sub" id="subKpiQ7">0.0% tổng đơn • 0 phường</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="sheet-kpi-card sheet-kpi-q9 shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Quận 9', 'Quận 9');">
+            <div class="sheet-kpi-title" id="lblKpi4">
+              <span>QUẬN 9</span>
+              <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 9', 'Quận 9')" title="Xem chi tiết phường & mã đơn Quận 9">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="sheet-kpi-val" id="kpiQ9">0</div>
+            <div class="sheet-kpi-sub" id="subKpiQ9">0.0% tổng đơn • 0 phường</div>
+          </div>
+        </div>
+        <div class="col-12 col-md">
+          <div class="sheet-kpi-card sheet-kpi-bt shadow-sm" onclick="if(currentKieuHangHoa === 'INBOUND') showChiTietInbound(2); else xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh');">
+            <div class="sheet-kpi-title" id="lblKpi5">
+              <span>BÌNH THẠNH</span>
+              <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')" title="Xem chi tiết phường & mã đơn Bình Thạnh">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="sheet-kpi-val" id="kpiBT">0</div>
+            <div class="sheet-kpi-sub" id="subKpiBT">0.0% tổng đơn • 0 phường</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BẢNG TOP PHƯỜNG RỚT NHIỀU NHẤT -->
       <div class="card shadow-sm border-0 mb-2 top5-card">
         <div class="card-header bg-transparent py-1 px-3 d-flex justify-content-between align-items-center">
           <div class="d-flex align-items-center gap-2">
@@ -600,11 +719,12 @@
                     <th style="width: 48px;">Hạng</th>
                     <th>Phường</th>
                     <th style="width: 90px;">Số Đơn</th>
+                    <th style="width: 65px;">Tỷ Trọng</th>
                     <th style="width: 50px;">Xem</th>
                   </tr>
                 </thead>
                 <tbody id="bangTop5Body">
-                  <tr><td colspan="4" class="text-center py-2 text-muted">Đang nạp Top...</td></tr>
+                  <tr><td colspan="5" class="text-center py-2 text-muted">Đang nạp Top...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -612,135 +732,50 @@
         </div>
       </div>
 
-      <!-- 5 BẢNG QUẬN CHI TIẾT (QUẬN 2, QUẬN 4, QUẬN 7, QUẬN 9, BÌNH THẠNH) -->
-      <div class="row g-2">
-        <div class="col-12 col-lg-4">
-          <div class="district-card shadow-sm h-100">
-            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-primary border-2 text-primary">
-              <div>
-                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 2
-                <span class="badge bg-primary district-badge ms-1" id="countQ2Badge">0</span>
-              </div>
-              <input type="text" id="searchQ2" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q2')">
-            </div>
-            <div>
-              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
-                <thead>
-                  <tr class="text-center">
-                    <th>Phường</th>
-                    <th style="width: 65px;">Số Đơn</th>
-                    <th style="width: 50px;">Xem</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyQ2">
-                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
-                </tbody>
-              </table>
-            </div>
+      <!-- BẢNG BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV (THAY THẾ BẢNG PHƯỜNG CŨ, CÓ NÚT THU PHÓNG) -->
+      <div class="hv-handover-card shadow-sm mb-2" id="cardBanGiaoHv">
+        <div class="hv-handover-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px;">
+              <i class="bi bi-shield-check text-warning me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
+            </span>
+            <span class="badge bg-warning text-dark fw-bold" id="badgeCountBanGiaoHv">0 đơn</span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle" id="badgeCountHvDelivered" style="font-size: 0.7rem;">0 Giao thành công</span>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" id="badgeCountHvIp" style="font-size: 0.7rem;">0 đơn IP</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <input type="text" id="searchBanGiaoHv" class="form-control form-control-sm" style="width: 210px; height: 26px; font-size: 0.75rem;" placeholder="🔍 Tìm mã đơn, RD, phường, trạng thái..." oninput="renderBangBanGiaoHv()">
+            <button type="button" class="btn btn-xs btn-outline-light py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="toggleZoomBanGiaoHv()" id="btnZoomBanGiaoHv" title="Phóng to toàn màn hình / Thu nhỏ">
+              <i class="bi bi-arrows-fullscreen" id="iconZoomBanGiaoHv"></i>
+              <span id="txtZoomBanGiaoHv">Phóng to</span>
+            </button>
+            <button type="button" class="btn btn-xs btn-warning text-dark fw-bold py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="dongMoBanGiaoHv()" id="btnToggleBanGiaoHv">
+              <i class="bi bi-chevron-up" id="iconToggleBanGiaoHv"></i>
+              <span id="txtToggleBanGiaoHv">Thu gọn</span>
+            </button>
           </div>
         </div>
-
-        <div class="col-12 col-lg-4">
-          <div class="district-card shadow-sm h-100">
-            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-warning border-2 text-warning">
-              <div>
-                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 4
-                <span class="badge bg-warning text-dark district-badge ms-1" id="countQ4Badge">0</span>
-              </div>
-              <input type="text" id="searchQ4" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q4')">
-            </div>
-            <div>
-              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
-                <thead>
-                  <tr class="text-center">
-                    <th>Phường</th>
-                    <th style="width: 65px;">Số Đơn</th>
-                    <th style="width: 50px;">Xem</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyQ4">
-                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-4">
-          <div class="district-card shadow-sm h-100">
-            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-info border-2 text-info">
-              <div>
-                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 7
-                <span class="badge bg-info text-dark district-badge ms-1" id="countQ7Badge">0</span>
-              </div>
-              <input type="text" id="searchQ7" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q7')">
-            </div>
-            <div>
-              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
-                <thead>
-                  <tr class="text-center">
-                    <th>Phường</th>
-                    <th style="width: 65px;">Số Đơn</th>
-                    <th style="width: 50px;">Xem</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyQ7">
-                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-4">
-          <div class="district-card shadow-sm h-100">
-            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-success border-2 text-success">
-              <div>
-                <i class="bi bi-geo-alt-fill me-1"></i>QUẬN 9
-                <span class="badge bg-success district-badge ms-1" id="countQ9Badge">0</span>
-              </div>
-              <input type="text" id="searchQ9" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('Q9')">
-            </div>
-            <div>
-              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
-                <thead>
-                  <tr class="text-center">
-                    <th>Phường</th>
-                    <th style="width: 65px;">Số Đơn</th>
-                    <th style="width: 50px;">Xem</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyQ9">
-                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-4">
-          <div class="district-card shadow-sm h-100">
-            <div class="district-header d-flex justify-content-between align-items-center border-bottom border-danger border-2 text-danger">
-              <div>
-                <i class="bi bi-geo-alt-fill me-1"></i>BÌNH THẠNH
-                <span class="badge bg-danger district-badge ms-1" id="countBTBadge">0</span>
-              </div>
-              <input type="text" id="searchBT" class="form-control district-search" placeholder="Lọc P..." oninput="filterQuanList('BT')">
-            </div>
-            <div>
-              <table class="table table-hover table-bordered table-sm district-table align-middle mb-0">
-                <thead>
-                  <tr class="text-center">
-                    <th>Phường</th>
-                    <th style="width: 65px;">Số Đơn</th>
-                    <th style="width: 50px;">Xem</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyBT">
-                  <tr><td colspan="3" class="text-center py-2 text-muted">Đang nạp...</td></tr>
-                </tbody>
-              </table>
-            </div>
+        <div id="collapseBanGiaoHv">
+          <div class="table-responsive" id="tableWrapBanGiaoHv" style="max-height: 520px; overflow-y: auto;">
+            <table class="table table-bordered table-hover table-sm hv-handover-table align-middle mb-0 text-center">
+              <thead class="sticky-top">
+                <tr>
+                  <th style="width: 42px;">STT</th>
+                  <th>Mã đơn</th>
+                  <th>Zone ID</th>
+                  <th>Quận / Phường cũ</th>
+                  <th>ID RD</th>
+                  <th>Tên RD</th>
+                  <th>COT RD</th>
+                  <th>Thời gian quét giao</th>
+                  <th>Trạng thái hiện tại</th>
+                  <th>Lý do onhold</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyBanGiaoHv">
+                <tr><td colspan="10" class="text-center py-3 text-muted">Đang tải bảng bàn giao đơn hàng HV...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1914,11 +1949,37 @@
       document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => { tr.style.display = tr.innerText.toLowerCase().includes(kw) ? '' : 'none'; });
     }
 
-    // ================= TẢI DỮ LIỆU HÀNG HÓA =================
+    // ================= TẢI DỮ LIỆU HÀNG HÓA (LƯU NGẦM + TÍCH HỢP PHƯỜNG VÀO KÍNH LÚP + BẢNG HV) =================
     const REFRESH_INTERVAL_SEC = 30;
+    const HANG_HOA_STORAGE_KEY = 'KV2_LAST_VALID_HANG_HOA_CACHE_V2';
     let countdownSec = REFRESH_INTERVAL_SEC, autoRefreshTimer = null, isFetchingHangHoa = false;
+    let listBanGiaoHv = [];
+    let isBanGiaoHvOpen = true;
+    let isBanGiaoHvFullscreen = false;
 
-    function getGioVietNamHienTai() { return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); }
+    function getGioVietNamHienTai() {
+      return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    }
+
+    function luuNgamHangHoaCache(payload) {
+      try {
+        localStorage.setItem(HANG_HOA_STORAGE_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          savedTimeStr: getGioVietNamHienTai(),
+          data: payload
+        }));
+      } catch (e) {}
+    }
+
+    function docNgamHangHoaCache() {
+      try {
+        const raw = localStorage.getItem(HANG_HOA_STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (e) {
+        return null;
+      }
+    }
 
     function startAutoRefreshCountdown() {
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
@@ -1935,127 +1996,290 @@
       }, 1000);
     }
 
-    function capNhatGiaoDienDongHo(sec) { const el = document.getElementById('nextUpdateCountdown'); if (el) el.innerText = `${sec}s`; }
+    function capNhatGiaoDienDongHo(sec) {
+      const el = document.getElementById('nextUpdateCountdown');
+      if (el) el.innerText = `${sec}s`;
+    }
 
-    function capNhatKpiPendingTuCache(kFallback = {}) {
-      if (cachedInboundOrders && cachedInboundOrders.length > 0) {
-        const uniquePending = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
-        document.getElementById('kpiTongDon').innerText = uniquePending.length;
-        if (document.getElementById('kpiQ2')) document.getElementById('kpiQ2').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 2').length;
-        if (document.getElementById('kpiQ4')) document.getElementById('kpiQ4').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 4').length;
-        if (document.getElementById('kpiQ7')) document.getElementById('kpiQ7').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 7').length;
-        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = uniquePending.filter(d => normQ(d.quan) === 'quận 9').length;
-        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = uniquePending.filter(d => normQ(d.quan) === 'bình thạnh').length;
-        document.getElementById('kpiMp').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
-        document.getElementById('kpiWh').innerText = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
-        document.getElementById('kpiHv').innerText = uniquePending.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+    function dongMoBanGiaoHv() {
+      isBanGiaoHvOpen = !isBanGiaoHvOpen;
+      const el = document.getElementById('collapseBanGiaoHv');
+      if (el) el.style.display = isBanGiaoHvOpen ? 'block' : 'none';
+      const icon = document.getElementById('iconToggleBanGiaoHv');
+      if (icon) icon.className = isBanGiaoHvOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+      const txt = document.getElementById('txtToggleBanGiaoHv');
+      if (txt) txt.innerText = isBanGiaoHvOpen ? 'Thu gọn' : 'Mở rộng';
+    }
+
+    function toggleZoomBanGiaoHv() {
+      isBanGiaoHvFullscreen = !isBanGiaoHvFullscreen;
+      const card = document.getElementById('cardBanGiaoHv');
+      const wrap = document.getElementById('tableWrapBanGiaoHv');
+      const icon = document.getElementById('iconZoomBanGiaoHv');
+      const txt = document.getElementById('txtZoomBanGiaoHv');
+      if (!card || !wrap) return;
+
+      if (isBanGiaoHvFullscreen) {
+        if (!isBanGiaoHvOpen) dongMoBanGiaoHv();
+        card.classList.add('fullscreen-mode');
+        wrap.style.maxHeight = 'calc(100vh - 65px)';
+        if (icon) icon.className = 'bi bi-fullscreen-exit';
+        if (txt) txt.innerText = 'Thu nhỏ';
       } else {
-        document.getElementById('kpiTongDon').innerText = kFallback.tongDon ?? '0';
-        if (document.getElementById('kpiQ2')) document.getElementById('kpiQ2').innerText = kFallback.q2 ?? '0';
-        if (document.getElementById('kpiQ4')) document.getElementById('kpiQ4').innerText = kFallback.q4 ?? '0';
-        if (document.getElementById('kpiQ7')) document.getElementById('kpiQ7').innerText = kFallback.q7 ?? '0';
-        if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = kFallback.q9 ?? '0';
-        if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = kFallback.bt ?? '0';
-        document.getElementById('kpiMp').innerText = kFallback.donMp ?? '0';
-        document.getElementById('kpiWh').innerText = kFallback.donWh ?? '0';
-        document.getElementById('kpiHv').innerText = kFallback.donHv ?? '0';
+        card.classList.remove('fullscreen-mode');
+        wrap.style.maxHeight = '520px';
+        if (icon) icon.className = 'bi bi-arrows-fullscreen';
+        if (txt) txt.innerText = 'Phóng to';
       }
     }
 
-    async function loadHangHoaData(isBackgroundSync = false) {
-      if (cachedInboundOrders && cachedInboundOrders.length > 0) {
-        capNhatKpiPendingTuCache();
+    function layDanhSachPhuongTheoQuan(typeKey) {
+      const nKey = normQ(typeKey);
+      if (nKey === 'quận 2') return listQ2 || [];
+      if (nKey === 'quận 4') return listQ4 || [];
+      if (nKey === 'quận 7') return listQ7 || [];
+      if (nKey === 'quận 9') return listQ9 || [];
+      if (nKey === 'bình thạnh') return listBT || [];
+      if (typeKey === 'all') {
+        return [
+          ...(listQ2 || []),
+          ...(listQ4 || []),
+          ...(listQ7 || []),
+          ...(listQ9 || []),
+          ...(listBT || [])
+        ];
       }
+      // Nếu là mp_only, wh_only, hv_only -> Tự gom nhóm phường từ cachedInboundOrders
+      const uniqueOrders = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
+      let filteredOrders = uniqueOrders;
+      if (typeKey === 'hv_only') filteredOrders = uniqueOrders.filter(d => (d.isHv || '').toLowerCase() === 'yes');
+      else if (typeKey === 'mp_only') filteredOrders = uniqueOrders.filter(d => (d.loaiHang || '').toUpperCase() === 'MP');
+      else if (typeKey === 'wh_only') filteredOrders = uniqueOrders.filter(d => (d.loaiHang || '').toUpperCase() === 'WH');
+
+      const mapP = {};
+      filteredOrders.forEach(d => {
+        const key = `${d.quan || 'Khác'}||${d.phuong || 'Chưa rõ'}`;
+        if (!mapP[key]) mapP[key] = { quan: d.quan || 'Khác', phuong: d.phuong || 'Chưa rõ', soLuong: 0 };
+        mapP[key].soLuong++;
+      });
+      return Object.values(mapP).sort((a, b) => b.soLuong - a.soLuong);
+    }
+
+    function capNhatKpiPendingTuCache(kFallback = {}) {
+      let tong = 0, q2 = 0, q4 = 0, q7 = 0, q9 = 0, bt = 0, mp = 0, wh = 0, hv = 0;
+
+      if (cachedInboundOrders && cachedInboundOrders.length > 0) {
+        const uniquePending = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
+        tong = uniquePending.length;
+        q2 = uniquePending.filter(d => normQ(d.quan) === 'quận 2').length;
+        q4 = uniquePending.filter(d => normQ(d.quan) === 'quận 4').length;
+        q7 = uniquePending.filter(d => normQ(d.quan) === 'quận 7').length;
+        q9 = uniquePending.filter(d => normQ(d.quan) === 'quận 9').length;
+        bt = uniquePending.filter(d => normQ(d.quan) === 'bình thạnh').length;
+        mp = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
+        wh = uniquePending.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
+        hv = uniquePending.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+      } else {
+        tong = Number(kFallback.tongDon) || 0;
+        q2 = Number(kFallback.q2) || 0;
+        q4 = Number(kFallback.q4) || 0;
+        q7 = Number(kFallback.q7) || 0;
+        q9 = Number(kFallback.q9) || 0;
+        bt = Number(kFallback.bt) || 0;
+        mp = Number(kFallback.donMp) || 0;
+        wh = Number(kFallback.donWh) || 0;
+        hv = Number(kFallback.donHv) || 0;
+      }
+
+      const pct = (val) => tong > 0 ? `${((val / tong) * 100).toFixed(1)}% tổng đơn` : '0.0% tổng đơn';
+      const pQ2 = (listQ2 || []).length;
+      const pQ4 = (listQ4 || []).length;
+      const pQ7 = (listQ7 || []).length;
+      const pQ9 = (listQ9 || []).length;
+      const pBT = (listBT || []).length;
+      const tongPhuongRot = pQ2 + pQ4 + pQ7 + pQ9 + pBT;
+
+      if (document.getElementById('kpiTongDon')) document.getElementById('kpiTongDon').innerText = tong;
+      if (document.getElementById('kpiHv')) document.getElementById('kpiHv').innerText = hv;
+      if (document.getElementById('kpiMp')) document.getElementById('kpiMp').innerText = mp;
+      if (document.getElementById('kpiWh')) document.getElementById('kpiWh').innerText = wh;
+      if (document.getElementById('kpiQ2')) document.getElementById('kpiQ2').innerText = q2;
+      if (document.getElementById('kpiQ4')) document.getElementById('kpiQ4').innerText = q4;
+      if (document.getElementById('kpiQ7')) document.getElementById('kpiQ7').innerText = q7;
+      if (document.getElementById('kpiQ9')) document.getElementById('kpiQ9').innerText = q9;
+      if (document.getElementById('kpiBT')) document.getElementById('kpiBT').innerText = bt;
+
+      if (document.getElementById('subKpiTongDon')) document.getElementById('subKpiTongDon').innerText = `Toàn bộ khu vực • ${tongPhuongRot} phường chưa gán`;
+      if (document.getElementById('subKpiHv')) document.getElementById('subKpiHv').innerText = pct(hv);
+      if (document.getElementById('subKpiMp')) document.getElementById('subKpiMp').innerText = pct(mp);
+      if (document.getElementById('subKpiWh')) document.getElementById('subKpiWh').innerText = pct(wh);
+      if (document.getElementById('subKpiQ2')) document.getElementById('subKpiQ2').innerText = `${pct(q2)} • ${pQ2} phường`;
+      if (document.getElementById('subKpiQ4')) document.getElementById('subKpiQ4').innerText = `${pct(q4)} • ${pQ4} phường`;
+      if (document.getElementById('subKpiQ7')) document.getElementById('subKpiQ7').innerText = `${pct(q7)} • ${pQ7} phường`;
+      if (document.getElementById('subKpiQ9')) document.getElementById('subKpiQ9').innerText = `${pct(q9)} • ${pQ9} phường`;
+      if (document.getElementById('subKpiBT')) document.getElementById('subKpiBT').innerText = `${pct(bt)} • ${pBT} phường`;
+    }
+
+    function apDungDuLieuHangHoaLenGiaoDien(data, isFromLocalCache = false) {
+      if (!data) return;
+      cachedInboundOrders = data.cachedInboundOrders || data.inboundOrdersCache || [];
+      listQ2 = data.phuongQuan2 || [];
+      listQ4 = data.phuongQuan4 || [];
+      listQ7 = data.phuongQuan7 || [];
+      listQ9 = data.phuongQuan9 || [];
+      listBT = data.phuongBinhThanh || [];
+      if (Array.isArray(data.banGiaoHv) && data.banGiaoHv.length > 0) {
+        listBanGiaoHv = data.banGiaoHv;
+      } else if (!listBanGiaoHv || listBanGiaoHv.length === 0) {
+        listBanGiaoHv = data.banGiaoHv || [];
+      }
+
+      const elFetch = document.getElementById('hangLastFetchTime');
+      if (elFetch) elFetch.innerText = getGioVietNamHienTai();
+      const elSheetTime = document.getElementById('hangSheetTimeLabel');
+      if (elSheetTime && data.kpi && data.kpi.lastUpdate) {
+        elSheetTime.innerText = `(Last update: ${data.kpi.lastUpdate})`;
+      }
+
+      const badgeCache = document.getElementById('badgeCacheHangHoa');
+      if (badgeCache) {
+        if (isFromLocalCache || data.restoredFromCache) badgeCache.classList.remove('d-none');
+        else badgeCache.classList.add('d-none');
+      }
+
+      capNhatKpiPendingTuCache(data.kpi || {});
+      renderTop5Table(data.top5Phuong || [], data.kpi?.tongDon || cachedInboundOrders.length);
+      renderBangBanGiaoHv();
+    }
+
+    async function loadHangHoaData(isBackgroundSync = false) {
+      // Khôi phục từ bản lưu ngầm ngay khi mở trang để không bao giờ hiện 0 lúc chờ mạng
+      if (!loadedTabs.hangHoa && (!cachedInboundOrders || cachedInboundOrders.length === 0)) {
+        const cached = docNgamHangHoaCache();
+        if (cached && cached.data) {
+          apDungDuLieuHangHoaLenGiaoDien(cached.data, true);
+        }
+      }
+
       if (isFetchingHangHoa) return;
       isFetchingHangHoa = true;
 
-      const refreshBtn = document.querySelector("button[onclick='triggerManualHangHoaSync()']");
+      const refreshBtn = document.getElementById('btnManualSyncHangHoa');
       if (refreshBtn && !isBackgroundSync) {
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang nạp...';
+        refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang nạp...';
       }
 
       try {
-        const res = await fetch(`${API_BASE}/hang-hoa-data`);
+        const res = await fetch(`${API_BASE}/hang-hoa-data?_t=${Date.now()}`);
         const data = await res.json();
         loadedTabs.hangHoa = true;
         if (!data) return;
-        cachedInboundOrders = data.cachedInboundOrders || data.inboundOrdersCache || [];
 
-        const elFetch = document.getElementById('hangLastFetchTime');
-        if (elFetch) elFetch.innerText = getGioVietNamHienTai();
-        const elSheetTime = document.getElementById('hangSheetTimeLabel');
-        if (elSheetTime && data.kpi && data.kpi.lastUpdate) elSheetTime.innerText = `(Ghi nhận: ${data.kpi.lastUpdate})`;
+        // KIỂM TRA CHỐNG NHẢY VỀ 0 KHI SHEET ĐANG CẬP NHẬT TRỐNG DATA
+        const isSheetMidUpdateEmpty = (Number(data.allRowsCount) === 0) && (!data.cachedInboundOrders || data.cachedInboundOrders.length === 0);
+        if (isSheetMidUpdateEmpty) {
+          const saved = docNgamHangHoaCache();
+          if (saved && saved.data) {
+            if (Array.isArray(data.banGiaoHv) && data.banGiaoHv.length > 0) {
+              saved.data.banGiaoHv = data.banGiaoHv;
+            }
+            apDungDuLieuHangHoaLenGiaoDien(saved.data, true);
+            return;
+          }
+        }
 
-        capNhatKpiPendingTuCache(data.kpi || {});
-
-        renderTop5Table(data.top5Phuong || []);
-        listQ2 = data.phuongQuan2 || [];
-        listQ4 = data.phuongQuan4 || [];
-        listQ7 = data.phuongQuan7 || [];
-        listQ9 = data.phuongQuan9 || [];
-        listBT = data.phuongBinhThanh || [];
-
-        // Hiển thị: [Số đơn rớt] đơn - [Tổng phường rớt] phường
-        const tinhTongDonQuan = (arr) => (arr || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
-        if (document.getElementById('countQ2Badge')) document.getElementById('countQ2Badge').innerText = `${tinhTongDonQuan(listQ2)} đơn - ${listQ2.length} phường`;
-        if (document.getElementById('countQ4Badge')) document.getElementById('countQ4Badge').innerText = `${tinhTongDonQuan(listQ4)} đơn - ${listQ4.length} phường`;
-        if (document.getElementById('countQ7Badge')) document.getElementById('countQ7Badge').innerText = `${tinhTongDonQuan(listQ7)} đơn - ${listQ7.length} phường`;
-        if (document.getElementById('countQ9Badge')) document.getElementById('countQ9Badge').innerText = `${tinhTongDonQuan(listQ9)} đơn - ${listQ9.length} phường`;
-        if (document.getElementById('countBTBadge')) document.getElementById('countBTBadge').innerText = `${tinhTongDonQuan(listBT)} đơn - ${listBT.length} phường`;
-
-        filterQuanList('Q2');
-        filterQuanList('Q4');
-        filterQuanList('Q7');
-        filterQuanList('Q9');
-        filterQuanList('BT');
+        // Nếu dữ liệu hợp lệ -> Lưu ngầm vào localStorage và hiển thị
+        if ((data.cachedInboundOrders && data.cachedInboundOrders.length > 0) || (data.banGiaoHv && data.banGiaoHv.length > 0) || Number(data.allRowsCount) > 0) {
+          luuNgamHangHoaCache(data);
+        }
+        apDungDuLieuHangHoaLenGiaoDien(data, false);
       } catch (err) {
         console.error('Lỗi tải hàng hóa:', err);
+        const saved = docNgamHangHoaCache();
+        if (saved && saved.data) apDungDuLieuHangHoaLenGiaoDien(saved.data, true);
       } finally {
         isFetchingHangHoa = false;
-        if (refreshBtn && !isBackgroundSync) {
+        if (refreshBtn) {
           refreshBtn.disabled = false;
           refreshBtn.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay';
         }
       }
     }
 
-    function renderTop5Table(topList) {
-      const tbody = document.getElementById('bangTop5Body'); if (!tbody) return; tbody.innerHTML = '';
-      if (!topList || topList.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-2 text-muted">Không có dữ liệu Top</td></tr>'; return; }
+    function renderTop5Table(topList, tongDonToanKV = 0) {
+      const tbody = document.getElementById('bangTop5Body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!topList || topList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-2 text-muted">Không có dữ liệu Top</td></tr>';
+        return;
+      }
+      const total = Number(tongDonToanKV) || topList.reduce((s, i) => s + (Number(i.soLuong) || 0), 0);
       topList.forEach(item => {
         const badgeColor = item.hang === '#1' ? 'bg-danger' : (item.hang === '#2' ? 'bg-warning text-dark' : 'bg-primary');
+        const tyTrong = total > 0 ? `${(((Number(item.soLuong) || 0) / total) * 100).toFixed(1)}%` : '0.0%';
         tbody.innerHTML += `
           <tr>
             <td class="text-center"><span class="badge ${badgeColor} fw-bold" style="font-size: 0.68rem;">${item.hang || ''}</span></td>
             <td><strong>${item.ten || ''}</strong> <span class="badge bg-light text-secondary border ms-1" style="font-size:0.65rem;">${item.quan || ''}</span></td>
             <td class="text-center font-monospace text-danger fw-bold fs-6">${item.soLuong || 0}</td>
+            <td class="text-center font-monospace small fw-semibold text-secondary">${tyTrong}</td>
             <td class="text-center"><button class="btn btn-xs btn-outline-danger py-0 px-1" style="font-size: 0.7rem;" onclick="xemChiTietDon('${item.quan || ''}', '${item.ten || ''}')"><i class="bi bi-search"></i></button></td>
           </tr>`;
       });
     }
 
-    function filterQuanList(quanCode) {
-      let dataList = [], tbodyId = '', searchId = '';
-      if (quanCode === 'Q2') { dataList = listQ2 || []; tbodyId = 'tbodyQ2'; searchId = 'searchQ2'; }
-      else if (quanCode === 'Q4') { dataList = listQ4 || []; tbodyId = 'tbodyQ4'; searchId = 'searchQ4'; }
-      else if (quanCode === 'Q7') { dataList = listQ7 || []; tbodyId = 'tbodyQ7'; searchId = 'searchQ7'; }
-      else if (quanCode === 'Q9') { dataList = listQ9 || []; tbodyId = 'tbodyQ9'; searchId = 'searchQ9'; }
-      else if (quanCode === 'BT') { dataList = listBT || []; tbodyId = 'tbodyBT'; searchId = 'searchBT'; }
+    function renderBangBanGiaoHv() {
+      const tbody = document.getElementById('tbodyBanGiaoHv');
+      if (!tbody) return;
 
-      const searchEl = document.getElementById(searchId); const kw = searchEl ? searchEl.value.trim().toLowerCase() : '';
-      const tbody = document.getElementById(tbodyId); if (!tbody) return;
+      const kw = (document.getElementById('searchBanGiaoHv')?.value || '').trim().toLowerCase();
+      const allHv = listBanGiaoHv || [];
 
-      const filtered = dataList.filter(item => !kw || (item.phuong || '').toLowerCase().includes(kw));
-      if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-2 text-muted small">Không có dữ liệu</td></tr>'; return; }
+      const countSuccess = allHv.filter(item => (item.trangThai || '').toLowerCase().includes('thành công')).length;
+      const countIp = allHv.filter(item => (item.maDon || '').toLowerCase().includes('ip')).length;
+
+      const badgeTotal = document.getElementById('badgeCountBanGiaoHv');
+      if (badgeTotal) badgeTotal.innerText = `${allHv.length} đơn HV`;
+      const badgeDelivered = document.getElementById('badgeCountHvDelivered');
+      if (badgeDelivered) badgeDelivered.innerText = `${countSuccess} Giao thành công`;
+      const badgeIp = document.getElementById('badgeCountHvIp');
+      if (badgeIp) badgeIp.innerText = `${countIp} đơn IP`;
+
+      const filtered = allHv.filter(item => {
+        if (!kw) return true;
+        const gop = `${item.maDon} ${item.zoneId} ${item.quanPhuong} ${item.idRd} ${item.tenRd} ${item.cotRd} ${item.trangThai} ${item.lyDoOnhold}`.toLowerCase();
+        return gop.includes(kw);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">Không có dữ liệu đơn hàng HV phù hợp</td></tr>';
+        return;
+      }
 
       let html = '';
-      filtered.forEach(item => {
+      filtered.forEach((item, idx) => {
+        const isIp = (item.maDon || '').toLowerCase().includes('ip');
+        const ipCls = isIp ? 'hv-cell-ip' : '';
+        const ttLower = (item.trangThai || '').toLowerCase();
+        const ttCls = ttLower.includes('thành công') ? 'hv-status-success' : (ttLower.includes('hold') || ttLower.includes('giữ') ? 'hv-status-onhold' : '');
+        const cotBadge = (item.cotRd || '').includes('2')
+          ? '<span class="badge badge-cot2" style="font-size:0.68rem;">COT 2</span>'
+          : ((item.cotRd || '').includes('1') ? '<span class="badge badge-cot1" style="font-size:0.68rem;">COT 1</span>' : (item.cotRd || '—'));
+
         html += `
           <tr>
-            <td class="fw-semibold text-truncate" style="max-width: 140px;" title="${item.phuong || ''}">${item.phuong || ''}</td>
-            <td class="text-center font-monospace fw-bold text-danger">${item.soLuong || 0}</td>
-            <td class="text-center"><button class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size: 0.7rem;" onclick="xemChiTietDon('${item.quan || ''}', '${item.phuong || ''}')"><i class="bi bi-search"></i></button></td>
+            <td class="text-muted small">${idx + 1}</td>
+            <td class="font-monospace text-start ${ipCls}">${item.maDon || '—'}</td>
+            <td class="font-monospace">${item.zoneId || '—'}</td>
+            <td class="text-start">${item.quanPhuong || '—'}</td>
+            <td class="font-monospace fw-bold text-secondary">${item.idRd || '—'}</td>
+            <td class="text-start fw-semibold ${ipCls}">${item.tenRd || '—'}</td>
+            <td>${cotBadge}</td>
+            <td class="font-monospace small ${ipCls}">${item.thoiGianQuet || '—'}</td>
+            <td class="${ttCls}">${item.trangThai || '—'}</td>
+            <td class="text-start text-danger small">${item.lyDoOnhold || ''}</td>
           </tr>`;
       });
       tbody.innerHTML = html;
@@ -2072,15 +2296,21 @@
       return s.trim();
     }
 
+    let currentModalAllOrders = [];
+    let currentModalPhuongList = [];
+    let currentModalTitleBase = '';
+
     function xemDonTheoKpi(type, label) {
-      const uniqueOrders = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
+      const uniqueOrders = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
       let donList = [];
       if (type === 'all') donList = uniqueOrders;
       else if (type === 'hv_only') donList = uniqueOrders.filter(d => (d.isHv || '').toLowerCase() === 'yes');
       else if (type === 'mp_only') donList = uniqueOrders.filter(d => (d.loaiHang || '').toUpperCase() === 'MP');
       else if (type === 'wh_only') donList = uniqueOrders.filter(d => (d.loaiHang || '').toUpperCase() === 'WH');
       else donList = uniqueOrders.filter(d => normQ(d.quan) === normQ(type));
-      hienThiModalDon(`Danh Sách: ${label}`, donList);
+
+      const phuongList = layDanhSachPhuongTheoQuan(type);
+      hienThiModalDon(`Chi Tiết: ${label}`, donList, phuongList);
     }
 
     function xemChiTietDon(quan, phuong) {
@@ -2088,7 +2318,7 @@
       let cleanP = (phuong || '').trim().toLowerCase().replace(/\s*\([^)]*\)/g, '').trim();
       const numMatch = cleanP.match(/(?:phường|p\.?)\s*0*(\d+)/i) || cleanP.match(/^0*(\d+)$/);
       const targetNorm = numMatch ? `phường ${numMatch[1] < 10 ? '0' + numMatch[1] : numMatch[1]}` : cleanP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
-      const uniqueOrders = [...new Map(cachedInboundOrders.map(item => [item.shipmentId, item])).values()];
+      const uniqueOrders = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
 
       const donList = uniqueOrders.filter(d => {
         const itemQ = normQ(d.quan);
@@ -2097,29 +2327,154 @@
         const itemNorm = itemNumMatch ? `phường ${itemNumMatch[1] < 10 ? '0' + itemNumMatch[1] : itemNumMatch[1]}` : itemP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
         return (!targetQ || itemQ === targetQ) && (itemNorm === targetNorm || itemP.includes(targetNorm) || targetNorm.includes(itemP));
       });
-      hienThiModalDon(`Đơn Rớt: ${phuong} ${quan ? '- ' + quan : ''}`, donList);
+      hienThiModalDon(`Đơn Rớt: ${phuong} ${quan ? '- ' + quan : ''}`, donList, []);
     }
 
-    function hienThiModalDon(title, donList) {
-      const modalEl = document.getElementById('modalChiTietDon'); if (!modalEl) return;
-      document.getElementById('modalTitle').innerText = title; const tbody = document.getElementById('modalDonTbody');
+    function locDonTheoPhuongTrongModal(quan, phuong) {
+      if (!phuong) {
+        veBangMaDonTrongModal(currentModalAllOrders, '');
+        return;
+      }
+      const targetQ = normQ(quan);
+      let cleanP = (phuong || '').trim().toLowerCase().replace(/\s*\([^)]*\)/g, '').trim();
+      const numMatch = cleanP.match(/(?:phường|p\.?)\s*0*(\d+)/i) || cleanP.match(/^0*(\d+)$/);
+      const targetNorm = numMatch ? `phường ${numMatch[1] < 10 ? '0' + numMatch[1] : numMatch[1]}` : cleanP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
+
+      const subList = currentModalAllOrders.filter(d => {
+        const itemQ = normQ(d.quan);
+        let itemP = (d.phuong || '').trim().toLowerCase();
+        const itemNumMatch = itemP.match(/(?:phường|p\.?)\s*0*(\d+)/i) || itemP.match(/^0*(\d+)$/);
+        const itemNorm = itemNumMatch ? `phường ${itemNumMatch[1] < 10 ? '0' + itemNumMatch[1] : itemNumMatch[1]}` : itemP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
+        return (!targetQ || itemQ === targetQ) && (itemNorm === targetNorm || itemP.includes(targetNorm) || targetNorm.includes(itemP));
+      });
+      veBangMaDonTrongModal(subList, `${phuong} (${subList.length} đơn)`);
+    }
+
+    function locNhanhBangPhuongModal(kw) {
+      const cleanKw = (kw || '').trim().toLowerCase();
+      document.querySelectorAll('#tbodyPhuongInModal tr.row-phuong-modal').forEach(tr => {
+        const txt = (tr.getAttribute('data-search') || '').toLowerCase();
+        tr.style.display = (!cleanKw || txt.includes(cleanKw)) ? '' : 'none';
+      });
+    }
+
+    function veBangMaDonTrongModal(donList, subFilterLabel = '') {
+      const tbody = document.getElementById('modalDonTbody');
+      if (!tbody) return;
       currentModalShipmentIds = donList.map(d => d.shipmentId).filter(Boolean);
+
+      const lblFilter = document.getElementById('lblSubFilterPhuongModal');
+      if (lblFilter) {
+        if (subFilterLabel) {
+          lblFilter.innerHTML = `<span class="badge bg-primary me-2">Đang lọc: ${subFilterLabel}</span><button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size:0.72rem;" onclick="locDonTheoPhuongTrongModal('', '')">Xem tất cả (${currentModalAllOrders.length} đơn)</button>`;
+        } else {
+          lblFilter.innerHTML = `<span class="text-muted small fw-semibold">Danh sách mã đơn (${donList.length} đơn):</span>`;
+        }
+      }
 
       if (donList.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Không có mã đơn rớt chưa gán Rider nào</td></tr>';
-        document.getElementById('modalCountBadge').innerText = '0 đơn rớt';
       } else {
-        const hvCount = donList.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
-        let badgeText = `${donList.length.toLocaleString('vi-VN')} đơn rớt`; if (hvCount > 0) badgeText += ` (⚠️ ${hvCount} đơn HV)`;
-        document.getElementById('modalCountBadge').innerText = badgeText;
         let html = '';
         donList.forEach((don, idx) => {
           const isHv = (don.isHv || '').toLowerCase() === 'yes', isMp = (don.loaiHang || '').toUpperCase() === 'MP';
           const badgeLoai = isMp ? '<span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">MP</span>' : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-bold">WH</span>';
-          html += `<tr class="${isHv ? 'table-warning' : ''}"><td class="text-center text-muted small">${idx + 1}</td><td class="font-monospace fw-bold ${isHv ? 'text-danger' : 'text-primary'}">${don.shipmentId}</td><td class="text-center">${badgeLoai}</td><td class="text-center small">${don.zoneId || '—'}</td><td class="text-center">${isHv ? '<span class="badge bg-danger text-white fw-bold"><i class="bi bi-star-fill me-1"></i>HV</span>' : '<span class="text-muted small">No</span>'}</td><td class="small text-muted">${don.receivedTime || '—'}</td></tr>`;
+          html += `<tr class="${isHv ? 'table-warning' : ''}"><td class="text-center text-muted small">${idx + 1}</td><td class="font-monospace fw-bold ${isHv ? 'text-danger' : 'text-primary'}">${don.shipmentId}</td><td class="text-center">${badgeLoai}</td><td class="text-center small font-monospace">${don.zoneId || '—'}</td><td class="text-center">${isHv ? '<span class="badge bg-danger text-white fw-bold"><i class="bi bi-star-fill me-1"></i>HV</span>' : '<span class="text-muted small">No</span>'}</td><td class="small text-muted font-monospace">${don.receivedTime || '—'}</td></tr>`;
         });
         tbody.innerHTML = html;
       }
+    }
+
+    function hienThiModalDon(title, donList, phuongList = []) {
+      const modalEl = document.getElementById('modalChiTietDon');
+      if (!modalEl) return;
+      const dialog = modalEl.querySelector('.modal-dialog');
+      if (dialog) dialog.classList.add('modal-xl');
+
+      currentModalAllOrders = donList || [];
+      currentModalPhuongList = phuongList || [];
+      currentModalTitleBase = title;
+
+      document.getElementById('modalTitle').innerText = title;
+
+      const hvCount = currentModalAllOrders.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+      const soPhuong = currentModalPhuongList.length;
+      let badgeText = `${currentModalAllOrders.length.toLocaleString('vi-VN')} đơn - ${soPhuong} phường chưa được gán`;
+      if (hvCount > 0) badgeText += ` (⚠️ ${hvCount} đơn HV)`;
+      const countBadgeEl = document.getElementById('modalCountBadge');
+      if (countBadgeEl) {
+        countBadgeEl.className = 'badge bg-danger fs-6 px-3 py-1 shadow-sm';
+        countBadgeEl.innerText = badgeText;
+      }
+
+      // Tự động chèn vùng Bảng Chi Tiết Phường vào đầu Modal nếu chưa có
+      let boxPhuong = document.getElementById('vungChiTietPhuongModal');
+      if (!boxPhuong) {
+        const modalBody = modalEl.querySelector('.modal-body');
+        const tableResponsive = modalBody.querySelector('.table-responsive');
+        boxPhuong = document.createElement('div');
+        boxPhuong.id = 'vungChiTietPhuongModal';
+        boxPhuong.className = 'mb-3';
+        modalBody.insertBefore(boxPhuong, tableResponsive);
+
+        const barFilter = document.createElement('div');
+        barFilter.id = 'lblSubFilterPhuongModal';
+        barFilter.className = 'mb-2 d-flex align-items-center';
+        modalBody.insertBefore(barFilter, tableResponsive);
+      }
+
+      if (currentModalPhuongList.length > 0) {
+        const totalOrders = currentModalAllOrders.length || currentModalPhuongList.reduce((s, i) => s + (Number(i.soLuong) || 0), 0);
+        let pHtml = `
+          <div class="card border-primary shadow-sm">
+            <div class="card-header bg-primary-subtle text-primary py-1 px-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <span class="fw-bold" style="font-size: 0.8rem;">
+                <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT PHƯỜNG CHƯA ĐƯỢC GÁN (${currentModalAllOrders.length} đơn - ${currentModalPhuongList.length} phường)
+              </span>
+              <input type="text" class="form-control form-control-sm" style="width: 180px; height: 24px; font-size: 0.74rem;" placeholder="Lọc nhanh phường..." oninput="locNhanhBangPhuongModal(this.value)">
+            </div>
+            <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+              <table class="table table-sm table-bordered table-hover align-middle mb-0 text-center" style="font-size: 0.78rem;">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th style="width: 45px;">STT</th>
+                    <th class="text-start">Phường Chưa Gán</th>
+                    <th>Quận</th>
+                    <th style="width: 110px;">Số Đơn Chưa Gán</th>
+                    <th style="width: 85px;">Tỷ Trọng</th>
+                    <th style="width: 90px;">Lọc Mã Đơn</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyPhuongInModal">`;
+
+        currentModalPhuongList.forEach((p, i) => {
+          const pct = totalOrders > 0 ? `${(((Number(p.soLuong) || 0) / totalOrders) * 100).toFixed(1)}%` : '0.0%';
+          const safeQ = (p.quan || '').replace(/'/g, "\\'");
+          const safeP = (p.phuong || '').replace(/'/g, "\\'");
+          pHtml += `
+            <tr class="row-phuong-modal" data-search="${p.phuong || ''} ${p.quan || ''}">
+              <td class="text-muted small">${i + 1}</td>
+              <td class="text-start fw-bold text-dark">${p.phuong || '—'}</td>
+              <td class="text-secondary small fw-semibold">${p.quan || '—'}</td>
+              <td class="font-monospace fw-bold text-danger fs-6">${p.soLuong || 0}</td>
+              <td class="font-monospace small text-muted">${pct}</td>
+              <td>
+                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="locDonTheoPhuongTrongModal('${safeQ}', '${safeP}')">
+                  <i class="bi bi-funnel-fill me-1"></i>Xem đơn
+                </button>
+              </td>
+            </tr>`;
+        });
+
+        pHtml += `</tbody></table></div></div>`;
+        boxPhuong.innerHTML = pHtml;
+        boxPhuong.style.display = 'block';
+      } else {
+        boxPhuong.innerHTML = '';
+        boxPhuong.style.display = 'none';
+      }
+
+      veBangMaDonTrongModal(currentModalAllOrders, '');
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
 

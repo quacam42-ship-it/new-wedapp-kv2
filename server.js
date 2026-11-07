@@ -260,22 +260,81 @@ app.get('/api/performance-data', async (req, res) => {
   }
 });
 
-// 3. API: HÀNG HÓA - COUNT ĐÚNG 100% ĐƠN CHƯA GÁN RIDER (LMHub_Received & TRỐNG DRIVER_NAME)
+// Bộ nhớ lưu ngầm dữ liệu Hàng Hóa hợp lệ gần nhất (Chống lỗi nhảy về 0 khi Sheet đang cập nhật/trống tạm thời)
+let lastValidHangHoaResponse = null;
+
+// 3. API: HÀNG HÓA - ĐỌC ĐỒNG THỜI "DATA INBOUND" & BẢNG "BÀN GIAO HV" TRÊN "PENDING ATTEMPT"
 app.get('/api/hang-hoa-data', async (req, res) => {
   try {
-    const resSummary = await sheets.spreadsheets.values.get({
+    const batchRes = await sheets.spreadsheets.values.batchGet({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      range: "'DATA INBOUND'!A2:O",
+      ranges: [
+        "'DATA INBOUND'!A2:O",
+        "'PENDING ATTEMPT'!A1:Z500"
+      ]
     });
 
-    const allRows = resSummary.data.values || [];
-    const lastUpdateStr = new Date().toLocaleTimeString('vi-VN');
+    const valueRanges = batchRes.data.valueRanges || [];
+    const allRows = valueRanges[0]?.values || [];
+    const pendingAttemptRows = valueRanges[1]?.values || [];
+    const nowTimeStr = new Date().toLocaleTimeString('vi-VN');
 
-    // Chỉ lấy đơn pending (LMHub_Received, chưa giao)
+    // 1. Trích xuất thời gian "Last update" và bảng "BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV" từ tab PENDING ATTEMPT
+    let sheetUpdateStr = '';
+    let banGiaoHv = [];
+    let hvHeaderRowIdx = -1;
+    let hvStartColIdx = -1;
+
+    for (let r = 0; r < pendingAttemptRows.length; r++) {
+      const row = pendingAttemptRows[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const cellText = (row[c] || '').toString().trim();
+        if (cellText.toLowerCase().startsWith('last update:')) {
+          sheetUpdateStr = cellText.replace(/^last update:\s*/i, '').trim();
+        }
+        if (
+          hvHeaderRowIdx === -1 &&
+          cellText.toLowerCase() === 'mã đơn' &&
+          (row[c + 1] || '').toString().trim().toLowerCase().includes('zone')
+        ) {
+          hvHeaderRowIdx = r;
+          hvStartColIdx = c;
+        }
+      }
+    }
+
+    if (hvHeaderRowIdx !== -1 && hvStartColIdx !== -1) {
+      for (let r = hvHeaderRowIdx + 1; r < pendingAttemptRows.length; r++) {
+        const row = pendingAttemptRows[r] || [];
+        const maDon = (row[hvStartColIdx] || '').toString().trim();
+        if (!maDon) continue;
+        banGiaoHv.push({
+          maDon: maDon,
+          zoneId: (row[hvStartColIdx + 1] || '').toString().trim(),
+          quanPhuong: (row[hvStartColIdx + 2] || '').toString().trim(),
+          idRd: (row[hvStartColIdx + 3] || '').toString().trim(),
+          tenRd: (row[hvStartColIdx + 4] || '').toString().trim(),
+          cotRd: (row[hvStartColIdx + 5] || '').toString().trim(),
+          thoiGianQuet: (row[hvStartColIdx + 6] || '').toString().trim(),
+          trangThai: (row[hvStartColIdx + 7] || '').toString().trim(),
+          lyDoOnhold: (row[hvStartColIdx + 8] || '').toString().trim()
+        });
+      }
+    }
+
+    // NẾU SHEET "DATA INBOUND" ĐANG TRỐNG TẠM THỜI DO ĐANG CHẠY ĐỒNG BỘ -> TRẢ VỀ BẢN LƯU NGẦM GẦN NHẤT ĐỂ KHÔNG BỊ HIỆN 0
+    if (allRows.length === 0 && lastValidHangHoaResponse) {
+      return res.json({
+        ...lastValidHangHoaResponse,
+        banGiaoHv: banGiaoHv.length > 0 ? banGiaoHv : (lastValidHangHoaResponse.banGiaoHv || []),
+        restoredFromCache: true
+      });
+    }
+
+    // 2. Chỉ lấy đơn pending chưa gán Rider (LMHub_Received & trống cột F - Driver Name)
     const rows = allRows.filter(r => (r[10] || '').toString().trim() === 'LMHub_Received' && !(r[5] || '').toString().trim());
 
     let pendingMP = 0, pendingWH = 0, pendingHV = 0;
-    // Gom nhóm theo quận + phường
     const groupMap = {};
     rows.forEach(r => {
       const whsId = (r[9] || '').toString().trim();
@@ -295,7 +354,6 @@ app.get('/api/hang-hoa-data', async (req, res) => {
 
     const groups = Object.values(groupMap);
 
-    // Định nghĩa thứ tự ưu tiên hiển thị thủ công cho các Quận dùng chữ
     const orderQ2 = ['an khánh', 'an lợi đông', 'an phú', 'thảo điền', 'thủ thiêm', 'bình trưng đông', 'bình trưng tây', 'thạnh mỹ lợi', 'cát lái'];
     const orderQ7 = ['phú thuận', 'tân hưng', 'tân kiểng', 'tân phong', 'tân quy', 'tân phú', 'tân thuận đông', 'tân thuận tây', 'bình thuận', 'phú mỹ'];
     const orderQ9 = ['phước bình', 'phước long a', 'phước long b'];
@@ -309,33 +367,28 @@ app.get('/api/hang-hoa-data', async (req, res) => {
           const pA = (a.phuong || '').toLowerCase();
           const pB = (b.phuong || '').toLowerCase();
 
-          // 1. Xử lý sắp xếp theo thứ tự ưu tiên của Q2, Q7, Q9
           let idxA = 999, idxB = 999;
           if (kw.includes('quận 2')) {
-             idxA = orderQ2.findIndex(item => pA.includes(item));
-             idxB = orderQ2.findIndex(item => pB.includes(item));
+            idxA = orderQ2.findIndex(item => pA.includes(item));
+            idxB = orderQ2.findIndex(item => pB.includes(item));
           } else if (kw.includes('quận 7')) {
-             idxA = orderQ7.findIndex(item => pA.includes(item));
-             idxB = orderQ7.findIndex(item => pB.includes(item));
+            idxA = orderQ7.findIndex(item => pA.includes(item));
+            idxB = orderQ7.findIndex(item => pB.includes(item));
           } else if (kw.includes('quận 9')) {
-             idxA = orderQ9.findIndex(item => pA.includes(item));
-             idxB = orderQ9.findIndex(item => pB.includes(item));
+            idxA = orderQ9.findIndex(item => pA.includes(item));
+            idxB = orderQ9.findIndex(item => pB.includes(item));
           }
 
           if (idxA === -1) idxA = 999;
           if (idxB === -1) idxB = 999;
-
           if (idxA !== 999 || idxB !== 999) {
-             if (idxA !== idxB) return idxA - idxB;
+            if (idxA !== idxB) return idxA - idxB;
           }
 
-          // 2. Xử lý sắp xếp theo số đếm cho Q4, Bình Thạnh (P.1 -> P.2 -> P.10)
-          // Sửa lỗi Regex bằng /\d+/ thay vì /\\d+/
           const numA = parseInt((pA.match(/\d+/) || [])[0], 10);
           const numB = parseInt((pB.match(/\d+/) || [])[0], 10);
           if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
-          
-          // 3. Dự phòng xếp theo A-Z nếu không thỏa 2 điều kiện trên
+
           return pA.localeCompare(pB, 'vi');
         });
     }
@@ -358,10 +411,9 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       donMp: pendingMP,
       donWh: pendingWH,
       donHv: pendingHV,
-      lastUpdate: lastUpdateStr,
+      lastUpdate: sheetUpdateStr || nowTimeStr,
     };
 
-    // Top 5 phường rớt nhiều nhất
     const sortedGroups = [...groups].sort((a, b) => b.soLuong - a.soLuong);
     const top5Phuong = sortedGroups.slice(0, 5).map((g, idx) => ({
       hang: `#${idx + 1}`,
@@ -380,7 +432,7 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       isHv: (r[12] || '').toString().trim()
     }));
 
-    res.json({
+    const responsePayload = {
       headers: ['Tracking', 'Zone', 'Status'],
       rows: rows.map(r => [r[0] || '', r[1] || '', r[10] || '']),
       kpi,
@@ -390,11 +442,27 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       phuongQuan7,
       phuongQuan9,
       phuongBinhThanh,
+      banGiaoHv,
+      allRowsCount: allRows.length,
       cachedInboundOrders: mapped,
       inboundOrdersCache: mapped
-    });
+    };
+
+    // Lưu ngầm vào bộ nhớ Server khi Sheet có dữ liệu hợp lệ
+    if (allRows.length > 0 && (rows.length > 0 || !lastValidHangHoaResponse)) {
+      lastValidHangHoaResponse = responsePayload;
+    } else if (rows.length > 0) {
+      lastValidHangHoaResponse = responsePayload;
+    } else if (lastValidHangHoaResponse && banGiaoHv.length > 0) {
+      lastValidHangHoaResponse.banGiaoHv = banGiaoHv;
+    }
+
+    res.json(responsePayload);
   } catch (error) {
-    console.warn('Lỗi đọc DATA PENDING:', error.message);
+    console.warn('Lỗi đọc DATA PENDING, trả về dữ liệu lưu ngầm:', error.message);
+    if (lastValidHangHoaResponse) {
+      return res.json({ ...lastValidHangHoaResponse, restoredFromCache: true });
+    }
     res.json({
       headers: ['Thông báo'],
       rows: [['Đang cập nhật dữ liệu...']],
@@ -404,7 +472,9 @@ app.get('/api/hang-hoa-data', async (req, res) => {
       phuongQuan4: [],
       phuongQuan7: [],
       phuongQuan9: [],
-      phuongBinhThanh: []
+      phuongBinhThanh: [],
+      banGiaoHv: [],
+      allRowsCount: 0
     });
   }
 });
