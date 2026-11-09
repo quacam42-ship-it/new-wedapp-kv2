@@ -191,6 +191,18 @@
     </div>
   </div>
 
+<!-- THANH TẢI DỮ LIỆU ĐỘNG CHO TỪNG MỤC KHI CLICK VÀO -->
+  <div id="globalTabLoadingWrap" style="display:none; position:sticky; top:42px; z-index:1049; background:rgba(255,255,255,0.95); border-bottom:1px solid #cbd5e1; box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+    <div class="progress rounded-0" style="height: 4px; background-color: #e2e8f0;">
+      <div id="globalTabProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 0%; transition: width 0.25s ease;"></div>
+    </div>
+    <div class="d-flex justify-content-center align-items-center py-1 px-3 gap-2" style="font-size: 0.76rem;">
+      <span class="spinner-border spinner-border-sm text-primary" id="globalTabLoadingSpinner" style="width: 13px; height: 13px;"></span>
+      <span class="fw-bold text-dark" id="globalTabLoadingText">Đang tải dữ liệu...</span>
+      <span class="badge bg-primary font-monospace" id="globalTabLoadingPct">0%</span>
+    </div>
+  </div>
+
   <div class="container-fluid px-2 px-md-3 pb-3" style="max-width: 1480px;">
     <!-- ==================== 1. TUYẾN RIDER ==================== -->
     <div id="section-tuyenRider" class="content-section active">
@@ -928,37 +940,49 @@
           </div>
         </div>
 
-        <!-- BẢNG 1: THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (NHẤN VÀO TỪNG Ô QUẬN ĐỂ XEM PHƯỜNG & COT) -->
-        <div class="card border-0 shadow-sm mb-3">
+        <!-- BẢNG 1: THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TUẦN HIỆN TẠI (CÓ NÚT THU PHÓNG) -->
+        <div class="hv-handover-card border-primary shadow-sm mb-3" id="cardBangNgayInbound" style="border-width: 1px;">
           <div class="card-header bg-primary text-white py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <span class="fw-bold" style="font-size: 0.84rem;">
-                <i class="bi bi-bar-chart-line-fill text-warning me-1"></i>THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TỪNG NGÀY (LƯU DAILY)
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="fw-bold" style="font-size: 0.84rem;" id="titleBangNgayTuanHienTai">
+                <i class="bi bi-bar-chart-line-fill text-warning me-1"></i>THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TUẦN HIỆN TẠI
               </span>
-              <span class="small ms-2 opacity-75 d-none d-md-inline">(💡 Nhấn trực tiếp vào từng ô Quận hoặc COT để xem chi tiết Phường & COT)</span>
+              <span class="badge bg-light text-primary fw-bold" id="badgeCountDaysInbound">0 ngày</span>
+              <span class="small opacity-75 d-none d-lg-inline">(💡 Nhấn trực tiếp vào từng ô Quận hoặc COT để xem chi tiết Phường & COT)</span>
             </div>
-            <span class="badge bg-light text-primary fw-bold" id="badgeCountDaysInbound">0 ngày</span>
+            <div class="d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-xs btn-outline-light py-0 px-2 d-flex align-items-center gap-1" style="height: 25px; font-size: 0.74rem;" onclick="toggleZoomBangNgayInbound()" id="btnZoomBangNgayInbound" title="Phóng to toàn màn hình / Thu nhỏ">
+                <i class="bi bi-arrows-fullscreen" id="iconZoomBangNgayInbound"></i>
+                <span id="txtZoomBangNgayInbound">Phóng to</span>
+              </button>
+              <button type="button" class="btn btn-xs btn-warning text-dark fw-bold py-0 px-2 d-flex align-items-center gap-1" style="height: 25px; font-size: 0.74rem;" onclick="dongMoBangNgayInbound()" id="btnToggleBangNgayInbound">
+                <i class="bi bi-chevron-up" id="iconToggleBangNgayInbound"></i>
+                <span id="txtToggleBangNgayInbound">Thu gọn</span>
+              </button>
+            </div>
           </div>
-          <div class="table-responsive">
-            <table class="table table-bordered table-hover table-sm align-middle mb-0 text-center" style="font-size: 0.8rem;">
-              <thead class="table-light">
-                <tr>
-                  <th class="text-start">Ngày / Thời Gian Lưu</th>
-                  <th>Tổng Inbound</th>
-                  <th>Ca COT 1</th>
-                  <th>Ca COT 2</th>
-                  <th>Quận 2 (C1 / C2)</th>
-                  <th>Quận 4 (C1 / C2)</th>
-                  <th>Quận 7 (C1 / C2)</th>
-                  <th>Quận 9 (C1 / C2)</th>
-                  <th>Bình Thạnh (C1 / C2)</th>
-                  <th style="width: 95px;">Chi Tiết</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyLichSuNgayInbound">
-                <tr><td colspan="10" class="py-3 text-muted">Đang tải dữ liệu Inbound từng ngày...</td></tr>
-              </tbody>
-            </table>
+          <div id="collapseBangNgayInbound">
+            <div class="table-responsive" id="wrapTableNgayInbound" style="max-height: 450px;">
+              <table class="table table-bordered table-hover table-sm align-middle mb-0 text-center" style="font-size: 0.8rem;">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th class="text-start">Ngày Trong Tuần Hiện Tại</th>
+                    <th>Tổng Inbound</th>
+                    <th>Ca COT 1</th>
+                    <th>Ca COT 2</th>
+                    <th>Quận 2 (C1 / C2)</th>
+                    <th>Quận 4 (C1 / C2)</th>
+                    <th>Quận 7 (C1 / C2)</th>
+                    <th>Quận 9 (C1 / C2)</th>
+                    <th>Bình Thạnh (C1 / C2)</th>
+                    <th style="width: 95px;">Chi Tiết</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyLichSuNgayInbound">
+                  <tr><td colspan="10" class="py-3 text-muted">Đang tải dữ liệu Inbound tuần hiện tại...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -1988,7 +2012,7 @@
   <script src="/js/lich-off.js?v=20261103"></script>
   <script src="/js/thong-tin-rider.js"></script>
   <script src="/js/profile_rider.js"></script>
-  <script src="/js/performance_rider.js"></script>
+  <script src="/js/performance_rider.js?v=20261110"></script>
   <script>
     window.API_BASE = '/api';
     const API_BASE = '/api';
@@ -2010,7 +2034,60 @@
 
     let isFetchingRiderData = false;
 
-    function chuyenTab(tabId) {
+    // ================= HỆ THỐNG THANH TẢI DỮ LIỆU ĐỘNG CHO TỪNG MỤC =================
+    let tabLoadingInterval = null;
+    let tabLoadingHideTimeout = null;
+
+    function batThanhTaiMuc(tenMuc) {
+      const wrap = document.getElementById('globalTabLoadingWrap');
+      const bar = document.getElementById('globalTabProgressBar');
+      const txt = document.getElementById('globalTabLoadingText');
+      const pct = document.getElementById('globalTabLoadingPct');
+      const spin = document.getElementById('globalTabLoadingSpinner');
+      if (!wrap || !bar) return;
+
+      if (tabLoadingInterval) clearInterval(tabLoadingInterval);
+      if (tabLoadingHideTimeout) clearTimeout(tabLoadingHideTimeout);
+
+      wrap.style.display = 'block';
+      bar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-warning';
+      bar.style.width = '18%';
+      if (spin) spin.style.display = 'inline-block';
+      if (txt) txt.innerText = `Đang tải dữ liệu mục [${tenMuc}]...`;
+      if (pct) pct.innerText = '18%';
+
+      let currentVal = 18;
+      tabLoadingInterval = setInterval(() => {
+        if (currentVal < 88) {
+          currentVal += Math.floor(Math.random() * 14) + 5;
+          if (currentVal > 88) currentVal = 88;
+          bar.style.width = `${currentVal}%`;
+          if (pct) pct.innerText = `${currentVal}%`;
+        }
+      }, 180);
+    }
+
+    function hoanTatThanhTaiMuc(tenMuc = '') {
+      const wrap = document.getElementById('globalTabLoadingWrap');
+      const bar = document.getElementById('globalTabProgressBar');
+      const txt = document.getElementById('globalTabLoadingText');
+      const pct = document.getElementById('globalTabLoadingPct');
+      const spin = document.getElementById('globalTabLoadingSpinner');
+      if (!wrap || !bar) return;
+
+      if (tabLoadingInterval) clearInterval(tabLoadingInterval);
+      bar.className = 'progress-bar bg-success';
+      bar.style.width = '100%';
+      if (spin) spin.style.display = 'none';
+      if (txt) txt.innerText = `✅ Đã nạp xong dữ liệu ${tenMuc ? '[' + tenMuc + ']' : ''}!`;
+      if (pct) pct.innerText = '100%';
+
+      tabLoadingHideTimeout = setTimeout(() => {
+        wrap.style.display = 'none';
+      }, 380);
+    }
+
+    async function chuyenTab(tabId) {
       currentTab = tabId;
       document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
       const btn = document.getElementById('btn-' + tabId);
@@ -2020,36 +2097,64 @@
       const sec = document.getElementById('section-' + tabId);
       if (sec) sec.classList.add('active');
 
-      if (tabId === 'tuyenRider') {
-        if (!loadedTabs.tuyenRider || ridersData.length === 0) loadRiderData();
-      } else if (tabId === 'lichOff') {
-        if (!loadedTabs.tuyenRider || ridersData.length === 0 || dateHeadersGlobal.length === 0) {
-          loadRiderData();
-        } else {
-          const selTuan = document.getElementById('selectTuanOff');
-          if (typeof taoDropdownTuanOff === 'function' && (!selTuan || selTuan.options.length === 0)) {
-            taoDropdownTuanOff(dateHeadersGlobal);
+      const mapTenMuc = {
+        tuyenRider: 'Tuyến Rider',
+        lichOff: 'Lịch OFF & Điều Phối',
+        performance: 'Performance Today',
+        hangHoa: currentKieuHangHoa === 'INBOUND' ? 'Hàng Hóa - INBOUND' : 'Hàng Hóa - PENDING ATTEMPT',
+        diemDanh: 'Điểm Danh QR',
+        thongTinRider: 'Thông Tin Chung',
+        profile: 'Hồ Sơ Rider'
+      };
+      const tenMuc = mapTenMuc[tabId] || tabId;
+      batThanhTaiMuc(tenMuc);
+
+      try {
+        if (tabId === 'tuyenRider') {
+          if (!loadedTabs.tuyenRider || ridersData.length === 0) await loadRiderData();
+        } else if (tabId === 'lichOff') {
+          if (!loadedTabs.tuyenRider || ridersData.length === 0 || dateHeadersGlobal.length === 0) {
+            await loadRiderData();
+          } else {
+            const selTuan = document.getElementById('selectTuanOff');
+            if (typeof taoDropdownTuanOff === 'function' && (!selTuan || selTuan.options.length === 0)) {
+              taoDropdownTuanOff(dateHeadersGlobal);
+            }
+            if (typeof renderMaTranOff === 'function') renderMaTranOff();
+            if (typeof filterOffData === 'function') filterOffData();
           }
-          if (typeof renderMaTranOff === 'function') renderMaTranOff();
-          if (typeof filterOffData === 'function') filterOffData();
+        } else if (tabId === 'performance') {
+          if (typeof window.loadPerformanceData === 'function') await window.loadPerformanceData();
+        } else if (tabId === 'hangHoa') {
+          if (currentKieuHangHoa === 'INBOUND') await fetchDataInboundThucTe();
+          else await loadHangHoaData();
+        } else if (tabId === 'diemDanh') {
+          khoiTaoTabDiemDanh();
+        } else if (tabId === 'thongTinRider') {
+          if (typeof loadThongTinChungData === 'function') await loadThongTinChungData();
         }
-      } else if (tabId === 'performance') { loadPerformanceData(); } 
-      else if (tabId === 'hangHoa') {
-      if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
-      else loadHangHoaData();
-    } 
-      else if (tabId === 'diemDanh') { khoiTaoTabDiemDanh(); }
-      else if (tabId === 'thongTinRider') { loadThongTinChungData(); }
+      } finally {
+        setTimeout(() => hoanTatThanhTaiMuc(tenMuc), 180);
+      }
     }
 
-    function lamMoiDuLieu() {
-      if (currentTab === 'tuyenRider' || currentTab === 'lichOff') { loadedTabs.tuyenRider = false; loadRiderData(true); } 
-      else if (currentTab === 'performance') { loadPerformanceData(); } 
-      else if (currentTab === 'hangHoa') {
-      if (currentKieuHangHoa === 'INBOUND') fetchDataInboundThucTe();
-      else loadHangHoaData();
-    } 
-      else if (currentTab === 'diemDanh') { loadLichSuDiemDanh(); }
+    async function lamMoiDuLieu() {
+      batThanhTaiMuc('Làm mới dữ liệu');
+      try {
+        if (currentTab === 'tuyenRider' || currentTab === 'lichOff') {
+          loadedTabs.tuyenRider = false;
+          await loadRiderData(true);
+        } else if (currentTab === 'performance') {
+          if (typeof window.loadPerformanceData === 'function') await window.loadPerformanceData(true);
+        } else if (currentTab === 'hangHoa') {
+          if (currentKieuHangHoa === 'INBOUND') await fetchDataInboundThucTe();
+          else await loadHangHoaData(false);
+        } else if (currentTab === 'diemDanh') {
+          await loadLichSuDiemDanh();
+        }
+      } finally {
+        hoanTatThanhTaiMuc('Làm mới dữ liệu');
+      }
     }
 
     // TẢI RIDER & LỊCH OFF (CHỐNG GỌI TRÙNG & ĐỒNG BỘ BIẾN TOÀN CỤC)
@@ -2137,14 +2242,7 @@
       tbody.innerHTML = html;
     }
 
-    async function loadPerformanceData() {
-      const tbody = document.getElementById('perfTbody');
-      if (tbody) tbody.innerHTML = '<tr><td class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải dữ liệu Performance...</td></tr>';
-      try {
-        const res = await fetch(`${API_BASE}/performance-data`); const data = await res.json();
-        loadedTabs.performance = true; renderDynamicTable('perfThead', 'perfTbody', data);
-      } catch (err) { if (tbody) tbody.innerHTML = `<tr><td class="text-center text-danger py-4">Lỗi: ${err.message}</td></tr>`; }
-    }
+    
 
     function renderDynamicTable(theadId, tbodyId, dataObj) {
       const thead = document.getElementById(theadId); const tbody = document.getElementById(tbodyId);
@@ -3444,31 +3542,42 @@ if (user.role === 'RIDER') {
         </tr>`;
     }
 
-    // 2. VẼ BẢNG THỐNG KÊ TỪNG NGÀY (LƯU DAILY)
-    function veBangLichSuNgayInbound() {
-      const tbody = document.getElementById('tbodyLichSuNgayInbound');
-      if (!tbody || !globalInboundData) return;
+    // Thu gọn / Mở rộng & Phóng to cho Bảng Inbound Tuần Hiện Tại
+    let isBangNgayInboundOpen = true;
+    let isBangNgayInboundFullscreen = false;
 
-      const ls = globalInboundData.lichSuNgay || [];
-      const homNay = globalInboundData.homNay;
-      const badgeDays = document.getElementById('badgeCountDaysInbound');
-      if (badgeDays) badgeDays.innerText = `${ls.length} ngày lưu`;
-
-      let html = '';
-      if (homNay) {
-        const firstCol = `<span class="badge bg-success me-1">LIVE HÔM NAY</span><span class="text-dark fw-bold">${homNay.ngay || 'Hôm nay'}</span>`;
-        html += taoDongBangInbound(homNay, 'TODAY', firstCol, true);
-      }
-
-      ls.forEach((d, idx) => {
-        const firstCol = `<i class="bi bi-calendar3 text-secondary me-1"></i><span class="fw-semibold text-dark">${d.rawTitle || d.ngay}</span>`;
-        html += taoDongBangInbound(d, `DAY_${idx}`, firstCol, false);
-      });
-
-      tbody.innerHTML = html || '<tr><td colspan="10" class="py-3 text-muted">Chưa có dữ liệu lịch sử ngày</td></tr>';
+    function dongMoBangNgayInbound() {
+      isBangNgayInboundOpen = !isBangNgayInboundOpen;
+      const el = document.getElementById('collapseBangNgayInbound');
+      if (el) el.style.display = isBangNgayInboundOpen ? 'block' : 'none';
+      const icon = document.getElementById('iconToggleBangNgayInbound');
+      if (icon) icon.className = isBangNgayInboundOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+      const txt = document.getElementById('txtToggleBangNgayInbound');
+      if (txt) txt.innerText = isBangNgayInboundOpen ? 'Thu gọn' : 'Mở rộng';
     }
 
-    // Hàm phụ: Trích xuất ngày chuẩn DD/MM/YYYY và tính Tuần (Thứ 2 -> Chủ Nhật: dd/mm - dd/mm)
+    function toggleZoomBangNgayInbound() {
+      isBangNgayInboundFullscreen = !isBangNgayInboundFullscreen;
+      const card = document.getElementById('cardBangNgayInbound');
+      const wrap = document.getElementById('wrapTableNgayInbound');
+      const icon = document.getElementById('iconZoomBangNgayInbound');
+      const txt = document.getElementById('txtZoomBangNgayInbound');
+      if (!card || !wrap) return;
+
+      if (isBangNgayInboundFullscreen) {
+        if (!isBangNgayInboundOpen) dongMoBangNgayInbound();
+        card.classList.add('fullscreen-mode');
+        wrap.style.maxHeight = 'calc(100vh - 65px)';
+        if (icon) icon.className = 'bi bi-fullscreen-exit';
+        if (txt) txt.innerText = 'Thu nhỏ';
+      } else {
+        card.classList.remove('fullscreen-mode');
+        wrap.style.maxHeight = '450px';
+        if (icon) icon.className = 'bi bi-arrows-fullscreen';
+        if (txt) txt.innerText = 'Phóng to';
+      }
+    }
+
     function phanTichTuanTuChuoiNgay(str) {
       const match = (str || '').match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
       if (!match) return null;
@@ -3480,7 +3589,7 @@ if (user.role === 'RIDER') {
       const dt = new Date(y, m - 1, d);
       if (isNaN(dt.getTime())) return null;
 
-      const dayOfWeek = dt.getDay(); // 0 = CN, 1 = T2 ...
+      const dayOfWeek = dt.getDay();
       const diffToMon = dt.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
       const mon = new Date(dt.getFullYear(), dt.getMonth(), diffToMon);
       const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
@@ -3493,7 +3602,55 @@ if (user.role === 'RIDER') {
       return { dateKey, weekKey, weekLabel };
     }
 
-    // Hàm gộp danh sách phường của nhiều ngày trong cùng 1 tuần
+    // 2. VẼ BẢNG THỐNG KÊ TỪNG NGÀY (CHỈ LẤY SỐ LIỆU CỦA TUẦN HIỆN TẠI)
+    function veBangLichSuNgayInbound() {
+      const tbody = document.getElementById('tbodyLichSuNgayInbound');
+      if (!tbody || !globalInboundData) return;
+
+      const ls = globalInboundData.lichSuNgay || [];
+      const homNay = globalInboundData.homNay;
+
+      const nowVN = new Date();
+      const todayStrVN = `${String(nowVN.getDate()).padStart(2, '0')}/${String(nowVN.getMonth() + 1).padStart(2, '0')}/${nowVN.getFullYear()}`;
+      let currentWeekInfo = (homNay && phanTichTuanTuChuoiNgay(homNay.ngay || homNay.rawTitle)) || phanTichTuanTuChuoiNgay(todayStrVN);
+      if (!currentWeekInfo && ls.length > 0) {
+        currentWeekInfo = phanTichTuanTuChuoiNgay(ls[0].ngay || ls[0].rawTitle);
+      }
+
+      const currentWeekKey = currentWeekInfo ? currentWeekInfo.weekKey : '';
+      const currentWeekLabel = currentWeekInfo ? currentWeekInfo.weekLabel : 'Tuần hiện tại';
+
+      const titleEl = document.getElementById('titleBangNgayTuanHienTai');
+      if (titleEl) {
+        titleEl.innerHTML = `<i class="bi bi-bar-chart-line-fill text-warning me-1"></i>THỐNG KÊ SỐ LƯỢNG HÀNG INBOUND TUẦN HIỆN TẠI (${currentWeekLabel})`;
+      }
+
+      let html = '';
+      let countRows = 0;
+
+      if (homNay) {
+        const infoToday = phanTichTuanTuChuoiNgay(homNay.ngay || homNay.rawTitle);
+        if (!currentWeekKey || !infoToday || infoToday.weekKey === currentWeekKey) {
+          const firstCol = `<span class="badge bg-success me-1">LIVE HÔM NAY</span><span class="text-dark fw-bold">${homNay.ngay || 'Hôm nay'}</span>`;
+          html += taoDongBangInbound(homNay, 'TODAY', firstCol, true);
+          countRows++;
+        }
+      }
+
+      ls.forEach((d, idx) => {
+        const info = phanTichTuanTuChuoiNgay(d.ngay || d.rawTitle);
+        if (currentWeekKey && info && info.weekKey !== currentWeekKey) return;
+        const firstCol = `<i class="bi bi-calendar3 text-secondary me-1"></i><span class="fw-semibold text-dark">${d.rawTitle || d.ngay}</span>`;
+        html += taoDongBangInbound(d, `DAY_${idx}`, firstCol, false);
+        countRows++;
+      });
+
+      const badgeDays = document.getElementById('badgeCountDaysInbound');
+      if (badgeDays) badgeDays.innerText = `${countRows} mục trong tuần`;
+
+      tbody.innerHTML = html || '<tr><td colspan="10" class="py-3 text-muted">Chưa có dữ liệu ngày trong tuần hiện tại</td></tr>';
+    }
+
     function gopPhuongTrongTuan(existingList, newList) {
       const map = {};
       [...(existingList || []), ...(newList || [])].forEach(item => {
@@ -3509,7 +3666,7 @@ if (user.role === 'RIDER') {
       return Object.values(map);
     }
 
-    // 3. TÍNH VÀ VẼ BẢNG THỐNG KÊ THEO TUẦN (DẠNG DD/MM - DD/MM)
+    // 3. TÍNH VÀ VẼ BẢNG THỐNG KÊ THEO TUẦN (NHẤN VÀO TUẦN HIỆN BẢNG TỔNG QUAN TỪNG NGÀY TRƯỚC)
     function tinhVaVeBangTuanInbound() {
       const tbody = document.getElementById('tbodyLichSuTuanInbound');
       if (!tbody || !globalInboundData) return;
@@ -3517,12 +3674,11 @@ if (user.role === 'RIDER') {
       const ls = globalInboundData.lichSuNgay || [];
       const homNay = globalInboundData.homNay;
 
-      // Lọc trùng theo ngày DD/MM/YYYY (Nếu ngày hôm nay chưa có trong LƯU DAILY thì gộp thêm vào, nếu đã có trong LƯU DAILY thì lấy bản có số lượng mới nhất)
       const uniqueDaysMap = new Map();
-      ls.forEach(d => {
+      ls.forEach((d, idx) => {
         const info = phanTichTuanTuChuoiNgay(d.ngay || d.rawTitle);
         if (info && !uniqueDaysMap.has(info.dateKey)) {
-          uniqueDaysMap.set(info.dateKey, { info, data: d });
+          uniqueDaysMap.set(info.dateKey, { info, data: d, sourceKey: `DAY_${idx}` });
         }
       });
 
@@ -3531,13 +3687,13 @@ if (user.role === 'RIDER') {
         if (infoToday) {
           const existing = uniqueDaysMap.get(infoToday.dateKey);
           if (!existing || (homNay.tongDonKhuVuc || 0) >= (existing.data.tongDonKhuVuc || 0)) {
-            uniqueDaysMap.set(infoToday.dateKey, { info: infoToday, data: homNay });
+            uniqueDaysMap.set(infoToday.dateKey, { info: infoToday, data: homNay, sourceKey: 'TODAY' });
           }
         }
       }
 
       const weekMap = new Map();
-      uniqueDaysMap.forEach(({ info, data }) => {
+      uniqueDaysMap.forEach(({ info, data, sourceKey }) => {
         if (!weekMap.has(info.weekKey)) {
           weekMap.set(info.weekKey, {
             weekKey: info.weekKey,
@@ -3546,6 +3702,7 @@ if (user.role === 'RIDER') {
             weekLabel: info.weekLabel,
             daysCount: 0,
             daysList: [],
+            dayRecords: [],
             tongDonKhuVuc: 0,
             tongCot1: 0,
             tongCot2: 0,
@@ -3559,6 +3716,8 @@ if (user.role === 'RIDER') {
         const w = weekMap.get(info.weekKey);
         w.daysCount++;
         w.daysList.push(info.dateKey.substring(0, 5));
+        w.dayRecords.push({ dateKey: info.dateKey, shortDate: info.dateKey.substring(0, 5), sourceKey, data });
+
         w.tongDonKhuVuc += Number(data.tongDonKhuVuc) || 0;
         w.tongCot1 += Number(data.tongCot1) || 0;
         w.tongCot2 += Number(data.tongCot2) || 0;
@@ -3588,16 +3747,130 @@ if (user.role === 'RIDER') {
 
       let html = '';
       globalInboundWeeks.forEach((w, idx) => {
-        const firstCol = `
-          <span class="badge bg-primary font-monospace fs-6 me-1">${w.weekLabel}</span>
-          <span class="badge bg-light text-secondary border">${w.daysCount} ngày (${w.daysList.join(', ')})</span>`;
-        html += taoDongBangInbound(w, `WEEK_${idx}`, firstCol, idx === 0);
+        html += `
+          <tr class="${idx === 0 ? 'table-primary' : ''}" style="cursor:pointer;" onclick="moModalTongQuanTuanInbound(${idx})" title="Nhấn vào để xem bảng tổng quan từng ngày trong tuần ${w.weekLabel}">
+            <td class="text-start">
+              <span class="badge bg-primary font-monospace fs-6 me-1">${w.weekLabel}</span>
+              <span class="badge bg-light text-secondary border">${w.daysCount} ngày (${w.daysList.join(', ')})</span>
+            </td>
+            <td class="font-monospace fw-bold text-danger fs-6 inb-cell-btn">${(w.tongDonKhuVuc || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace text-primary fw-bold inb-cell-btn">${(w.tongCot1 || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace fw-bold inb-cell-btn" style="color:#b45309;">${(w.tongCot2 || 0).toLocaleString('vi-VN')}</td>
+            <td class="font-monospace inb-cell-btn"><b class="text-primary">${(w.q2 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${w.q2Cot1 || 0}/${w.q2Cot2 || 0})</span></td>
+            <td class="font-monospace inb-cell-btn"><b class="text-dark">${(w.q4 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${w.q4Cot1 || 0}/${w.q4Cot2 || 0})</span></td>
+            <td class="font-monospace inb-cell-btn"><b class="text-info text-dark">${(w.q7 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${w.q7Cot1 || 0}/${w.q7Cot2 || 0})</span></td>
+            <td class="font-monospace inb-cell-btn"><b class="text-success">${(w.q9 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${w.q9Cot1 || 0}/${w.q9Cot2 || 0})</span></td>
+            <td class="font-monospace inb-cell-btn"><b class="text-danger">${(w.bt || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${w.btCot1 || 0}/${w.btCot2 || 0})</span></td>
+            <td>
+              <button type="button" class="btn btn-xs btn-primary py-0 px-2 fw-bold" onclick="event.stopPropagation(); moModalTongQuanTuanInbound(${idx})">
+                <i class="bi bi-calendar2-week me-1"></i>Xem ngày
+              </button>
+            </td>
+          </tr>`;
       });
 
       tbody.innerHTML = html;
     }
 
-    // Hàm lấy đúng đối tượng dữ liệu (Hôm nay / Ngày thứ idx / Tuần thứ idx) khi người dùng bấm vào ô
+    function moModalTongQuanTuanInbound(weekIdx) {
+      const w = globalInboundWeeks[weekIdx];
+      if (!w) return;
+
+      document.getElementById('titleModalInbound').innerHTML = `
+        <i class="bi bi-calendar2-week-fill text-warning me-1"></i>TỔNG QUAN TỪNG NGÀY TRONG TUẦN (${w.weekLabel}) — ${w.daysCount} ngày • Tổng: ${(w.tongDonKhuVuc || 0).toLocaleString('vi-VN')} đơn`;
+
+      let html = `
+        <div class="col-12">
+          <div class="alert alert-primary py-2 px-3 mb-2 d-flex flex-wrap justify-content-between align-items-center" style="font-size: 0.82rem;">
+            <span>💡 <b>Bước 1:</b> Bảng tổng quan các ngày trong tuần <b>${w.weekLabel}</b>. Hãy <b>nhấn vào từng Ngày (hoặc từng ô Quận của ngày đó)</b> để xem chi tiết Phường & COT!</span>
+            <button type="button" class="btn btn-xs btn-outline-primary bg-white fw-bold py-1 px-2" onclick="showChiTietInbound('ALL', 'WEEK_${weekIdx}', ${weekIdx})">
+              <i class="bi bi-layers-fill me-1"></i>Xem gộp Phường cả tuần
+            </button>
+          </div>
+          <div class="table-responsive bg-white rounded shadow-sm border">
+            <table class="table table-bordered table-hover table-sm align-middle mb-0 text-center" style="font-size: 0.82rem;">
+              <thead class="table-dark">
+                <tr>
+                  <th class="text-start">Ngày Trong Tuần (${w.weekLabel})</th>
+                  <th>Tổng Inbound</th>
+                  <th>Ca COT 1</th>
+                  <th>Ca COT 2</th>
+                  <th>Quận 2 (C1 / C2)</th>
+                  <th>Quận 4 (C1 / C2)</th>
+                  <th>Quận 7 (C1 / C2)</th>
+                  <th>Quận 9 (C1 / C2)</th>
+                  <th>Bình Thạnh (C1 / C2)</th>
+                  <th style="width: 110px;">Xem Chi Tiết</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+      (w.dayRecords || []).forEach(rec => {
+        const d = rec.data || {};
+        const sKey = rec.sourceKey;
+        html += `
+          <tr style="cursor:pointer;" onclick="showChiTietInbound('ALL', '${sKey}', ${weekIdx})">
+            <td class="text-start fw-bold text-dark">
+              <i class="bi bi-calendar-event text-primary me-1"></i>${d.rawTitle || d.ngay}
+            </td>
+            <td class="font-monospace fw-bold text-danger fs-6 inb-cell-btn" onclick="event.stopPropagation(); showChiTietInbound('ALL', '${sKey}', ${weekIdx})">
+              ${(d.tongDonKhuVuc || 0).toLocaleString('vi-VN')}
+            </td>
+            <td class="font-monospace text-primary fw-bold inb-cell-btn" onclick="event.stopPropagation(); showChiTietInbound(1, '${sKey}', ${weekIdx})">
+              ${(d.tongCot1 || 0).toLocaleString('vi-VN')}
+            </td>
+            <td class="font-monospace fw-bold inb-cell-btn" style="color:#b45309;" onclick="event.stopPropagation(); showChiTietInbound(2, '${sKey}', ${weekIdx})">
+              ${(d.tongCot2 || 0).toLocaleString('vi-VN')}
+            </td>
+            <td class="font-monospace inb-cell-btn" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 2', '${sKey}', ${weekIdx})">
+              <b class="text-primary">${(d.q2 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q2Cot1 || 0}/${d.q2Cot2 || 0})</span> <i class="bi bi-search text-primary" style="font-size:10px;"></i>
+            </td>
+            <td class="font-monospace inb-cell-btn" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 4', '${sKey}', ${weekIdx})">
+              <b class="text-dark">${(d.q4 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q4Cot1 || 0}/${d.q4Cot2 || 0})</span> <i class="bi bi-search text-warning text-dark" style="font-size:10px;"></i>
+            </td>
+            <td class="font-monospace inb-cell-btn" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 7', '${sKey}', ${weekIdx})">
+              <b class="text-info text-dark">${(d.q7 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q7Cot1 || 0}/${d.q7Cot2 || 0})</span> <i class="bi bi-search text-info text-dark" style="font-size:10px;"></i>
+            </td>
+            <td class="font-monospace inb-cell-btn" onclick="event.stopPropagation(); showChiTietInboundQuan('Quận 9', '${sKey}', ${weekIdx})">
+              <b class="text-success">${(d.q9 || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.q9Cot1 || 0}/${d.q9Cot2 || 0})</span> <i class="bi bi-search text-success" style="font-size:10px;"></i>
+            </td>
+            <td class="font-monospace inb-cell-btn" onclick="event.stopPropagation(); showChiTietInboundQuan('Bình Thạnh', '${sKey}', ${weekIdx})">
+              <b class="text-danger">${(d.bt || 0).toLocaleString('vi-VN')}</b> <span class="text-muted small">(${d.btCot1 || 0}/${d.btCot2 || 0})</span> <i class="bi bi-search text-danger" style="font-size:10px;"></i>
+            </td>
+            <td>
+              <button type="button" class="btn btn-xs btn-primary py-0 px-2 fw-bold" onclick="event.stopPropagation(); showChiTietInbound('ALL', '${sKey}', ${weekIdx})">
+                <i class="bi bi-search me-1"></i>Chi tiết ngày
+              </button>
+            </td>
+          </tr>`;
+      });
+
+      html += `
+              <tr class="table-warning fw-bold">
+                <td class="text-start">📊 TỔNG LŨY KẾ TUẦN (${w.weekLabel})</td>
+                <td class="font-monospace text-danger fs-6">${(w.tongDonKhuVuc || 0).toLocaleString('vi-VN')}</td>
+                <td class="font-monospace text-primary">${(w.tongCot1 || 0).toLocaleString('vi-VN')}</td>
+                <td class="font-monospace" style="color:#b45309;">${(w.tongCot2 || 0).toLocaleString('vi-VN')}</td>
+                <td class="font-monospace">${(w.q2 || 0).toLocaleString('vi-VN')} (${w.q2Cot1 || 0}/${w.q2Cot2 || 0})</td>
+                <td class="font-monospace">${(w.q4 || 0).toLocaleString('vi-VN')} (${w.q4Cot1 || 0}/${w.q4Cot2 || 0})</td>
+                <td class="font-monospace">${(w.q7 || 0).toLocaleString('vi-VN')} (${w.q7Cot1 || 0}/${w.q7Cot2 || 0})</td>
+                <td class="font-monospace">${(w.q9 || 0).toLocaleString('vi-VN')} (${w.q9Cot1 || 0}/${w.q9Cot2 || 0})</td>
+                <td class="font-monospace">${(w.bt || 0).toLocaleString('vi-VN')} (${w.btCot1 || 0}/${w.btCot2 || 0})</td>
+                <td>
+                  <button type="button" class="btn btn-xs btn-dark py-0 px-2 fw-bold" onclick="showChiTietInbound('ALL', 'WEEK_${weekIdx}', ${weekIdx})">
+                    Cả tuần
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+
+      document.getElementById('bodyChiTietInboundCot').innerHTML = html;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietInbound')).show();
+    }
+
     function layDuLieuInboundTheoKey(sourceKey = 'TODAY') {
       if (!globalInboundData) return {};
       if (!sourceKey || sourceKey === 'TODAY') {
@@ -3614,8 +3887,7 @@ if (user.role === 'RIDER') {
       return globalInboundData.homNay || globalInboundData;
     }
 
-    // 4. HIỂN THỊ POPUP CHI TIẾT PHƯỜNG & COT KHI BẤM VÀO Ô QUẬN
-    function showChiTietInboundQuan(quanName, sourceKey = 'TODAY') {
+    function showChiTietInboundQuan(quanName, sourceKey = 'TODAY', fromWeekIdx = null) {
       const d = layDuLieuInboundTheoKey(sourceKey);
       let list = [];
       if (quanName === 'Quận 2') list = d.phuongQ2 || [];
@@ -3631,9 +3903,16 @@ if (user.role === 'RIDER') {
       document.getElementById('titleModalInbound').innerHTML = `
         <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT INBOUND ${quanName.toUpperCase()} — ${d.rawTitle || d.ngay || 'Hôm nay'} (${totalQuan.toLocaleString('vi-VN')} đơn - ${list.length} phường)`;
 
+      const backBtnHtml = (fromWeekIdx !== null && fromWeekIdx !== undefined && globalInboundWeeks[fromWeekIdx])
+        ? `<button type="button" class="btn btn-sm btn-warning text-dark fw-bold me-auto shadow-sm" onclick="moModalTongQuanTuanInbound(${fromWeekIdx})">
+             <i class="bi bi-arrow-left-circle-fill me-1"></i>Quay lại tổng quan các ngày Tuần (${globalInboundWeeks[fromWeekIdx].weekLabel})
+           </button>`
+        : '';
+
       let html = `
         <div class="col-12">
-          <div class="d-flex flex-wrap gap-2 mb-2">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+            ${backBtnHtml}
             <span class="badge bg-danger fs-6">Tổng ${quanName}: ${totalQuan.toLocaleString('vi-VN')} đơn</span>
             <span class="badge bg-primary fs-6">Ca COT 1: ${totalC1.toLocaleString('vi-VN')} đơn</span>
             <span class="badge bg-warning text-dark fs-6">Ca COT 2: ${totalC2.toLocaleString('vi-VN')} đơn</span>
@@ -3674,8 +3953,7 @@ if (user.role === 'RIDER') {
       bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietInbound')).show();
     }
 
-    // 5. HIỂN THỊ POPUP CHI TIẾT TOÀN BỘ 5 QUẬN (THEO CA COT 1, COT 2 HOẶC TẤT CẢ)
-    function showChiTietInbound(cotType, sourceKey = 'TODAY') {
+    function showChiTietInbound(cotType, sourceKey = 'TODAY', fromWeekIdx = null) {
       const d = layDuLieuInboundTheoKey(sourceKey);
       const title = cotType === 1 ? 'CA COT 1' : (cotType === 2 ? 'CA COT 2' : 'TOÀN KHU VỰC 2 (COT 1 + COT 2)');
       document.getElementById('titleModalInbound').innerHTML = `<i class="bi bi-box-seam me-1"></i>CHI TIẾT INBOUND - ${title} — ${d.rawTitle || d.ngay || 'Hôm nay'}`;
@@ -3690,6 +3968,15 @@ if (user.role === 'RIDER') {
       ];
 
       let html = '';
+      if (fromWeekIdx !== null && fromWeekIdx !== undefined && globalInboundWeeks[fromWeekIdx]) {
+        html += `
+          <div class="col-12 mb-1">
+            <button type="button" class="btn btn-sm btn-warning text-dark fw-bold shadow-sm" onclick="moModalTongQuanTuanInbound(${fromWeekIdx})">
+              <i class="bi bi-arrow-left-circle-fill me-1"></i>Quay lại bảng tổng quan các ngày Tuần (${globalInboundWeeks[fromWeekIdx].weekLabel})
+            </button>
+          </div>`;
+      }
+
       configs.forEach(cfg => {
         const rows = cfg.list.map(p => ({
           phuong: p.phuong,

@@ -129,6 +129,18 @@ app.get(['/js/lich-off.js', '/lich-off.js'], (req, res) => {
   res.sendFile(candidates[0]);
 });
 
+app.get(['/js/performance_rider.js', '/performance_rider.js'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  const candidates = [
+    path.join(__dirname, 'public', 'js', 'performance_rider.js'),
+    path.join(__dirname, 'js', 'performance_rider.js'),
+    path.join(__dirname, 'performance_rider.js')
+  ].filter(p => fs.existsSync(p));
+  if (candidates.length === 0) return res.status(404).send('// Không tìm thấy performance_rider.js');
+  candidates.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  res.sendFile(candidates[0]);
+});
+
 // Bộ nhớ đệm ngắn 10 giây chống lỗi 429 khi nhiều tab gọi cùng lúc
 let riderDataCache = null;
 let riderDataCacheTime = 0;
@@ -238,25 +250,312 @@ app.get('/api/rider-data', async (req, res) => {
   }
 });
 
-// 2. API: Performance
+// ================= 2. API: PERFORMANCE TODAY (ĐỌC GID=1048493669 & THIẾT KẾ NHƯ GID=1561639417) =================
+const GID_PERF_RAW_ORDERS = 1048493669;
+const GID_PERF_TODAY_VIEW = 1561639417;
+let lastValidPerformanceResponse = null;
+let cachedPerfOrdersByRider = {};
+
+function chuanHoaQuanPerf(qRaw) {
+  const s = (qRaw || '').toString().toLowerCase().trim();
+  if (s.includes('quận 2') || s === 'q2') return 'Quận 2';
+  if (s.includes('quận 4') || s === 'q4') return 'Quận 4';
+  if (s.includes('quận 7') || s === 'q7') return 'Quận 7';
+  if (s.includes('quận 9') || s === 'q9') return 'Quận 9';
+  if (s.includes('bình thạnh') || s === 'bt') return 'Bình Thạnh';
+  if (s.includes('bk') || s.includes('backup')) return 'Backup (BK)';
+  return (qRaw || '').toString().trim() || 'Chưa phân tuyến';
+}
+
+function phanLoaiTrangThaiDonPerf(rawStatus) {
+  const st = (rawStatus || '').toString().toLowerCase().trim();
+  if (st.includes('delivered') && !st.includes('undelivered')) return 'DELIVERED';
+  if (st.includes('delivering')) return 'DELIVERING';
+  return 'ON_HOLD';
+}
+
 app.get('/api/performance-data', async (req, res) => {
   try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: "'PERFORMANCE TODAY'!B9:P150",
+    const meta = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+      fields: 'sheets.properties(title,sheetId)'
     });
-    const values = response.data.values || [];
-    if (values.length < 2) {
-      return res.json({ headers: ['Thông báo'], rows: [['Chưa có dữ liệu Performance']] });
+    const allSheets = meta.data.sheets || [];
+    const rawSheetObj = allSheets.find(s => s.properties.sheetId === GID_PERF_RAW_ORDERS);
+    const viewSheetObj = allSheets.find(s => s.properties.sheetId === GID_PERF_TODAY_VIEW);
+
+    const rawSheetTitle = rawSheetObj ? rawSheetObj.properties.title : 'DATA INBOUND';
+    const viewSheetTitle = viewSheetObj ? viewSheetObj.properties.title : 'PERFORMANCE TODAY';
+
+    const batchRes = await sheets.spreadsheets.values.batchGet({
+      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+      ranges: [
+        `'${rawSheetTitle}'!A2:V50000`,
+        `'${viewSheetTitle}'!A1:AZ250`,
+        "'TỔNG QUAN RD'!M1:W1000"
+      ]
+    });
+
+    const valueRanges = batchRes.data.valueRanges || [];
+    const rawOrderRows = valueRanges[0]?.values || [];
+    const viewRows = valueRanges[1]?.values || [];
+    const rdRosterRows = valueRanges[2]?.values || [];
+
+    if (rawOrderRows.length === 0 && lastValidPerformanceResponse) {
+      return res.json({ ...lastValidPerformanceResponse, restoredFromCache: true });
     }
 
-    const headers = values[0].filter(Boolean);
-    const rows = values.slice(1).filter(r => r.some(c => c && c.toString().trim()));
+    const riderDirectory = {};
+    for (let r = 2; r < rdRosterRows.length; r++) {
+      const row = rdRosterRows[r] || [];
+      const id = (row[3] || '').toString().trim();
+      const name = (row[4] || '').toString().trim();
+      if (!id || !name) continue;
+      const caRaw = (row[2] || '').toString().trim().toUpperCase();
+      const quanDeliRaw = (row[8] || '').toString().trim();
+      riderDirectory[id] = {
+        id,
+        name,
+        ca: caRaw.includes('2') ? 'COT 2' : 'COT 1',
+        quanGiao: chuanHoaQuanPerf(quanDeliRaw),
+        phuongGiao: (row[9] || '').toString().trim()
+      };
+    }
 
-    res.json({ headers, rows });
+    const sheetPerfFallback = {};
+    let headerRowPerfIdx = -1;
+    for (let r = 0; r < Math.min(20, viewRows.length); r++) {
+      const rowStr = (viewRows[r] || []).map(c => (c || '').toString().toLowerCase().trim());
+      if (rowStr.includes('mã rider') || rowStr.includes('tổng assigned')) {
+        headerRowPerfIdx = r;
+        break;
+      }
+    }
+
+    if (headerRowPerfIdx !== -1) {
+      const hRow = (viewRows[headerRowPerfIdx] || []).map(c => (c || '').toString().toLowerCase().trim());
+      const idColIndices = [];
+      hRow.forEach((colName, idx) => {
+        if (colName === 'mã rider' || colName === 'id' || colName === 'driver id') idColIndices.push(idx);
+      });
+
+      idColIndices.forEach((idCol, tableIdx) => {
+        const caFromTable = tableIdx === 0 ? 'COT 1' : 'COT 2';
+        for (let r = headerRowPerfIdx + 1; r < viewRows.length; r++) {
+          const row = viewRows[r] || [];
+          const rId = (row[idCol] || '').toString().trim();
+          const rName = (row[idCol + 1] || '').toString().trim();
+          const rQuan = (row[idCol + 2] || '').toString().trim();
+          if (!rId || rId === '—' || rId === '-' || !/^\d{4,10}$/.test(rId)) continue;
+
+          if (!riderDirectory[rId]) {
+            riderDirectory[rId] = {
+              id: rId,
+              name: rName || rId,
+              ca: caFromTable,
+              quanGiao: chuanHoaQuanPerf(rQuan),
+              phuongGiao: ''
+            };
+          } else if (rQuan && rQuan !== '—' && rQuan !== '-' && riderDirectory[rId].quanGiao === 'Backup (BK)') {
+            riderDirectory[rId].quanGiao = chuanHoaQuanPerf(rQuan);
+          }
+
+          sheetPerfFallback[rId] = {
+            id: rId,
+            name: rName || riderDirectory[rId]?.name || rId,
+            ca: caFromTable,
+            quanGiao: chuanHoaQuanPerf(rQuan || riderDirectory[rId]?.quanGiao),
+            assigned: parseInt(String(row[idCol + 3] || '0').replace(/[^\d]/g, ''), 10) || 0,
+            delivered: parseInt(String(row[idCol + 4] || '0').replace(/[^\d]/g, ''), 10) || 0,
+            delivering: parseInt(String(row[idCol + 5] || '0').replace(/[^\d]/g, ''), 10) || 0,
+            onHold: parseInt(String(row[idCol + 6] || '0').replace(/[^\d]/g, ''), 10) || 0,
+            orderInSheet: r
+          };
+        }
+      });
+    }
+
+    const uniqueAssignedOrders = new Map();
+    rawOrderRows.forEach(r => {
+      if (!r || !r[0]) return;
+      const shipmentId = (r[0] || '').toString().trim();
+      const driverId = (r[4] || '').toString().trim();
+      const driverName = (r[5] || '').toString().trim();
+      if (!shipmentId || (!driverId && !driverName)) return;
+
+      const whsId = (r[9] || '').toString().trim();
+      const loaiHang = (whsId && whsId !== '0' && whsId.toLowerCase() !== 'trong' && whsId.toLowerCase() !== 'trống' && whsId.toLowerCase() !== 'nan') ? 'WH' : 'MP';
+      const rawStatus = (r[10] || '').toString().trim();
+      const statusBucket = phanLoaiTrangThaiDonPerf(rawStatus);
+
+      uniqueAssignedOrders.set(shipmentId, {
+        shipmentId,
+        zoneId: (r[1] || '').toString().trim(),
+        driverId: driverId || driverName,
+        driverName: driverName || riderDirectory[driverId]?.name || driverId,
+        receivedTime: (r[6] || '').toString().trim(),
+        onHoldTime: (r[7] || '').toString().trim(),
+        onHoldReason: ((r[8] || r[17]) || '').toString().trim(),
+        loaiHang,
+        rawStatus: rawStatus || '—',
+        statusBucket,
+        deliveringTime: (r[11] || '').toString().trim(),
+        isHv: (r[12] || '').toString().trim(),
+        quan: chuanHoaQuanPerf(r[13] || ''),
+        phuong: (r[14] || '').toString().trim(),
+        cotRd: ((r[15] || r[20] || r[16]) || '').toString().trim().toUpperCase()
+      });
+    });
+
+    const riderStatsMap = {};
+    const newOrdersByRiderCache = {};
+
+    uniqueAssignedOrders.forEach(ord => {
+      const rId = ord.driverId;
+      if (!newOrdersByRiderCache[rId]) newOrdersByRiderCache[rId] = [];
+      newOrdersByRiderCache[rId].push(ord);
+
+      if (!riderStatsMap[rId]) {
+        const dirInfo = riderDirectory[rId] || sheetPerfFallback[rId] || {};
+        let caResolved = dirInfo.ca || (ord.cotRd.includes('2') ? 'COT 2' : 'COT 1');
+        riderStatsMap[rId] = {
+          id: rId,
+          name: dirInfo.name || ord.driverName || rId,
+          ca: caResolved,
+          quanGiao: dirInfo.quanGiao || 'Chưa phân tuyến',
+          assigned: 0,
+          delivered: 0,
+          delivering: 0,
+          onHold: 0,
+          hvCount: 0,
+          quanOrderCounts: {},
+          orderInSheet: sheetPerfFallback[rId]?.orderInSheet ?? 9999
+        };
+      }
+
+      const stObj = riderStatsMap[rId];
+      stObj.assigned++;
+      if (ord.statusBucket === 'DELIVERED') stObj.delivered++;
+      else if (ord.statusBucket === 'DELIVERING') stObj.delivering++;
+      else stObj.onHold++;
+
+      if ((ord.isHv || '').toLowerCase() === 'yes') stObj.hvCount++;
+      if (ord.quan && ord.quan !== 'Chưa phân tuyến') {
+        stObj.quanOrderCounts[ord.quan] = (stObj.quanOrderCounts[ord.quan] || 0) + 1;
+      }
+    });
+
+    Object.values(sheetPerfFallback).forEach(fb => {
+      if (!riderStatsMap[fb.id] && fb.assigned > 0) {
+        riderStatsMap[fb.id] = { ...fb, hvCount: 0, quanOrderCounts: {} };
+      }
+    });
+
+    cachedPerfOrdersByRider = newOrdersByRiderCache;
+
+    const districtOrderPriority = ['Quận 2', 'Quận 4', 'Quận 7', 'Quận 9', 'Bình Thạnh', 'Backup (BK)', 'Chưa phân tuyến'];
+
+    const allRiderStats = Object.values(riderStatsMap).map(r => {
+      let finalQuan = r.quanGiao;
+      const topOrderQuan = Object.keys(r.quanOrderCounts || {}).sort((a, b) => r.quanOrderCounts[b] - r.quanOrderCounts[a])[0];
+
+      if ((!finalQuan || finalQuan === 'Chưa phân tuyến' || finalQuan === 'Backup (BK)') && topOrderQuan) {
+        finalQuan = finalQuan === 'Backup (BK)' ? `${topOrderQuan} (BK)` : topOrderQuan;
+      }
+      const baseQuan = chuanHoaQuanPerf(finalQuan);
+      const rateNum = r.assigned > 0 ? Number(((r.delivered / r.assigned) * 100).toFixed(1)) : 0;
+
+      return {
+        id: r.id,
+        name: r.name,
+        ca: r.ca.includes('2') ? 'COT 2' : 'COT 1',
+        quanGiao: finalQuan || 'Chưa phân tuyến',
+        baseQuan: baseQuan,
+        assigned: r.assigned,
+        delivered: r.delivered,
+        delivering: r.delivering,
+        onHold: r.onHold,
+        hvCount: r.hvCount || 0,
+        rate: rateNum,
+        rateStr: `${rateNum.toFixed(1)}%`,
+        orderInSheet: r.orderInSheet
+      };
+    });
+
+    const sortRiders = (arr) => arr.sort((a, b) => {
+      const idxA = districtOrderPriority.indexOf(a.baseQuan);
+      const idxB = districtOrderPriority.indexOf(b.baseQuan);
+      const pA = idxA === -1 ? 99 : idxA;
+      const pB = idxB === -1 ? 99 : idxB;
+      if (pA !== pB) return pA - pB;
+      if (b.assigned !== a.assigned) return b.assigned - a.assigned;
+      return a.name.localeCompare(b.name, 'vi');
+    });
+
+    const caSangList = sortRiders(allRiderStats.filter(r => r.ca === 'COT 1'));
+    const caChieuList = sortRiders(allRiderStats.filter(r => r.ca === 'COT 2'));
+
+    const calcSum = (list) => {
+      const assigned = list.reduce((s, i) => s + i.assigned, 0);
+      const delivered = list.reduce((s, i) => s + i.delivered, 0);
+      const delivering = list.reduce((s, i) => s + i.delivering, 0);
+      const onHold = list.reduce((s, i) => s + i.onHold, 0);
+      const hvCount = list.reduce((s, i) => s + (i.hvCount || 0), 0);
+      const rate = assigned > 0 ? Number(((delivered / assigned) * 100).toFixed(1)) : 0;
+      return { riderCount: list.length, assigned, delivered, delivering, onHold, hvCount, rate, rateStr: `${rate.toFixed(1)}%` };
+    };
+
+    const payload = {
+      success: true,
+      lastUpdate: new Date().toLocaleTimeString('vi-VN'),
+      sourceSheet: rawSheetTitle,
+      templateSheet: viewSheetTitle,
+      tongToanTram: calcSum(allRiderStats),
+      tongCaSang: calcSum(caSangList),
+      tongCaChieu: calcSum(caChieuList),
+      caSangList,
+      caChieuList
+    };
+
+    if (allRiderStats.length > 0) {
+      lastValidPerformanceResponse = payload;
+    }
+
+    res.json(payload);
   } catch (error) {
     console.warn('Lỗi đọc Performance:', error.message);
-    res.json({ headers: ['Thông báo'], rows: [['Đang cập nhật dữ liệu Performance...']] });
+    if (lastValidPerformanceResponse) {
+      return res.json({ ...lastValidPerformanceResponse, restoredFromCache: true });
+    }
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// 2.1 API: XEM CHI TIẾT MÃ ĐƠN CỦA TỪNG RIDER TRONG PERFORMANCE
+app.get('/api/performance-rider-orders', async (req, res) => {
+  try {
+    const { riderId, ca, quan } = req.query;
+    let orders = [];
+
+    if (riderId && riderId !== 'ALL') {
+      orders = cachedPerfOrdersByRider[riderId] || [];
+    } else {
+      Object.keys(cachedPerfOrdersByRider).forEach(rId => {
+        orders.push(...(cachedPerfOrdersByRider[rId] || []));
+      });
+      if (ca && ca !== 'ALL') {
+        const isCot2 = ca.toUpperCase().includes('2');
+        orders = orders.filter(o => isCot2 ? o.cotRd.includes('2') : !o.cotRd.includes('2'));
+      }
+      if (quan && quan !== 'ALL') {
+        const qNorm = chuanHoaQuanPerf(quan);
+        orders = orders.filter(o => o.quan === qNorm);
+      }
+    }
+
+    res.json({ success: true, orders });
+  } catch (e) {
+    res.status(500).json({ success: false, orders: [], error: e.message });
   }
 });
 
