@@ -776,13 +776,15 @@
         <div class="hv-handover-card shadow-sm mb-2" id="cardBanGiaoHv">
           <div class="hv-handover-header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div class="d-flex align-items-center flex-wrap gap-2">
-              <span class="fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px;">
-                <i class="bi bi-shield-check text-warning me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
-              </span>
-              <span class="badge bg-warning text-dark fw-bold" id="badgeCountBanGiaoHv">0 đơn</span>
-              <span class="badge bg-success-subtle text-success border border-success-subtle" id="badgeCountHvDelivered" style="font-size: 0.7rem;">0 Giao thành công</span>
-              <span class="badge bg-danger-subtle text-danger border border-danger-subtle" id="badgeCountHvIp" style="font-size: 0.7rem;">0 đơn IP</span>
-            </div>
+            <span class="fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL')" title="Nhấn để xem tất cả đơn HV">
+              <i class="bi bi-shield-check text-warning me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
+            </span>
+            <span class="badge bg-warning text-dark fw-bold" id="badgeCountBanGiaoHv" style="cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL')" title="Xem tất cả đơn HV">0 đơn HV</span>
+            <span class="badge bg-success-subtle text-success border border-success-subtle" id="badgeCountHvDelivered" style="font-size: 0.72rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('DELIVERED')">0 Giao thành công</span>
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" id="badgeCountHvIp" style="font-size: 0.72rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL_IP')">0 đơn IP</span>
+            <span class="badge bg-danger text-white border border-warning fw-bold shadow-sm" id="badgeCountHvIpChuaBG" style="font-size: 0.73rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('IP_CHUA_BG')" title="Nhấn để lọc riêng các đơn IP chưa bàn giao">⏳ 0 IP Chưa bàn giao</span>
+            <span class="badge bg-info text-dark border border-light fw-bold shadow-sm" id="badgeCountHvIpDaBG" style="font-size: 0.73rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('IP_DA_BG')" title="Nhấn để lọc riêng các đơn IP đã bàn giao">✅ 0 IP Đã bàn giao</span>
+          </div>
             <div class="d-flex align-items-center gap-2">
               <input type="text" id="searchBanGiaoHv" class="form-control form-control-sm" style="width: 210px; height: 26px; font-size: 0.75rem;" placeholder="🔍 Tìm mã đơn, RD, phường, trạng thái..." oninput="renderBangBanGiaoHv()">
               <button type="button" class="btn btn-xs btn-outline-light py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="toggleZoomBanGiaoHv()" id="btnZoomBanGiaoHv" title="Phóng to toàn màn hình / Thu nhỏ">
@@ -2551,6 +2553,36 @@
       });
     }
 
+    let currentFilterModeBanGiaoHv = 'ALL';
+
+    function locNhanhTrangThaiIpHv(mode) {
+      currentFilterModeBanGiaoHv = (currentFilterModeBanGiaoHv === mode && mode !== 'ALL') ? 'ALL' : mode;
+      renderBangBanGiaoHv();
+    }
+
+    // Kiểm tra trạng thái đơn đã bàn giao / hoàn tất hay chưa
+    function kiemTraDaBanGiaoHvItem(trangThai) {
+      const tt = (trangThai || '').toString().toLowerCase().trim();
+      return tt.includes('đã bàn giao') ||
+             tt.includes('da ban giao') ||
+             tt.includes('thành công') ||
+             tt.includes('thanh cong') ||
+             tt.includes('hoàn tất') ||
+             tt.includes('đã trả') ||
+             tt.includes('đã nhận');
+    }
+
+    // Xác định thứ tự ưu tiên Quận để gom các đơn chung Quận nằm liền kề nhau
+    function layThuTuQuanBanGiaoHv(quanPhuongStr) {
+      const s = (quanPhuongStr || '').toString().toLowerCase();
+      if (s.includes('quận 2') || s.includes('q2')) return 1;
+      if (s.includes('quận 4') || s.includes('q4')) return 2;
+      if (s.includes('quận 7') || s.includes('q7')) return 3;
+      if (s.includes('quận 9') || s.includes('q9')) return 4;
+      if (s.includes('bình thạnh') || s.includes('bt')) return 5;
+      return 6;
+    }
+
     function renderBangBanGiaoHv() {
       const tbody = document.getElementById('tbodyBanGiaoHv');
       if (!tbody) return;
@@ -2558,8 +2590,21 @@
       const kw = (document.getElementById('searchBanGiaoHv')?.value || '').trim().toLowerCase();
       const allHv = listBanGiaoHv || [];
 
-      const countSuccess = allHv.filter(item => (item.trangThai || '').toLowerCase().includes('thành công')).length;
-      const countIp = allHv.filter(item => (item.maDon || '').toLowerCase().includes('ip')).length;
+      let countSuccess = 0;
+      let countIp = 0;
+      let countIpChuaBG = 0;
+      let countIpDaBG = 0;
+
+      allHv.forEach(item => {
+        const isIp = (item.maDon || '').toLowerCase().includes('ip');
+        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThai);
+        if ((item.trangThai || '').toLowerCase().includes('thành công')) countSuccess++;
+        if (isIp) {
+          countIp++;
+          if (isDaBG) countIpDaBG++;
+          else countIpChuaBG++;
+        }
+      });
 
       const badgeTotal = document.getElementById('badgeCountBanGiaoHv');
       if (badgeTotal) badgeTotal.innerText = `${allHv.length} đơn HV`;
@@ -2567,40 +2612,96 @@
       if (badgeDelivered) badgeDelivered.innerText = `${countSuccess} Giao thành công`;
       const badgeIp = document.getElementById('badgeCountHvIp');
       if (badgeIp) badgeIp.innerText = `${countIp} đơn IP`;
+      const badgeIpChua = document.getElementById('badgeCountHvIpChuaBG');
+      if (badgeIpChua) badgeIpChua.innerText = `⏳ ${countIpChuaBG} IP Chưa bàn giao`;
+      const badgeIpDa = document.getElementById('badgeCountHvIpDaBG');
+      if (badgeIpDa) badgeIpDa.innerText = `✅ ${countIpDaBG} IP Đã bàn giao`;
 
       const filtered = allHv.filter(item => {
+        const isIp = (item.maDon || '').toLowerCase().includes('ip');
+        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThai);
+
+        if (currentFilterModeBanGiaoHv === 'DELIVERED' && !(item.trangThai || '').toLowerCase().includes('thành công')) return false;
+        if (currentFilterModeBanGiaoHv === 'ALL_IP' && !isIp) return false;
+        if (currentFilterModeBanGiaoHv === 'IP_CHUA_BG' && !(isIp && !isDaBG)) return false;
+        if (currentFilterModeBanGiaoHv === 'IP_DA_BG' && !(isIp && isDaBG)) return false;
+
         if (!kw) return true;
         const gop = `${item.maDon} ${item.zoneId} ${item.quanPhuong} ${item.idRd} ${item.tenRd} ${item.cotRd} ${item.trangThai} ${item.lyDoOnhold}`.toLowerCase();
         return gop.includes(kw);
       });
 
-      if (filtered.length === 0) {
+      // SẮP XẾP:
+      // 1. Đưa toàn bộ "Đơn IP chưa bàn giao" lên đầu tiên (Group 0)
+      // 2. Tiếp theo là đơn thường chưa hoàn thành (Group 1) -> Đơn IP đã bàn giao (Group 2) -> Đơn thường đã hoàn thành (Group 3)
+      // 3. Trong mỗi nhóm: Sắp xếp gom chung Quận (Quận 2 -> Quận 4 -> Quận 7 -> Quận 9 -> Bình Thạnh) và chung Phường
+      const sorted = [...filtered].sort((a, b) => {
+        const isIpA = (a.maDon || '').toLowerCase().includes('ip');
+        const isIpB = (b.maDon || '').toLowerCase().includes('ip');
+        const isDoneA = kiemTraDaBanGiaoHvItem(a.trangThai);
+        const isDoneB = kiemTraDaBanGiaoHvItem(b.trangThai);
+
+        const groupA = (isIpA && !isDoneA) ? 0 : (!isIpA && !isDoneA ? 1 : (isIpA && isDoneA ? 2 : 3));
+        const groupB = (isIpB && !isDoneB) ? 0 : (!isIpB && !isDoneB ? 1 : (isIpB && isDoneB ? 2 : 3));
+        if (groupA !== groupB) return groupA - groupB;
+
+        // Gom chung Quận (Q2 -> Q4 -> Q7 -> Q9 -> BT)
+        const qOrderA = layThuTuQuanBanGiaoHv(a.quanPhuong);
+        const qOrderB = layThuTuQuanBanGiaoHv(b.quanPhuong);
+        if (qOrderA !== qOrderB) return qOrderA - qOrderB;
+
+        // Trong cùng Quận của nhóm IP chưa bàn giao: Ưu tiên "Chờ bàn giao" / "Chờ kho xử lý" lên trước "Đang đi giao"
+        if (groupA === 0) {
+          const waitA = (a.trangThai || '').toLowerCase().includes('chờ') ? 0 : 1;
+          const waitB = (b.trangThai || '').toLowerCase().includes('chờ') ? 0 : 1;
+          if (waitA !== waitB) return waitA - waitB;
+        }
+
+        // Gom chung Phường trong cùng Quận
+        return (a.quanPhuong || '').localeCompare(b.quanPhuong || '', 'vi');
+      });
+
+      if (sorted.length === 0) {
         tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">Không có dữ liệu đơn hàng HV phù hợp</td></tr>';
         return;
       }
 
       let html = '';
-      filtered.forEach((item, idx) => {
+      sorted.forEach((item, idx) => {
         const isIp = (item.maDon || '').toLowerCase().includes('ip');
+        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThai);
         const ipCls = isIp ? 'hv-cell-ip' : '';
         const ttLower = (item.trangThai || '').toLowerCase();
-        const ttCls = ttLower.includes('thành công') ? 'hv-status-success' : (ttLower.includes('hold') || ttLower.includes('giữ') ? 'hv-status-onhold' : '');
+
+        let ttCls = '';
+        if (ttLower.includes('thành công') || ttLower.includes('đã bàn giao')) {
+          ttCls = 'hv-status-success';
+        } else if (isIp && !isDaBG) {
+          ttCls = 'hv-status-onhold';
+        } else if (ttLower.includes('chờ') || ttLower.includes('hold') || ttLower.includes('giữ')) {
+          ttCls = 'hv-status-onhold';
+        }
+
         const cotBadge = (item.cotRd || '').includes('2')
           ? '<span class="badge badge-cot2" style="font-size:0.68rem;">COT 2</span>'
-          : ((item.cotRd || '').includes('1') ? '<span class="badge badge-cot1" style="font-size:0.68rem;">COT 1</span>' : (item.cotRd || '—'));
+          : ((item.cotRd || '').includes('1') ? '<span class="badge badge-cot1" style="font-size:0.68rem;">COT 1</span>' : (item.cotRd && item.cotRd !== '0' ? item.cotRd : '—'));
+
+        const cleanIdRd = (item.idRd && item.idRd !== '0') ? item.idRd : '—';
+        const cleanTenRd = (item.tenRd && item.tenRd !== '0') ? item.tenRd : '—';
+        const cleanTime = (item.thoiGianQuet && item.thoiGianQuet !== '0') ? item.thoiGianQuet : '—';
 
         html += `
           <tr>
             <td class="text-muted small">${idx + 1}</td>
             <td class="font-monospace text-start ${ipCls}">${item.maDon || '—'}</td>
             <td class="font-monospace">${item.zoneId || '—'}</td>
-            <td class="text-start">${item.quanPhuong || '—'}</td>
-            <td class="font-monospace fw-bold text-secondary">${item.idRd || '—'}</td>
-            <td class="text-start fw-semibold ${ipCls}">${item.tenRd || '—'}</td>
+            <td class="text-start fw-semibold">${item.quanPhuong || '—'}</td>
+            <td class="font-monospace fw-bold text-secondary">${cleanIdRd}</td>
+            <td class="text-start fw-semibold ${ipCls}">${cleanTenRd}</td>
             <td>${cotBadge}</td>
-            <td class="font-monospace small ${ipCls}">${item.thoiGianQuet || '—'}</td>
+            <td class="font-monospace small ${ipCls}">${cleanTime}</td>
             <td class="${ttCls}">${item.trangThai || '—'}</td>
-            <td class="text-start text-danger small">${item.lyDoOnhold || ''}</td>
+            <td class="text-start text-danger small fw-semibold">${item.lyDoOnhold || ''}</td>
           </tr>`;
       });
       tbody.innerHTML = html;
