@@ -778,13 +778,37 @@ app.get('/api/performance-rider-orders', async (req, res) => {
 // Bộ nhớ lưu ngầm dữ liệu Hàng Hóa hợp lệ gần nhất (Chống lỗi nhảy về 0 khi Sheet đang cập nhật/trống tạm thời)
 let lastValidHangHoaResponse = null;
 
+// Hàm chuẩn hóa trạng thái đơn HV theo đúng quy tắc vận hành
+function chuanHoaTrangThaiBanGiaoHv(rawStatus, idRd, tenRd) {
+  const st = (rawStatus || '').toString().trim().toLowerCase();
+  const hasRd = Boolean(idRd && idRd !== '0' && idRd !== '—' && idRd !== '-') ||
+                Boolean(tenRd && tenRd !== '0' && tenRd !== '—' && tenRd !== '-');
+
+  if (st.includes('delivered') && !st.includes('undelivered')) return 'Giao thành công';
+  if (st.includes('giao thành công') || st.includes('thanh cong')) return 'Giao thành công';
+
+  if (st.includes('onhold') || st.includes('on_hold') || st.includes('on-hold') || st.includes('chờ kho xử lý')) {
+    return 'Chờ kho xử lý';
+  }
+
+  if (st.includes('delivering') || st.includes('đang đi giao')) {
+    return 'Đang đi giao';
+  }
+
+  if (st.includes('lmhub_received') || st.includes('chờ bàn giao') || !hasRd) {
+    return 'Chờ bàn giao';
+  }
+
+  return rawStatus || 'Chờ bàn giao';
+}
+
 // 3. API: HÀNG HÓA - ĐỌC ĐỒNG THỜI "DATA INBOUND" & BẢNG "BÀN GIAO HV" TRÊN "PENDING ATTEMPT"
 app.get('/api/hang-hoa-data', async (req, res) => {
   try {
     const batchRes = await sheets.spreadsheets.values.batchGet({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
       ranges: [
-        "'DATA INBOUND'!A2:O",
+        "'DATA INBOUND'!A2:V",
         "'PENDING ATTEMPT'!A1:Z500"
       ]
     });
@@ -793,6 +817,26 @@ app.get('/api/hang-hoa-data', async (req, res) => {
     const allRows = valueRanges[0]?.values || [];
     const pendingAttemptRows = valueRanges[1]?.values || [];
     const nowTimeStr = new Date().toLocaleTimeString('vi-VN');
+
+    // Lập từ điển tra cứu nhanh từ DATA INBOUND (kiểm tra whs_id = VNWL và trạng thái gốc)
+    const inboundLookupMap = new Map();
+    allRows.forEach(r => {
+      const sId = (r[0] || '').toString().trim();
+      if (!sId) return;
+      inboundLookupMap.set(sId, {
+        zoneId: (r[1] || '').toString().trim(),
+        idRd: (r[4] || '').toString().trim(),
+        tenRd: (r[5] || '').toString().trim(),
+        onHoldReason: ((r[8] || r[17]) || '').toString().trim(),
+        whsId: (r[9] || '').toString().trim(),
+        rawStatus: (r[10] || '').toString().trim(),
+        deliveringTime: (r[11] || '').toString().trim(),
+        isHv: (r[12] || '').toString().trim(),
+        quan: (r[13] || '').toString().trim(),
+        phuong: (r[14] || '').toString().trim(),
+        cotRd: ((r[15] || r[20]) || '').toString().trim()
+      });
+    });
 
     // 1. Trích xuất thời gian "Last update" và bảng "BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV" từ tab PENDING ATTEMPT
     let sheetUpdateStr = '';
@@ -821,18 +865,33 @@ app.get('/api/hang-hoa-data', async (req, res) => {
     if (hvHeaderRowIdx !== -1 && hvStartColIdx !== -1) {
       for (let r = hvHeaderRowIdx + 1; r < pendingAttemptRows.length; r++) {
         const row = pendingAttemptRows[r] || [];
-        const maDon = (row[hvStartColIdx] || '').toString().trim();
-        if (!maDon) continue;
+        let rawMaDon = (row[hvStartColIdx] || '').toString().trim();
+        if (!rawMaDon) continue;
+
+        const baseShipId = rawMaDon.split(/\s*-\s*/)[0].trim();
+        const inbInfo = inboundLookupMap.get(baseShipId) || {};
+
+        const whsIdUpper = (inbInfo.whsId || '').toUpperCase();
+        const isIpOrder = whsIdUpper.includes('VNWL') || rawMaDon.toLowerCase().includes('đơn ip');
+        const finalMaDon = isIpOrder ? `${baseShipId} - đơn IP` : baseShipId;
+
+        const idRdVal = (row[hvStartColIdx + 3] || inbInfo.idRd || '').toString().trim();
+        const tenRdVal = (row[hvStartColIdx + 4] || inbInfo.tenRd || '').toString().trim();
+        const rawTt = (row[hvStartColIdx + 7] || inbInfo.rawStatus || '').toString().trim();
+        const trangThaiChuan = chuanHoaTrangThaiBanGiaoHv(rawTt, idRdVal, tenRdVal);
+
         banGiaoHv.push({
-          maDon: maDon,
-          zoneId: (row[hvStartColIdx + 1] || '').toString().trim(),
-          quanPhuong: (row[hvStartColIdx + 2] || '').toString().trim(),
-          idRd: (row[hvStartColIdx + 3] || '').toString().trim(),
-          tenRd: (row[hvStartColIdx + 4] || '').toString().trim(),
-          cotRd: (row[hvStartColIdx + 5] || '').toString().trim(),
-          thoiGianQuet: (row[hvStartColIdx + 6] || '').toString().trim(),
-          trangThai: (row[hvStartColIdx + 7] || '').toString().trim(),
-          lyDoOnhold: (row[hvStartColIdx + 8] || '').toString().trim()
+          maDon: finalMaDon,
+          isIp: isIpOrder,
+          whsId: inbInfo.whsId || '',
+          zoneId: (row[hvStartColIdx + 1] || inbInfo.zoneId || '').toString().trim(),
+          quanPhuong: (row[hvStartColIdx + 2] || `${inbInfo.quan || ''} - ${inbInfo.phuong || ''}`).toString().trim(),
+          idRd: idRdVal,
+          tenRd: tenRdVal,
+          cotRd: (row[hvStartColIdx + 5] || inbInfo.cotRd || '').toString().trim(),
+          thoiGianQuet: (row[hvStartColIdx + 6] || inbInfo.deliveringTime || '').toString().trim(),
+          trangThai: trangThaiChuan,
+          lyDoOnhold: (row[hvStartColIdx + 8] || inbInfo.onHoldReason || '').toString().trim()
         });
       }
     }

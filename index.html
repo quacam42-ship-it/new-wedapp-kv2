@@ -586,6 +586,11 @@
           color: #990000 !important;
           font-weight: 700 !important;
         }
+        .hv-row-ip td {
+          background-color: #fce8e6 !important;
+          color: #990000 !important;
+          font-weight: 700 !important;
+        }
         .hv-status-success {
           background-color: #d9ead3 !important;
           color: #137333 !important;
@@ -2560,19 +2565,67 @@
       renderBangBanGiaoHv();
     }
 
-    // Kiểm tra trạng thái đơn đã bàn giao / hoàn tất hay chưa
-    function kiemTraDaBanGiaoHvItem(trangThai) {
-      const tt = (trangThai || '').toString().toLowerCase().trim();
-      return tt.includes('đã bàn giao') ||
-             tt.includes('da ban giao') ||
-             tt.includes('thành công') ||
-             tt.includes('thanh cong') ||
-             tt.includes('hoàn tất') ||
-             tt.includes('đã trả') ||
-             tt.includes('đã nhận');
+    let currentFilterModeBanGiaoHv = 'ALL';
+
+    function locNhanhTrangThaiIpHv(mode) {
+      currentFilterModeBanGiaoHv = (currentFilterModeBanGiaoHv === mode && mode !== 'ALL') ? 'ALL' : mode;
+      renderBangBanGiaoHv();
     }
 
-    // Xác định thứ tự ưu tiên Quận để gom các đơn chung Quận nằm liền kề nhau
+    // Chuẩn hóa tên trạng thái hiển thị trên bảng HV:
+    // - LMHub_Received (chưa có RD quét) -> Chờ bàn giao
+    // - Delivering -> Đang đi giao
+    // - OnHold -> Chờ kho xử lý
+    // - Delivered -> Giao thành công
+    function chuanHoaTrangThaiHvFrontend(item) {
+      const raw = (item.trangThai || '').toString().trim();
+      const s = raw.toLowerCase();
+      const hasRd = Boolean(item.idRd && item.idRd !== '0' && item.idRd !== '—' && item.idRd !== '-') ||
+                    Boolean(item.tenRd && item.tenRd !== '0' && item.tenRd !== '—' && item.tenRd !== '-');
+
+      if (s.includes('delivered') && !s.includes('undelivered')) return 'Giao thành công';
+      if (s.includes('giao thành công') || s.includes('thành công')) return 'Giao thành công';
+
+      if (s.includes('onhold') || s.includes('on_hold') || s.includes('on-hold') || s.includes('chờ kho xử lý')) {
+        return 'Chờ kho xử lý';
+      }
+
+      if (s.includes('delivering') || s.includes('đang đi giao')) {
+        return 'Đang đi giao';
+      }
+
+      if (s.includes('lmhub_received') || s.includes('chờ bàn giao') || !hasRd) {
+        return 'Chờ bàn giao';
+      }
+
+      return raw || 'Chờ bàn giao';
+    }
+
+    // Đang đi giao (Delivering) và Giao thành công (Delivered) được tính là ĐÃ BÀN GIAO
+    function kiemTraDaBanGiaoHvItem(trangThaiChuan) {
+      const tt = (trangThaiChuan || '').toString().toLowerCase().trim();
+      return tt === 'đang đi giao' ||
+             tt === 'giao thành công' ||
+             tt.includes('đang đi giao') ||
+             tt.includes('thành công') ||
+             tt.includes('đã bàn giao');
+    }
+
+    // Thứ tự ưu tiên trạng thái từ trên xuống dưới:
+    // 1. Chờ bàn giao (LMHub_Received - chưa có RD quét)
+    // 2. Đang đi giao (Delivering)
+    // 3. Chờ kho xử lý (OnHold)
+    // 4. Giao thành công (Delivered)
+    function layThuTuTrangThaiHv(trangThaiChuan) {
+      const tt = (trangThaiChuan || '').toString().toLowerCase().trim();
+      if (tt.includes('chờ bàn giao')) return 1;
+      if (tt.includes('đang đi giao')) return 2;
+      if (tt.includes('chờ kho xử lý')) return 3;
+      if (tt.includes('giao thành công')) return 4;
+      return 5;
+    }
+
+    // Thứ tự gom chung Quận (Q2 -> Q4 -> Q7 -> Q9 -> Bình Thạnh)
     function layThuTuQuanBanGiaoHv(quanPhuongStr) {
       const s = (quanPhuongStr || '').toString().toLowerCase();
       if (s.includes('quận 2') || s.includes('q2')) return 1;
@@ -2588,7 +2641,23 @@
       if (!tbody) return;
 
       const kw = (document.getElementById('searchBanGiaoHv')?.value || '').trim().toLowerCase();
-      const allHv = listBanGiaoHv || [];
+      const rawList = listBanGiaoHv || [];
+
+      // Chuẩn hóa trạng thái & nhận diện đơn IP (whs_id = VNWL hoặc có hậu tố - đơn IP)
+      const allHv = rawList.map(item => {
+        const isIp = Boolean(item.isIp) ||
+                     (item.whsId || '').toUpperCase().includes('VNWL') ||
+                     (item.maDon || '').toLowerCase().includes('ip');
+        const baseId = (item.maDon || '').split(/\s*-\s*/)[0].trim();
+        const maDonHienThi = isIp ? `${baseId} - đơn IP` : (item.maDon || '—');
+        const trangThaiChuan = chuanHoaTrangThaiHvFrontend(item);
+        return {
+          ...item,
+          isIp,
+          maDonHienThi,
+          trangThaiChuan
+        };
+      });
 
       let countSuccess = 0;
       let countIp = 0;
@@ -2596,10 +2665,9 @@
       let countIpDaBG = 0;
 
       allHv.forEach(item => {
-        const isIp = (item.maDon || '').toLowerCase().includes('ip');
-        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThai);
-        if ((item.trangThai || '').toLowerCase().includes('thành công')) countSuccess++;
-        if (isIp) {
+        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThaiChuan);
+        if (item.trangThaiChuan === 'Giao thành công') countSuccess++;
+        if (item.isIp) {
           countIp++;
           if (isDaBG) countIpDaBG++;
           else countIpChuaBG++;
@@ -2618,46 +2686,33 @@
       if (badgeIpDa) badgeIpDa.innerText = `✅ ${countIpDaBG} IP Đã bàn giao`;
 
       const filtered = allHv.filter(item => {
-        const isIp = (item.maDon || '').toLowerCase().includes('ip');
-        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThai);
+        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThaiChuan);
 
-        if (currentFilterModeBanGiaoHv === 'DELIVERED' && !(item.trangThai || '').toLowerCase().includes('thành công')) return false;
-        if (currentFilterModeBanGiaoHv === 'ALL_IP' && !isIp) return false;
-        if (currentFilterModeBanGiaoHv === 'IP_CHUA_BG' && !(isIp && !isDaBG)) return false;
-        if (currentFilterModeBanGiaoHv === 'IP_DA_BG' && !(isIp && isDaBG)) return false;
+        if (currentFilterModeBanGiaoHv === 'DELIVERED' && item.trangThaiChuan !== 'Giao thành công') return false;
+        if (currentFilterModeBanGiaoHv === 'ALL_IP' && !item.isIp) return false;
+        if (currentFilterModeBanGiaoHv === 'IP_CHUA_BG' && !(item.isIp && !isDaBG)) return false;
+        if (currentFilterModeBanGiaoHv === 'IP_DA_BG' && !(item.isIp && isDaBG)) return false;
 
         if (!kw) return true;
-        const gop = `${item.maDon} ${item.zoneId} ${item.quanPhuong} ${item.idRd} ${item.tenRd} ${item.cotRd} ${item.trangThai} ${item.lyDoOnhold}`.toLowerCase();
+        const gop = `${item.maDonHienThi} ${item.zoneId} ${item.quanPhuong} ${item.idRd} ${item.tenRd} ${item.cotRd} ${item.trangThaiChuan} ${item.lyDoOnhold}`.toLowerCase();
         return gop.includes(kw);
       });
 
-      // SẮP XẾP:
-      // 1. Đưa toàn bộ "Đơn IP chưa bàn giao" lên đầu tiên (Group 0)
-      // 2. Tiếp theo là đơn thường chưa hoàn thành (Group 1) -> Đơn IP đã bàn giao (Group 2) -> Đơn thường đã hoàn thành (Group 3)
-      // 3. Trong mỗi nhóm: Sắp xếp gom chung Quận (Quận 2 -> Quận 4 -> Quận 7 -> Quận 9 -> Bình Thạnh) và chung Phường
+      // SẮP XẾP TỪ TRÊN XUỐNG DƯỚI:
+      // 1. Xếp theo thứ tự Trạng thái: Chờ bàn giao (1) -> Đang đi giao (2) -> Chờ kho xử lý (3) -> Giao thành công (4)
+      // 2. Trong mỗi trạng thái: Ưu tiên Đơn IP (whs_id = VNWL) lên đầu
+      // 3. Gom chung Quận (Q2 -> Q4 -> Q7 -> Q9 -> Bình Thạnh) và Phường
       const sorted = [...filtered].sort((a, b) => {
-        const isIpA = (a.maDon || '').toLowerCase().includes('ip');
-        const isIpB = (b.maDon || '').toLowerCase().includes('ip');
-        const isDoneA = kiemTraDaBanGiaoHvItem(a.trangThai);
-        const isDoneB = kiemTraDaBanGiaoHvItem(b.trangThai);
+        const rankStA = layThuTuTrangThaiHv(a.trangThaiChuan);
+        const rankStB = layThuTuTrangThaiHv(b.trangThaiChuan);
+        if (rankStA !== rankStB) return rankStA - rankStB;
 
-        const groupA = (isIpA && !isDoneA) ? 0 : (!isIpA && !isDoneA ? 1 : (isIpA && isDoneA ? 2 : 3));
-        const groupB = (isIpB && !isDoneB) ? 0 : (!isIpB && !isDoneB ? 1 : (isIpB && isDoneB ? 2 : 3));
-        if (groupA !== groupB) return groupA - groupB;
+        if (a.isIp !== b.isIp) return a.isIp ? -1 : 1;
 
-        // Gom chung Quận (Q2 -> Q4 -> Q7 -> Q9 -> BT)
         const qOrderA = layThuTuQuanBanGiaoHv(a.quanPhuong);
         const qOrderB = layThuTuQuanBanGiaoHv(b.quanPhuong);
         if (qOrderA !== qOrderB) return qOrderA - qOrderB;
 
-        // Trong cùng Quận của nhóm IP chưa bàn giao: Ưu tiên "Chờ bàn giao" / "Chờ kho xử lý" lên trước "Đang đi giao"
-        if (groupA === 0) {
-          const waitA = (a.trangThai || '').toLowerCase().includes('chờ') ? 0 : 1;
-          const waitB = (b.trangThai || '').toLowerCase().includes('chờ') ? 0 : 1;
-          if (waitA !== waitB) return waitA - waitB;
-        }
-
-        // Gom chung Phường trong cùng Quận
         return (a.quanPhuong || '').localeCompare(b.quanPhuong || '', 'vi');
       });
 
@@ -2668,18 +2723,18 @@
 
       let html = '';
       sorted.forEach((item, idx) => {
-        const isIp = (item.maDon || '').toLowerCase().includes('ip');
-        const isDaBG = kiemTraDaBanGiaoHvItem(item.trangThai);
-        const ipCls = isIp ? 'hv-cell-ip' : '';
-        const ttLower = (item.trangThai || '').toLowerCase();
+        const isIp = item.isIp;
+        const rowCls = isIp ? 'hv-row-ip' : '';
+        const ipCellCls = isIp ? 'hv-cell-ip' : '';
+        const tt = item.trangThaiChuan;
 
         let ttCls = '';
-        if (ttLower.includes('thành công') || ttLower.includes('đã bàn giao')) {
+        if (tt === 'Giao thành công') {
           ttCls = 'hv-status-success';
-        } else if (isIp && !isDaBG) {
+        } else if (tt === 'Chờ bàn giao' || tt === 'Chờ kho xử lý') {
           ttCls = 'hv-status-onhold';
-        } else if (ttLower.includes('chờ') || ttLower.includes('hold') || ttLower.includes('giữ')) {
-          ttCls = 'hv-status-onhold';
+        } else if (tt === 'Đang đi giao') {
+          ttCls = isIp ? 'hv-cell-ip' : 'fw-bold text-primary';
         }
 
         const cotBadge = (item.cotRd || '').includes('2')
@@ -2691,16 +2746,16 @@
         const cleanTime = (item.thoiGianQuet && item.thoiGianQuet !== '0') ? item.thoiGianQuet : '—';
 
         html += `
-          <tr>
+          <tr class="${rowCls}">
             <td class="text-muted small">${idx + 1}</td>
-            <td class="font-monospace text-start ${ipCls}">${item.maDon || '—'}</td>
+            <td class="font-monospace text-start ${ipCellCls}">${item.maDonHienThi}</td>
             <td class="font-monospace">${item.zoneId || '—'}</td>
             <td class="text-start fw-semibold">${item.quanPhuong || '—'}</td>
-            <td class="font-monospace fw-bold text-secondary">${cleanIdRd}</td>
-            <td class="text-start fw-semibold ${ipCls}">${cleanTenRd}</td>
+            <td class="font-monospace fw-bold">${cleanIdRd}</td>
+            <td class="text-start fw-semibold ${ipCellCls}">${cleanTenRd}</td>
             <td>${cotBadge}</td>
-            <td class="font-monospace small ${ipCls}">${cleanTime}</td>
-            <td class="${ttCls}">${item.trangThai || '—'}</td>
+            <td class="font-monospace small ${ipCellCls}">${cleanTime}</td>
+            <td class="${ttCls}">${tt}</td>
             <td class="text-start text-danger small fw-semibold">${item.lyDoOnhold || ''}</td>
           </tr>`;
       });
