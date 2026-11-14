@@ -471,13 +471,13 @@ app.get('/api/performance-data', async (req, res) => {
       });
     });
 
-    // 4. ĐỌC SHEET "LỊCH SỬ ONHOLD" (GID=296426696) - CHỈ LẤY ĐƠN OH TRONG NGÀY HÔM NAY
+    // 4. ĐỌC SHEET "LỊCH SỬ ONHOLD" (GID=296426696) - CHỈ DÙNG CHO THẺ KPI ON-HOLD TRONG NGÀY
     const todayOhOrdersMap = new Map();
     if (ohHistoryRows.length > 1) {
       let ohHeaderIdx = 0;
       for (let r = 0; r < Math.min(5, ohHistoryRows.length); r++) {
         const rowLower = (ohHistoryRows[r] || []).map(c => (c || '').toString().toLowerCase().trim()).join(' ');
-        if (rowLower.includes('shipment') || rowLower.includes('mã đơn') || rowLower.includes('onhold') || rowLower.includes('lý do') || rowLower.includes('driver') || rowLower.includes('rider')) {
+        if (rowLower.includes('shipment') || rowLower.includes('mã đơn') || rowLower.includes('onhold') || rowLower.includes('lý do') || rowLower.includes('zone')) {
           ohHeaderIdx = r;
           break;
         }
@@ -490,21 +490,15 @@ app.get('/api/performance-data', async (req, res) => {
       const cZone = findCol(['zone']);
       const cDrvId = findCol(['driver_id', 'id rd', 'mã rd', 'mã rider', 'rider_id', 'id tài xế']);
       const cDrvName = findCol(['driver_name', 'tên rd', 'tên rider', 'họ tên', 'họ và tên', 'tên tài xế', 'rider_name']);
-      const cHoldTime = findCol(['on_hold_time', 'onhold_time', 'thời gian onhold', 'thời gian hold', 'giờ hold', 'ngày onhold', 'time']);
-      const cDate = findCol(['ngày', 'date', 'timestamp', 'thời gian']);
+      const cHoldTime = findCol(['on_hold_time', 'onhold_time', 'thời gian onhold', 'thời gian hold', 'giờ hold', 'ngày onhold', 'thời gian', 'time']);
       const cReason = findCol(['reason', 'lý do', 'ly do']);
-      const cStatus = findCol(['status', 'trạng thái', 'trang thai']);
       const cQuan = findCol(['quận', 'quan']);
       const cPhuong = findCol(['phường', 'phuong']);
-      const cWhs = findCol(['whs', 'loại hàng']);
-      const cHv = findCol(['hv']);
-      const cCot = findCol(['cot', 'ca']);
 
       for (let r = ohHeaderIdx + 1; r < ohHistoryRows.length; r++) {
         const row = ohHistoryRows[r] || [];
         if (!row || row.length === 0) continue;
 
-        // Tìm mã đơn (Shipment ID)
         let sId = cShip !== -1 ? cleanZeroVal(row[cShip]) : '';
         if (!sId) {
           const foundCell = row.find(cell => /^VN[0-9A-Z]{8,20}$/i.test(cleanZeroVal(cell)));
@@ -512,30 +506,16 @@ app.get('/api/performance-data', async (req, res) => {
         }
         if (!sId) continue;
 
-        // Kiểm tra ngày của dòng On-Hold có phải HÔM NAY không
-        let isTodayRow = false;
-        let holdTimeStr = '';
+        // Xác định cột Thời gian On-Hold (mặc định cột E = row[4] nếu không có tiêu đề khớp)
+        let holdTimeStr = cHoldTime !== -1 ? cleanZeroVal(row[cHoldTime]) : cleanZeroVal(row[4]);
+        let isTodayRow = holdTimeStr ? laNgayHomNayVN(holdTimeStr, todayParts) : false;
 
-        if (cHoldTime !== -1 && cleanZeroVal(row[cHoldTime])) {
-          holdTimeStr = cleanZeroVal(row[cHoldTime]);
-          if (laNgayHomNayVN(holdTimeStr, todayParts)) isTodayRow = true;
-        }
-        if (!isTodayRow && cDate !== -1 && cleanZeroVal(row[cDate])) {
-          const dtVal = cleanZeroVal(row[cDate]);
-          if (!holdTimeStr) holdTimeStr = dtVal;
-          if (laNgayHomNayVN(dtVal, todayParts)) isTodayRow = true;
-        }
-        if (!isTodayRow && cleanZeroVal(row[7]) && laNgayHomNayVN(row[7], todayParts)) {
-          // Trường hợp cấu trúc cột giống DATA INBOUND (Cột H = index 7 là on_hold_time)
-          holdTimeStr = cleanZeroVal(row[7]);
-          isTodayRow = true;
-        }
         if (!isTodayRow) {
           for (let c = 0; c < row.length; c++) {
             if (c === cShip) continue;
             const cellVal = cleanZeroVal(row[c]);
             if (cellVal && laNgayHomNayVN(cellVal, todayParts)) {
-              if (!holdTimeStr) holdTimeStr = cellVal;
+              holdTimeStr = cellVal;
               isTodayRow = true;
               break;
             }
@@ -546,59 +526,54 @@ app.get('/api/performance-data', async (req, res) => {
         if (!isTodayRow) continue;
 
         const inboundRef = allInboundOrderLookup.get(sId) || {};
-        let drvId = (cDrvId !== -1 ? cleanZeroVal(row[cDrvId]) : cleanZeroVal(row[4])) || inboundRef.driverId || '';
-        let drvName = (cDrvName !== -1 ? cleanZeroVal(row[cDrvName]) : cleanZeroVal(row[5])) || inboundRef.driverName || '';
 
-        if (!drvId && drvName && riderNameMap[drvName.toLowerCase()]) {
-          drvId = riderNameMap[drvName.toLowerCase()].id;
-        }
-        if (drvId && !drvName && riderDirectory[drvId]) {
-          drvName = riderDirectory[drvId].name;
-        }
+        // Chỉ lấy ID Rider nếu thực sự là mã số Rider hợp lệ (4-10 chữ số), tuyệt đối không lấy nhầm cột Thời gian row[4]
+        let rawDrvId = (cDrvId !== -1 ? cleanZeroVal(row[cDrvId]) : '') || inboundRef.driverId || '';
+        const validDrvId = /^\d{4,10}$/.test(rawDrvId) ? rawDrvId : '';
+        let validDrvName = (cDrvName !== -1 ? cleanZeroVal(row[cDrvName]) : '') || inboundRef.driverName || (validDrvId && riderDirectory[validDrvId]?.name) || '—';
 
-        const reasonStr = (cReason !== -1 ? cleanZeroVal(row[cReason]) : cleanZeroVal(row[8])) || inboundRef.onHoldReason || '—';
+        const reasonStr = (cReason !== -1 ? cleanZeroVal(row[cReason]) : cleanZeroVal(row[5])) || inboundRef.onHoldReason || '—';
         const zoneStr = (cZone !== -1 ? cleanZeroVal(row[cZone]) : cleanZeroVal(row[1])) || inboundRef.zoneId || '—';
-        const quanStr = chuanHoaQuanPerf((cQuan !== -1 ? cleanZeroVal(row[cQuan]) : '') || inboundRef.quan || riderDirectory[drvId]?.quanGiao || '');
-        const phuongStr = (cPhuong !== -1 ? cleanZeroVal(row[cPhuong]) : '') || inboundRef.phuong || '';
-        const statusStr = (cStatus !== -1 ? cleanZeroVal(row[cStatus]) : '') || inboundRef.rawStatus || 'On-Hold';
-        const loaiStr = (cWhs !== -1 && cleanZeroVal(row[cWhs])) ? (cleanZeroVal(row[cWhs]).toUpperCase() === 'MP' ? 'MP' : 'WH') : (inboundRef.loaiHang || 'MP');
-        const hvStr = (cHv !== -1 ? cleanZeroVal(row[cHv]) : '') || inboundRef.isHv || 'No';
-        const cotStr = ((cCot !== -1 ? cleanZeroVal(row[cCot]) : '') || inboundRef.cotRd || riderDirectory[drvId]?.ca || 'COT 1').toUpperCase();
+        const quanStr = chuanHoaQuanPerf((cQuan !== -1 ? cleanZeroVal(row[cQuan]) : cleanZeroVal(row[2])) || inboundRef.quan || '');
+        const phuongStr = (cPhuong !== -1 ? cleanZeroVal(row[cPhuong]) : cleanZeroVal(row[3])) || inboundRef.phuong || '';
 
         todayOhOrdersMap.set(sId, {
           shipmentId: sId,
           zoneId: zoneStr,
-          driverId: drvId || drvName || 'Chưa rõ',
-          driverName: drvName || drvId || 'Chưa rõ',
+          driverId: validDrvId || '—',
+          driverName: validDrvName,
           receivedTime: inboundRef.receivedTime || '',
           onHoldTime: holdTimeStr,
           onHoldReason: reasonStr,
-          loaiHang: loaiStr,
-          rawStatus: statusStr,
+          loaiHang: inboundRef.loaiHang || 'MP',
+          rawStatus: 'On-Hold',
           statusBucket: 'ON_HOLD',
           deliveringTime: inboundRef.deliveringTime || '',
-          isHv: hvStr,
+          isHv: inboundRef.isHv || 'No',
           quan: quanStr,
           phuong: phuongStr,
-          cotRd: cotStr
+          cotRd: inboundRef.cotRd || (validDrvId && riderDirectory[validDrvId]?.ca) || 'COT 1'
         });
       }
     }
 
     cachedTodayOnHoldOrders = Array.from(todayOhOrdersMap.values());
 
-    // 5. Tổng hợp số liệu theo từng Rider (Delivered & Delivering từ DATA INBOUND + On-Hold trong ngày từ LỊCH SỬ ONHOLD)
+    // 5. CHỈ LẤY ID & HỌ TÊN CỦA RIDER HỢP LỆ VÀO BẢNG (KHÔNG ĐẨY CÁC ĐƠN ON-HOLD VÀO BẢNG RIDER)
     const riderStatsMap = {};
     const newOrdersByRiderCache = {};
 
     const ensureRiderStat = (rId, rName, fallbackCa, fallbackQuan) => {
-      if (!rId || rId === 'Chưa rõ') return null;
-      if (!riderStatsMap[rId]) {
-        const dirInfo = riderDirectory[rId] || sheetPerfFallback[rId] || {};
+      const cleanId = (rId || '').toString().trim();
+      // Chỉ chấp nhận Mã Rider là dãy số ID hợp lệ (VD: 141965, 132373...), loại bỏ hoàn toàn ngày giờ / lý do onhold
+      if (!/^\d{4,10}$/.test(cleanId)) return null;
+
+      if (!riderStatsMap[cleanId]) {
+        const dirInfo = riderDirectory[cleanId] || sheetPerfFallback[cleanId] || {};
         const caResolved = dirInfo.ca || (fallbackCa && fallbackCa.includes('2') ? 'COT 2' : 'COT 1');
-        riderStatsMap[rId] = {
-          id: rId,
-          name: dirInfo.name || rName || rId,
+        riderStatsMap[cleanId] = {
+          id: cleanId,
+          name: dirInfo.name || rName || cleanId,
           ca: caResolved,
           quanGiao: dirInfo.quanGiao || fallbackQuan || 'Chưa phân tuyến',
           assigned: 0,
@@ -607,48 +582,30 @@ app.get('/api/performance-data', async (req, res) => {
           onHold: 0,
           hvCount: 0,
           quanOrderCounts: {},
-          orderInSheet: sheetPerfFallback[rId]?.orderInSheet ?? 9999
+          orderInSheet: sheetPerfFallback[cleanId]?.orderInSheet ?? 9999
         };
       }
-      if (!newOrdersByRiderCache[rId]) newOrdersByRiderCache[rId] = [];
-      return riderStatsMap[rId];
+      if (!newOrdersByRiderCache[cleanId]) newOrdersByRiderCache[cleanId] = [];
+      return riderStatsMap[cleanId];
     };
 
-    // Nạp đơn Delivered & Delivering từ DATA INBOUND
+    // Chỉ nạp các đơn của Rider hợp lệ (Delivered & Delivering) vào bảng
     uniqueAssignedOrders.forEach(ord => {
+      if (ord.statusBucket !== 'DELIVERED' && ord.statusBucket !== 'DELIVERING') return;
+
       const rId = ord.driverId;
       const stObj = ensureRiderStat(rId, ord.driverName, ord.cotRd, ord.quan);
       if (!stObj) return;
 
-      // Nếu đơn này nằm trong danh sách On-Hold hôm nay của LỊCH SỬ ONHOLD thì sẽ được tính ở bước On-Hold bên dưới
-      if (todayOhOrdersMap.has(ord.shipmentId)) return;
-
-      if (ord.statusBucket === 'DELIVERED' || ord.statusBucket === 'DELIVERING') {
-        stObj.assigned++;
-        if (ord.statusBucket === 'DELIVERED') stObj.delivered++;
-        else if (ord.statusBucket === 'DELIVERING') stObj.delivering++;
-
-        if (ord.isHv.toLowerCase() === 'yes') stObj.hvCount++;
-        if (ord.quan && ord.quan !== 'Chưa phân tuyến') {
-          stObj.quanOrderCounts[ord.quan] = (stObj.quanOrderCounts[ord.quan] || 0) + 1;
-        }
-        newOrdersByRiderCache[rId].push(ord);
-      }
-    });
-
-    // Nạp đơn On-Hold trong ngày từ LỊCH SỬ ONHOLD (gid=296426696)
-    cachedTodayOnHoldOrders.forEach(ohOrd => {
-      const rId = ohOrd.driverId;
-      const stObj = ensureRiderStat(rId, ohOrd.driverName, ohOrd.cotRd, ohOrd.quan);
-      if (!stObj) return;
-
       stObj.assigned++;
-      stObj.onHold++;
-      if ((ohOrd.isHv || '').toLowerCase() === 'yes') stObj.hvCount++;
-      if (ohOrd.quan && ohOrd.quan !== 'Chưa phân tuyến') {
-        stObj.quanOrderCounts[ohOrd.quan] = (stObj.quanOrderCounts[ohOrd.quan] || 0) + 1;
+      if (ord.statusBucket === 'DELIVERED') stObj.delivered++;
+      else if (ord.statusBucket === 'DELIVERING') stObj.delivering++;
+
+      if ((ord.isHv || '').toLowerCase() === 'yes') stObj.hvCount++;
+      if (ord.quan && ord.quan !== 'Chưa phân tuyến') {
+        stObj.quanOrderCounts[ord.quan] = (stObj.quanOrderCounts[ord.quan] || 0) + 1;
       }
-      newOrdersByRiderCache[rId].push(ohOrd);
+      newOrdersByRiderCache[stObj.id].push(ord);
     });
 
     cachedPerfOrdersByRider = newOrdersByRiderCache;
