@@ -250,7 +250,7 @@ app.get('/api/rider-data', async (req, res) => {
   }
 });
 
-// ================= 2. API: PERFORMANCE TODAY (ĐỌC GID=1048493669 & ON-HOLD TỪ GID=296426696) =================
+// ================= 2. API: PERFORMANCE TODAY (CHUẨN TỔNG QUÉT & ĐƠN OH CỦA TỪNG RIDER) =================
 const GID_PERF_RAW_ORDERS = 1048493669;
 const GID_PERF_TODAY_VIEW = 1561639417;
 const GID_ONHOLD_HISTORY = 296426696;
@@ -258,7 +258,6 @@ let lastValidPerformanceResponse = null;
 let cachedPerfOrdersByRider = {};
 let cachedTodayOnHoldOrders = [];
 
-// Làm sạch các ô công thức trả về '0' hoặc ký tự rỗng trên Sheet
 function cleanZeroVal(val) {
   const s = (val ?? '').toString().trim();
   if (s === '0' || s === '-' || s === '—' || s.toLowerCase() === 'nan' || s.toLowerCase() === '#n/a' || s.toLowerCase() === 'null' || s.toLowerCase() === 'trống' || s.toLowerCase() === 'trong') {
@@ -278,19 +277,16 @@ function chuanHoaQuanPerf(qRaw) {
   return cleanZeroVal(qRaw) || 'Chưa phân tuyến';
 }
 
-// Kiểm tra chuỗi ngày/thời gian có phải là ngày hôm nay (theo giờ Việt Nam) không
 function laNgayHomNayVN(strDate, todayParts) {
   const s = cleanZeroVal(strDate);
   if (!s) return false;
   const { dInt, mInt, yInt } = todayParts;
 
-  // 1. Định dạng YYYY-MM-DD hoặc YYYY/MM/DD (VD: 2026-11-12 11:21:49)
   const mIso = s.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
   if (mIso) {
     return parseInt(mIso[1], 10) === yInt && parseInt(mIso[2], 10) === mInt && parseInt(mIso[3], 10) === dInt;
   }
 
-  // 2. Định dạng DD/MM/YYYY hoặc DD-MM-YYYY (VD: 12/11/2026)
   const mVN = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
   if (mVN) {
     let yr = parseInt(mVN[3], 10);
@@ -298,12 +294,10 @@ function laNgayHomNayVN(strDate, todayParts) {
     return yr === yInt && parseInt(mVN[2], 10) === mInt && parseInt(mVN[1], 10) === dInt;
   }
 
-  // 3. Định dạng ngắn DD/MM (VD: 12/11)
   const mShort = s.match(/(?:^|\s)(\d{1,2})[\/\-](\d{1,2})(?:\s|$)/);
   if (mShort) {
     return parseInt(mShort[2], 10) === mInt && parseInt(mShort[1], 10) === dInt;
   }
-
   return false;
 }
 
@@ -342,7 +336,6 @@ app.get('/api/performance-data', async (req, res) => {
       return res.json({ ...lastValidPerformanceResponse, restoredFromCache: true });
     }
 
-    // Lấy ngày hôm nay theo chuẩn giờ Việt Nam
     const nowVN = new Date();
     const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit' });
     const parts = {};
@@ -353,10 +346,9 @@ app.get('/api/performance-data', async (req, res) => {
       yInt: parseInt(parts.year, 10)
     };
 
-    // Hàm chuẩn hóa tên Rider (bỏ khoảng trắng thừa, đồng bộ bảng mã Unicode & chữ thường) để dò khớp 100%
     const chuanHoaTenKey = (str) => cleanZeroVal(str).normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim();
 
-    // 1. Xây dựng danh bạ Rider từ TỔNG QUAN RD (kèm Map tìm theo Tên để đối chiếu với LỊCH SỬ ONHOLD & DATA INBOUND)
+    // 1. Danh bạ Rider từ TỔNG QUAN RD
     const riderDirectory = {};
     const riderNameMap = {};
     for (let r = 2; r < rdRosterRows.length; r++) {
@@ -377,7 +369,7 @@ app.get('/api/performance-data', async (req, res) => {
       riderNameMap[chuanHoaTenKey(name)] = rdObj;
     }
 
-    // 2. Quét bảng PERFORMANCE TODAY (gid=1561639417) để bổ sung thông tin Ca/Quận & số On-Hold dự phòng
+    // 2. Đọc bảng PERFORMANCE TODAY (gid=1561639417) để đối chiếu Ca, Quận và số liệu trên Sheet
     const sheetPerfFallback = {};
     let headerRowPerfIdx = -1;
     for (let r = 0; r < Math.min(20, viewRows.length); r++) {
@@ -430,7 +422,7 @@ app.get('/api/performance-data', async (req, res) => {
       });
     }
 
-    // 3. Đọc DATA INBOUND (gid=1048493669): Học thêm cặp (ID <-> Tên Rider) trước, sau đó ánh xạ toàn bộ đơn
+    // 3. Học thêm cặp (ID <-> Tên Rider) từ DATA INBOUND & lập danh sách đơn đã gán Rider
     rawOrderRows.forEach(r => {
       if (!r || !r[0]) return;
       const dId = cleanZeroVal(r[4]);
@@ -457,7 +449,6 @@ app.get('/api/performance-data', async (req, res) => {
       let driverId = /^\d{4,10}$/.test(rawDrvId) ? rawDrvId : '';
       let driverName = cleanZeroVal(r[5]);
 
-      // Nếu cột ID Rider trên DATA INBOUND bị về 0 nhưng còn Tên Rider -> Dò ngược ra Mã ID Rider
       if (!driverId && driverName) {
         const matchedRd = riderNameMap[chuanHoaTenKey(driverName)];
         if (matchedRd) driverId = matchedRd.id;
@@ -491,24 +482,26 @@ app.get('/api/performance-data', async (req, res) => {
       let statusBucket = 'OTHER';
       if (stLower.includes('delivered') && !stLower.includes('undelivered')) statusBucket = 'DELIVERED';
       else if (stLower.includes('delivering')) statusBucket = 'DELIVERING';
-      else if (stLower.includes('onhold') || stLower.includes('on_hold') || (onHoldTime && laNgayHomNayVN(onHoldTime, todayParts))) {
+      else if (stLower.includes('onhold') || stLower.includes('on_hold') || onHoldTime || onHoldReason) {
         statusBucket = 'ON_HOLD_INBOUND';
       }
 
-      uniqueAssignedOrders.set(shipmentId, {
-        ...ordBase,
-        statusBucket
-      });
+      // Chỉ giữ các đơn thực sự đã gán Rider và đang chạy/đã giao/onhold (loại bỏ đơn chưa quét LMHub_Received)
+      if (statusBucket !== 'OTHER') {
+        uniqueAssignedOrders.set(shipmentId, {
+          ...ordBase,
+          statusBucket
+        });
+      }
     });
 
-    // 4. ĐỌC SHEET "LỊCH SỬ ONHOLD" (GID=296426696) - CHỈ LẤY ĐƠN OH TRONG NGÀY & GHÉP ĐÚNG RIDER
+    // 4. ĐỌC SHEET "LỊCH SỬ ONHOLD" (GID=296426696) - CHỈ LẤY ĐƠN OH TRONG NGÀY & ÁNH XẠ ĐÚNG ID/TÊN RIDER
     const todayOhOrdersMap = new Map();
     if (ohHistoryRows.length > 1) {
       let ohHeaderIdx = 0;
       for (let r = 0; r < Math.min(6, ohHistoryRows.length); r++) {
         const nonEmptyCells = (ohHistoryRows[r] || []).filter(c => cleanZeroVal(c) !== '');
         const rowLower = nonEmptyCells.map(c => c.toString().toLowerCase().trim()).join(' ');
-        // Đảm bảo dòng tiêu đề có ít nhất 3 cột (tránh bắt nhầm dòng 1 nếu là ô gộp tên bảng)
         if (nonEmptyCells.length >= 3 && (rowLower.includes('shipment') || rowLower.includes('mã đơn') || rowLower.includes('zone') || rowLower.includes('lý do'))) {
           ohHeaderIdx = r;
           break;
@@ -540,7 +533,6 @@ app.get('/api/performance-data', async (req, res) => {
         }
         if (!sId) continue;
 
-        // Tìm cột Thời gian On-Hold và kiểm tra phải thuộc NGÀY HÔM NAY
         let holdTimeStr = cHoldTime !== -1 ? cleanZeroVal(row[cHoldTime]) : '';
         let isTodayRow = holdTimeStr ? laNgayHomNayVN(holdTimeStr, todayParts) : false;
 
@@ -558,29 +550,30 @@ app.get('/api/performance-data', async (req, res) => {
         if (!isTodayRow) continue;
 
         const inboundRef = allInboundOrderLookup.get(sId) || {};
-
-        // TÌM ĐÚNG MÃ ID RIDER & HỌ TÊN RIDER CỦA ĐƠN ON-HOLD NÀY:
         let validDrvId = '';
         let validDrvName = '';
 
-        // Bước 4.1: Lấy từ cột cDrvId / cDrvName nếu có tiêu đề khớp
+        // 4.1 Dò theo cột tiêu đề trên LỊCH SỬ ONHOLD
         if (cDrvId !== -1 && /^\d{4,10}$/.test(cleanZeroVal(row[cDrvId]))) {
           validDrvId = cleanZeroVal(row[cDrvId]);
         }
         if (cDrvName !== -1 && cleanZeroVal(row[cDrvName])) {
           const candName = cleanZeroVal(row[cDrvName]);
-          if (riderNameMap[chuanHoaTenKey(candName)]) {
-            validDrvName = riderNameMap[chuanHoaTenKey(candName)].name;
-            if (!validDrvId) validDrvId = riderNameMap[chuanHoaTenKey(candName)].id;
+          const matched = riderNameMap[chuanHoaTenKey(candName)];
+          if (matched) {
+            validDrvName = matched.name;
+            if (!validDrvId) validDrvId = matched.id;
+          } else if (!laNgayHomNayVN(candName, todayParts)) {
+            validDrvName = candName;
           }
         }
 
-        // Bước 4.2: Quét thông minh các ô trong dòng LỊCH SỬ ONHOLD để tìm Mã ID Rider (trong danh bạ) hoặc Tên Rider
+        // 4.2 Quét toàn bộ các ô trên dòng LỊCH SỬ ONHOLD để bắt ID Rider (VD: cột G/H) hoặc Tên Rider
         if (!validDrvId) {
           for (let c = 0; c < row.length; c++) {
             const cellVal = cleanZeroVal(row[c]);
             if (!cellVal || cellVal === sId || cellVal === holdTimeStr) continue;
-            if (riderDirectory[cellVal]) {
+            if (/^\d{4,10}$/.test(cellVal) && riderDirectory[cellVal]) {
               validDrvId = cellVal;
               validDrvName = riderDirectory[cellVal].name;
               break;
@@ -594,7 +587,7 @@ app.get('/api/performance-data', async (req, res) => {
           }
         }
 
-        // Bước 4.3: Đối chiếu sang DATA INBOUND theo mã đơn (Shipment ID)
+        // 4.3 Đối chiếu sang DATA INBOUND theo Shipment ID
         if (!validDrvId && inboundRef.driverId && /^\d{4,10}$/.test(inboundRef.driverId)) {
           validDrvId = inboundRef.driverId;
         }
@@ -606,7 +599,6 @@ app.get('/api/performance-data', async (req, res) => {
           validDrvName = (validDrvId && riderDirectory[validDrvId]?.name) || inboundRef.driverName || '—';
         }
 
-        // Tìm Lý do On-Hold (tránh lấy nhầm tên Rider hoặc ngày giờ)
         let reasonStr = cReason !== -1 ? cleanZeroVal(row[cReason]) : '';
         if (!reasonStr) {
           const candCol5 = cleanZeroVal(row[5]);
@@ -643,13 +635,46 @@ app.get('/api/performance-data', async (req, res) => {
 
     cachedTodayOnHoldOrders = Array.from(todayOhOrdersMap.values());
 
-    // 5. TỔNG HỢP BẢNG RIDER (CHỈ NHẬN MÃ RIDER SỐ HỢP LỆ & CỘNG ĐỦ ĐƠN ON-HOLD CHO RIDER ĐÓ)
+    // 5. HỢP NHẤT ĐƠN HÀNG THEO SHIPMENT ID (CHỐNG CỘNG TRÙNG 100%)
+    // Quy tắc: Mỗi mã đơn (Shipment ID) chỉ được tính ĐÚNG 1 LẦN cho Rider của đơn đó!
+    const mergedRiderOrdersMap = new Map(); // shipmentId -> orderObj
+
+    // 5.1 Nạp các đơn Delivered & Delivering từ DATA INBOUND
+    uniqueAssignedOrders.forEach((ord, sId) => {
+      if (ord.statusBucket === 'DELIVERED' || ord.statusBucket === 'DELIVERING') {
+        mergedRiderOrdersMap.set(sId, ord);
+      } else if (ord.statusBucket === 'ON_HOLD_INBOUND') {
+        mergedRiderOrdersMap.set(sId, { ...ord, statusBucket: 'ON_HOLD' });
+      }
+    });
+
+    // 5.2 Ghi đè / Bổ sung các đơn On-Hold trong ngày từ LỊCH SỬ ONHOLD (Nếu đơn đó đang nằm trong LỊCH SỬ ONHOLD hôm nay thì trạng thái chuẩn của nó là ON_HOLD)
+    cachedTodayOnHoldOrders.forEach(ohOrd => {
+      let rId = ohOrd.driverId;
+      if (!/^\d{4,10}$/.test(rId) && ohOrd.driverName && ohOrd.driverName !== '—') {
+        const matched = riderNameMap[chuanHoaTenKey(ohOrd.driverName)];
+        if (matched) rId = matched.id;
+      }
+      const existingOrd = mergedRiderOrdersMap.get(ohOrd.shipmentId);
+      const finalDriverId = /^\d{4,10}$/.test(rId) ? rId : (existingOrd?.driverId || '');
+
+      if (/^\d{4,10}$/.test(finalDriverId)) {
+        mergedRiderOrdersMap.set(ohOrd.shipmentId, {
+          ...(existingOrd || {}),
+          ...ohOrd,
+          driverId: finalDriverId,
+          driverName: riderDirectory[finalDriverId]?.name || ohOrd.driverName || existingOrd?.driverName || finalDriverId,
+          statusBucket: 'ON_HOLD'
+        });
+      }
+    });
+
+    // 5.3 Đếm chính xác từ tập đơn đã hợp nhất (Tổng Quét = Delivered + Delivering + On-Hold)
     const riderStatsMap = {};
     const newOrdersByRiderCache = {};
 
     const ensureRiderStat = (rId, rName, fallbackCa, fallbackQuan) => {
       const cleanId = (rId || '').toString().trim();
-      // Chỉ cho phép ID Rider là mã số hợp lệ (4-10 chữ số) vào bảng, chặn 100% ngày giờ / lý do On-Hold
       if (!/^\d{4,10}$/.test(cleanId)) return null;
 
       if (!riderStatsMap[cleanId]) {
@@ -673,65 +698,41 @@ app.get('/api/performance-data', async (req, res) => {
       return riderStatsMap[cleanId];
     };
 
-    // 5.1. Nạp đơn Delivered & Delivering (và đơn On-Hold trực tiếp trên DATA INBOUND nếu chưa có trong LỊCH SỬ ONHOLD)
-    uniqueAssignedOrders.forEach(ord => {
-      const rId = ord.driverId;
-      const stObj = ensureRiderStat(rId, ord.driverName, ord.cotRd, ord.quan);
+    mergedRiderOrdersMap.forEach(ord => {
+      const stObj = ensureRiderStat(ord.driverId, ord.driverName, ord.cotRd, ord.quan);
       if (!stObj) return;
 
-      // Nếu đơn này đã nằm trong danh sách LỊCH SỬ ONHOLD hôm nay thì sẽ được cộng ở bước 5.2 ngay bên dưới
-      if (todayOhOrdersMap.has(ord.shipmentId)) return;
-
-      if (ord.statusBucket === 'DELIVERED' || ord.statusBucket === 'DELIVERING') {
-        stObj.assigned++;
-        if (ord.statusBucket === 'DELIVERED') stObj.delivered++;
-        else if (ord.statusBucket === 'DELIVERING') stObj.delivering++;
-
-        if ((ord.isHv || '').toLowerCase() === 'yes') stObj.hvCount++;
-        if (ord.quan && ord.quan !== 'Chưa phân tuyến') {
-          stObj.quanOrderCounts[ord.quan] = (stObj.quanOrderCounts[ord.quan] || 0) + 1;
-        }
-        newOrdersByRiderCache[stObj.id].push(ord);
-      } else if (ord.statusBucket === 'ON_HOLD_INBOUND') {
-        const ohItem = { ...ord, statusBucket: 'ON_HOLD' };
-        stObj.assigned++;
-        stObj.onHold++;
-        if ((ord.isHv || '').toLowerCase() === 'yes') stObj.hvCount++;
-        if (ord.quan && ord.quan !== 'Chưa phân tuyến') {
-          stObj.quanOrderCounts[ord.quan] = (stObj.quanOrderCounts[ord.quan] || 0) + 1;
-        }
-        newOrdersByRiderCache[stObj.id].push(ohItem);
-      }
-    });
-
-    // 5.2. Cộng toàn bộ đơn On-Hold trong ngày (từ LỊCH SỬ ONHOLD) vào đúng Rider sở hữu đơn đó
-    cachedTodayOnHoldOrders.forEach(ohOrd => {
-      let rId = ohOrd.driverId;
-      if (!/^\d{4,10}$/.test(rId) && ohOrd.driverName && ohOrd.driverName !== '—') {
-        const matched = riderNameMap[chuanHoaTenKey(ohOrd.driverName)];
-        if (matched) rId = matched.id;
-      }
-      const stObj = ensureRiderStat(rId, ohOrd.driverName, ohOrd.cotRd, ohOrd.quan);
-      if (!stObj) return; // Nếu đơn OH không gắn với Rider nào thì chỉ tính trên KPI tổng, không tạo dòng rác trong bảng
-
       stObj.assigned++;
-      stObj.onHold++;
-      if ((ohOrd.isHv || '').toLowerCase() === 'yes') stObj.hvCount++;
-      if (ohOrd.quan && ohOrd.quan !== 'Chưa phân tuyến') {
-        stObj.quanOrderCounts[ohOrd.quan] = (stObj.quanOrderCounts[ohOrd.quan] || 0) + 1;
+      if (ord.statusBucket === 'DELIVERED') stObj.delivered++;
+      else if (ord.statusBucket === 'DELIVERING') stObj.delivering++;
+      else if (ord.statusBucket === 'ON_HOLD') stObj.onHold++;
+
+      if ((ord.isHv || '').toLowerCase() === 'yes') stObj.hvCount++;
+      if (ord.quan && ord.quan !== 'Chưa phân tuyến') {
+        stObj.quanOrderCounts[ord.quan] = (stObj.quanOrderCounts[ord.quan] || 0) + 1;
       }
-      newOrdersByRiderCache[stObj.id].push(ohOrd);
+      newOrdersByRiderCache[stObj.id].push(ord);
     });
 
-    // 5.3. Đối chiếu với cột On-Hold trên PERFORMANCE TODAY (gid=1561639417): Nếu trên Sheet có ghi nhận số On-Hold cho Rider mà DATA INBOUND đã xóa tên Rider khi trả hàng về kho, vẫn giữ đủ số On-Hold cho Rider đó
-    Object.keys(riderStatsMap).forEach(rId => {
-      const stObj = riderStatsMap[rId];
+    // 5.4 Đối chiếu với PERFORMANCE TODAY (gid=1561639417): Nếu trên Sheet có ghi nhận On-Hold cho Rider mà DATA INBOUND đã xóa tên Rider khi trả hàng về kho
+    Object.keys(sheetPerfFallback).forEach(rId => {
       const fb = sheetPerfFallback[rId];
-      if (fb && fb.onHold > stObj.onHold) {
-        const diff = fb.onHold - stObj.onHold;
+      if (!fb || fb.assigned <= 0) return;
+      const stObj = ensureRiderStat(rId, fb.name, fb.ca, fb.quanGiao);
+      if (!stObj) return;
+
+      if (fb.onHold > stObj.onHold) {
         stObj.onHold = fb.onHold;
-        stObj.assigned += diff;
       }
+      if (fb.delivered > stObj.delivered && stObj.delivered === 0) {
+        stObj.delivered = fb.delivered;
+      }
+      if (fb.delivering > stObj.delivering && stObj.delivering === 0) {
+        stObj.delivering = fb.delivering;
+      }
+      // Đảm bảo công thức: Tổng Quét (Assigned) luôn bằng đúng Delivered + Delivering + On-Hold
+      const calcTotal = stObj.delivered + stObj.delivering + stObj.onHold;
+      stObj.assigned = Math.max(calcTotal, fb.assigned);
     });
 
     cachedPerfOrdersByRider = newOrdersByRiderCache;
@@ -796,8 +797,7 @@ app.get('/api/performance-data', async (req, res) => {
       sourceSheet: rawSheetTitle,
       templateSheet: viewSheetTitle,
       onHoldSheet: ohSheetTitle,
-      // Thẻ KPI On-Hold lấy đúng tổng số đơn OH trong ngày từ sheet LỊCH SỬ ONHOLD (gid=296426696)
-      tongToanTram: calcSum(allRiderStats, cachedTodayOnHoldOrders.length),
+      tongToanTram: calcSum(allRiderStats, cachedTodayOnHoldOrders.length > 0 ? cachedTodayOnHoldOrders.length : null),
       tongCaSang: calcSum(caSangList),
       tongCaChieu: calcSum(caChieuList),
       caSangList,
@@ -818,7 +818,7 @@ app.get('/api/performance-data', async (req, res) => {
   }
 });
 
-// 2.1 API: XEM CHI TIẾT MÃ ĐƠN CỦA TỪNG RIDER (KHI XEM TẤT CẢ ON-HOLD SẼ TRẢ VỀ ĐÚNG DANH SÁCH TỪ LỊCH SỬ ONHOLD HÔM NAY)
+// 2.1 API: XEM CHI TIẾT MÃ ĐƠN CỦA TỪNG RIDER
 app.get('/api/performance-rider-orders', async (req, res) => {
   try {
     const { riderId, ca, quan } = req.query;
@@ -827,7 +827,6 @@ app.get('/api/performance-rider-orders', async (req, res) => {
     if (riderId && riderId !== 'ALL') {
       orders = cachedPerfOrdersByRider[riderId] || [];
     } else {
-      // Gộp các đơn Delivered / Delivering của Rider + toàn bộ đơn On-Hold trong ngày từ LỊCH SỬ ONHOLD
       const seenShipIds = new Set();
       cachedTodayOnHoldOrders.forEach(oh => {
         seenShipIds.add(oh.shipmentId);
@@ -857,7 +856,6 @@ app.get('/api/performance-rider-orders', async (req, res) => {
     res.status(500).json({ success: false, orders: [], error: e.message });
   }
 });
-
 // Bộ nhớ lưu ngầm dữ liệu Hàng Hóa hợp lệ gần nhất (Chống lỗi nhảy về 0 khi Sheet đang cập nhật/trống tạm thời)
 let lastValidHangHoaResponse = null;
 

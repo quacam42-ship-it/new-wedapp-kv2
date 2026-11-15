@@ -9,12 +9,11 @@ let currentPerfModalOrders = [];
 let currentPerfModalStatusFilter = 'ALL';
 let currentPerfShipmentIds = [];
 
-// 1. TỰ ĐỘNG KHỞI TẠO GIAO DIỆN PERFORMANCE CHUẨN SHEET (GID=1561639417) TRONG #section-performance
+// 1. TỰ ĐỘNG KHỞI TẠO GIAO DIỆN PERFORMANCE GỌN GÀNG KHÔNG CẦN KÉO NGANG
 function khoiTaoGiaoDienPerformanceDOM() {
   const sec = document.getElementById('section-performance');
   if (!sec || document.getElementById('rowHaiBangPerformance')) return;
 
-  // Giữ lại thẻ Quản lý phường lấy hàng (BK) và Modal của nó
   const modalPick = document.getElementById('modalPhanPhuongPick');
 
   sec.innerHTML = `
@@ -22,29 +21,34 @@ function khoiTaoGiaoDienPerformanceDOM() {
       .perf-sheet-header-cot1 {
         background: linear-gradient(135deg, #1b4965, #0d6efd);
         color: #ffffff;
-        padding: 7px 12px;
+        padding: 6px 10px;
         font-weight: 700;
-        font-size: 0.84rem;
+        font-size: 0.82rem;
       }
       .perf-sheet-header-cot2 {
         background: linear-gradient(135deg, #9a3412, #fd7e14);
         color: #ffffff;
-        padding: 7px 12px;
+        padding: 6px 10px;
         font-weight: 700;
-        font-size: 0.84rem;
+        font-size: 0.82rem;
+      }
+      .perf-sheet-table {
+        table-layout: fixed;
+        width: 100%;
       }
       .perf-sheet-table th {
         background-color: #1b4965 !important;
         color: #ffffff !important;
-        font-size: 0.73rem;
-        padding: 5px 6px !important;
-        white-space: nowrap;
+        font-size: 0.7rem;
+        padding: 5px 3px !important;
         text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .perf-sheet-table td {
-        font-size: 0.76rem;
-        padding: 4px 6px !important;
-        white-space: nowrap;
+        font-size: 0.74rem;
+        padding: 4px 3px !important;
+        vertical-align: middle;
       }
       .perf-summary-row td {
         background-color: #fef9c3 !important;
@@ -61,14 +65,15 @@ function khoiTaoGiaoDienPerformanceDOM() {
       }
       .perf-num-btn {
         cursor: pointer;
-        padding: 1px 6px;
+        padding: 1px 4px;
         border-radius: 4px;
         display: inline-block;
-        min-width: 28px;
+        min-width: 24px;
+        font-size: 0.73rem;
         transition: transform 0.1s ease;
       }
       .perf-num-btn:hover {
-        transform: scale(1.12);
+        transform: scale(1.1);
         box-shadow: 0 2px 5px rgba(0,0,0,0.15);
       }
     </style>
@@ -91,7 +96,7 @@ function khoiTaoGiaoDienPerformanceDOM() {
           <div class="d-flex align-items-center flex-wrap gap-2">
             <span class="badge bg-primary fs-6 py-1 px-2 shadow-sm"><i class="bi bi-speedometer2 me-1"></i>PERFORMANCE TODAY</span>
             <span class="text-muted small">Nạp lúc: <strong class="text-primary font-monospace" id="perfLastUpdateTime">—</strong></span>
-            <span class="text-secondary small d-none d-sm-inline">(💡 Nhấn vào từng Rider hoặc số đơn để xem mã đơn)</span>
+            <span class="text-secondary small d-none d-sm-inline">(💡 Nhấn vào Rider hoặc số đơn để xem mã đơn)</span>
           </div>
           <button type="button" class="btn btn-sm btn-primary fw-bold py-1 px-3 shadow-sm" id="btnRefreshPerf" onclick="window.loadPerformanceData(true)">
             <i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay
@@ -104,7 +109,7 @@ function khoiTaoGiaoDienPerformanceDOM() {
     <div class="row row-cols-2 row-cols-md-5 g-2 mb-2">
       <div class="col">
         <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="window.xemChiTietDonPerformance('ALL', 'TẤT CẢ RIDER KV2', 'ALL')">
-          <div class="sheet-kpi-title"><span>TỔNG ASSIGNED</span> <i class="bi bi-search"></i></div>
+          <div class="sheet-kpi-title"><span>TỔNG QUÉT (ASSIGNED)</span> <i class="bi bi-search"></i></div>
           <div class="sheet-kpi-val" id="perfKpiAssigned">0</div>
           <div class="sheet-kpi-sub" id="perfSubAssigned">0 Rider chạy đơn</div>
         </div>
@@ -124,8 +129,8 @@ function khoiTaoGiaoDienPerformanceDOM() {
         </div>
       </div>
       <div class="col">
-        <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="window.xemChiTietDonPerformance('ALL', 'TẤT CẢ ĐƠN ON-HOLD', 'ON_HOLD')">
-          <div class="sheet-kpi-title"><span>ON-HOLD (GIỮ HÀNG)</span> <i class="bi bi-search"></i></div>
+        <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="window.xemChiTietDonPerformance('ALL', 'TẤT CẢ ĐƠN ON-HOLD HÔM NAY', 'ON_HOLD')">
+          <div class="sheet-kpi-title"><span>ON-HOLD (HÔM NAY)</span> <i class="bi bi-search"></i></div>
           <div class="sheet-kpi-val text-danger" id="perfKpiOnHold">0</div>
           <div class="sheet-kpi-sub" id="perfSubOnHold">0.0% tổng đơn</div>
         </div>
@@ -164,7 +169,7 @@ function khoiTaoGiaoDienPerformanceDOM() {
             <select id="perfFilterStatus" class="form-select form-select-sm fw-bold" onchange="window.renderBangPerformanceHaiCa()">
               <option value="ALL">📦 Tất cả trạng thái</option>
               <option value="HAS_ONHOLD">⚠️ Có đơn On-Hold (> 0)</option>
-              <option value="HAS_DELIVERING">🛵 Đang đi giao (Delivering > 0)</option>
+              <option value="HAS_DELIVERING">🛵 Đang đi giao (> 0)</option>
               <option value="DONE_100">✅ Hoàn thành 100%</option>
             </select>
           </div>
@@ -177,7 +182,7 @@ function khoiTaoGiaoDienPerformanceDOM() {
       </div>
     </div>
 
-    <!-- 2 BẢNG SONG SONG Y NHƯ GOOGLE SHEET (CA SÁNG COT 1 & CA CHIỀU COT 2) -->
+    <!-- 2 BẢNG SONG SONG THU GỌN ĐỦ 8 CỘT VỪA KHÍT MÀN HÌNH (KHÔNG CẦN KÉO NGANG) -->
     <div class="row g-2" id="rowHaiBangPerformance">
       <div class="col-12 col-xl-6" id="colPerfCot1">
         <div class="card shadow-sm border-0 h-100 overflow-hidden">
@@ -189,19 +194,18 @@ function khoiTaoGiaoDienPerformanceDOM() {
             <table class="table table-bordered table-hover table-sm perf-sheet-table align-middle mb-0 text-center">
               <thead class="sticky-top">
                 <tr>
-                  <th style="width: 38px;">STT</th>
-                  <th style="width: 72px;">Mã Rider</th>
-                  <th class="text-start">Họ và tên Rider</th>
-                  <th>Quận giao</th>
-                  <th>Tổng Assigned</th>
-                  <th>Delivered</th>
-                  <th>Delivering</th>
-                  <th>On-Hold</th>
-                  <th>% Hoàn thành</th>
+                  <th style="width: 30px;">#</th>
+                  <th class="text-start" style="width: 33%;">Rider (ID - Tên)</th>
+                  <th style="width: 15%;">Quận</th>
+                  <th style="width: 9%;" title="Tổng Quét (Assigned)">Tổng</th>
+                  <th style="width: 9%;" title="Giao thành công (Delivered)">Giao</th>
+                  <th style="width: 9%;" title="Đang đi giao (Delivering)">Đang</th>
+                  <th style="width: 9%;" title="On-Hold (Giữ hàng)">OH</th>
+                  <th style="width: 11%;" title="Tỷ lệ hoàn thành">% Đạt</th>
                 </tr>
               </thead>
               <tbody id="tbodyPerfCot1">
-                <tr><td colspan="9" class="text-center py-4 text-muted">Đang tải dữ liệu Ca Sáng...</td></tr>
+                <tr><td colspan="8" class="text-center py-4 text-muted">Đang tải dữ liệu Ca Sáng...</td></tr>
               </tbody>
             </table>
           </div>
@@ -218,19 +222,18 @@ function khoiTaoGiaoDienPerformanceDOM() {
             <table class="table table-bordered table-hover table-sm perf-sheet-table align-middle mb-0 text-center">
               <thead class="sticky-top">
                 <tr>
-                  <th style="width: 38px;">STT</th>
-                  <th style="width: 72px;">Mã Rider</th>
-                  <th class="text-start">Họ và tên Rider</th>
-                  <th>Quận giao</th>
-                  <th>Tổng Assigned</th>
-                  <th>Delivered</th>
-                  <th>Delivering</th>
-                  <th>On-Hold</th>
-                  <th>% Hoàn thành</th>
+                  <th style="width: 30px;">#</th>
+                  <th class="text-start" style="width: 33%;">Rider (ID - Tên)</th>
+                  <th style="width: 15%;">Quận</th>
+                  <th style="width: 9%;" title="Tổng Quét (Assigned)">Tổng</th>
+                  <th style="width: 9%;" title="Giao thành công (Delivered)">Giao</th>
+                  <th style="width: 9%;" title="Đang đi giao (Delivering)">Đang</th>
+                  <th style="width: 9%;" title="On-Hold (Giữ hàng)">OH</th>
+                  <th style="width: 11%;" title="Tỷ lệ hoàn thành">% Đạt</th>
                 </tr>
               </thead>
               <tbody id="tbodyPerfCot2">
-                <tr><td colspan="9" class="text-center py-4 text-muted">Đang tải dữ liệu Ca Chiều...</td></tr>
+                <tr><td colspan="8" class="text-center py-4 text-muted">Đang tải dữ liệu Ca Chiều...</td></tr>
               </tbody>
             </table>
           </div>
@@ -412,6 +415,14 @@ function locDanhSachRiderPerf(list) {
   });
 }
 
+function rutGonTenQuanPerf(qStr) {
+  return (qStr || '—')
+    .replace(/^Quận\s+/i, 'Q.')
+    .replace(/Bình Thạnh/i, 'B.Thạnh')
+    .replace(/Chưa phân tuyến/i, 'Chưa PT')
+    .replace(/Backup \(BK\)/i, 'BK');
+}
+
 function veMotBangCaPerf(tbodyId, badgeId, rawList, labelTongCa, caCode) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
@@ -428,17 +439,17 @@ function veMotBangCaPerf(tbodyId, badgeId, rawList, labelTongCa, caCode) {
 
   let html = `
     <tr class="perf-summary-row">
-      <td colspan="3" class="text-start ps-2">${labelTongCa} (${filtered.length} RD)</td>
+      <td colspan="2" class="text-start ps-2 text-truncate">${labelTongCa} (${filtered.length})</td>
       <td>—</td>
       <td><span class="perf-num-btn bg-white text-dark border" onclick="window.xemChiTietDonPerformance('ALL', '${labelTongCa}', 'ALL', '${caCode}')">${sumAssigned.toLocaleString('vi-VN')}</span></td>
       <td><span class="perf-num-btn bg-success text-white" onclick="window.xemChiTietDonPerformance('ALL', '${labelTongCa} - DELIVERED', 'DELIVERED', '${caCode}')">${sumDelivered.toLocaleString('vi-VN')}</span></td>
       <td><span class="perf-num-btn bg-warning text-dark" onclick="window.xemChiTietDonPerformance('ALL', '${labelTongCa} - DELIVERING', 'DELIVERING', '${caCode}')">${sumDelivering.toLocaleString('vi-VN')}</span></td>
       <td><span class="perf-num-btn bg-danger text-white" onclick="window.xemChiTietDonPerformance('ALL', '${labelTongCa} - ON-HOLD', 'ON_HOLD', '${caCode}')">${sumOnHold.toLocaleString('vi-VN')}</span></td>
-      <td class="font-monospace">${sumRate}</td>
+      <td class="font-monospace" style="font-size:0.7rem;">${sumRate}</td>
     </tr>`;
 
   if (filtered.length === 0) {
-    html += `<tr><td colspan="9" class="py-4 text-muted">Không có Rider phù hợp bộ lọc</td></tr>`;
+    html += `<tr><td colspan="8" class="py-4 text-muted">Không có Rider phù hợp bộ lọc</td></tr>`;
     tbody.innerHTML = html;
     return;
   }
@@ -447,13 +458,16 @@ function veMotBangCaPerf(tbodyId, badgeId, rawList, labelTongCa, caCode) {
     const safeTitle = `${r.id} - ${r.name} (${r.ca} • ${r.quanGiao})`.replace(/'/g, "\\'");
     const rateColor = r.rate >= 90 ? 'bg-success text-white' : (r.rate >= 70 ? 'bg-warning text-dark' : 'bg-danger-subtle text-danger border border-danger-subtle');
     const quanBadgeCls = r.baseQuan === 'Quận 2' ? 'text-primary' : (r.baseQuan === 'Quận 4' ? 'text-warning text-dark' : (r.baseQuan === 'Quận 7' ? 'text-info text-dark' : (r.baseQuan === 'Quận 9' ? 'text-success' : (r.baseQuan === 'Bình Thạnh' ? 'text-danger' : 'text-secondary'))));
+    const quanShort = rutGonTenQuanPerf(r.quanGiao);
 
     html += `
       <tr class="perf-rider-row" onclick="window.xemChiTietDonPerformance('${r.id}', '${safeTitle}', 'ALL')">
         <td class="text-muted small">${idx + 1}</td>
-        <td class="font-monospace fw-bold text-primary">${r.id}</td>
-        <td class="text-start fw-bold text-dark">${r.name}</td>
-        <td class="fw-semibold ${quanBadgeCls}">${r.quanGiao}</td>
+        <td class="text-start text-truncate" title="${r.id} - ${r.name}">
+          <div class="fw-bold text-dark text-truncate" style="line-height:1.15;">${r.name}</div>
+          <div class="font-monospace text-primary fw-semibold" style="font-size:0.67rem; line-height:1.1;">${r.id}</div>
+        </td>
+        <td class="fw-semibold text-truncate ${quanBadgeCls}" title="${r.quanGiao}">${quanShort}</td>
         <td class="font-monospace fw-bold">
           <span class="perf-num-btn bg-light border text-dark" onclick="event.stopPropagation(); window.xemChiTietDonPerformance('${r.id}', '${safeTitle}', 'ALL')">${r.assigned}</span>
         </td>
@@ -467,7 +481,7 @@ function veMotBangCaPerf(tbodyId, badgeId, rawList, labelTongCa, caCode) {
           <span class="perf-num-btn ${r.onHold > 0 ? 'bg-danger text-white shadow-sm' : 'text-muted'}" onclick="event.stopPropagation(); window.xemChiTietDonPerformance('${r.id}', '${safeTitle}', 'ON_HOLD')">${r.onHold}</span>
         </td>
         <td>
-          <span class="badge ${rateColor} font-monospace" style="min-width: 52px;">${r.rateStr}</span>
+          <span class="badge ${rateColor} font-monospace px-1" style="font-size:0.68rem;">${r.rateStr}</span>
         </td>
       </tr>`;
   });
@@ -477,8 +491,8 @@ function veMotBangCaPerf(tbodyId, badgeId, rawList, labelTongCa, caCode) {
 
 window.renderBangPerformanceHaiCa = function() {
   if (!globalPerformanceData) return;
-  veMotBangCaPerf('tbodyPerfCot1', 'badgeCountRdCot1', globalPerformanceData.caSangList || [], '📊 TỔNG CỘNG CA SÁNG', 'COT 1');
-  veMotBangCaPerf('tbodyPerfCot2', 'badgeCountRdCot2', globalPerformanceData.caChieuList || [], '📊 TỔNG CỘNG CA CHIỀU', 'COT 2');
+  veMotBangCaPerf('tbodyPerfCot1', 'badgeCountRdCot1', globalPerformanceData.caSangList || [], '📊 TỔNG CA SÁNG', 'COT 1');
+  veMotBangCaPerf('tbodyPerfCot2', 'badgeCountRdCot2', globalPerformanceData.caChieuList || [], '📊 TỔNG CA CHIỀU', 'COT 2');
 };
 
 // 3. XEM CHI TIẾT MÃ ĐƠN CỦA TỪNG RIDER TRONG PERFORMANCE
