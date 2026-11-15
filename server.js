@@ -1927,7 +1927,7 @@ async function napAnhTuSheetVaoAlbum() {
   }
 }
 
-// TỌA ĐỘ KHO XÁC ĐỊNH & NGƯỠNG BÁN KÍNH HỢP LỆ (75 MÉT)
+// ================= HỆ THỐNG TÍNH KHOẢNG CÁCH (75M) & KIỂM TRA GIỜ TRỄ ĐIỂM DANH =================
 const TARGET_LAT = 10.819452810093942;
 const TARGET_LNG = 106.67217349075761;
 const MAX_KHO_DISTANCE_MET = 75;
@@ -1951,14 +1951,13 @@ function tinhKhoangCachMetTuToaDo(viDo, kinhDo) {
   return Math.round(R * c);
 }
 
-// Hàm tính chi tiết số phút & số giây trễ so với giờ quy định (VD: 12:00:00, 12:15:00, 15:45:00)
+// Tính chi tiết phút/giây trễ so với khung giờ quy định (12:00, 12:15, 15:45)
 function tinhChiTietTreGio(gioDiemDanhStr, gioQuyDinhStr) {
   if (!gioDiemDanhStr || !gioQuyDinhStr) return { soGiayTre: 0, soPhutTre: 0, textTre: '', mucCanhBao: '' };
 
   const cleanCheckIn = gioDiemDanhStr.toString().trim();
   const pGio = cleanCheckIn.split(':').map(Number);
 
-  // Hỗ trợ đọcทั้ง dạng "12:00", "12h00", hoặc "11h45 - 12h00"
   let targetStr = gioQuyDinhStr.toString().trim();
   if (targetStr.includes('-')) {
     const parts = targetStr.split('-');
@@ -1984,7 +1983,7 @@ function tinhChiTietTreGio(gioDiemDanhStr, gioQuyDinhStr) {
   const soPhutLamTron = Math.max(1, Math.ceil(diffSec / 60));
 
   let textTre = '';
-  if (phut > 0 && giay > 0) textTre = `+${phut}p ${giay}s`;
+  if (phut > 0 && giay > 0) textTre = `+${phut} phút ${giay} giây`;
   else if (phut > 0) textTre = `+${phut} phút`;
   else textTre = `+${giay} giây`;
 
@@ -1992,7 +1991,6 @@ function tinhChiTietTreGio(gioDiemDanhStr, gioQuyDinhStr) {
   return { soGiayTre: diffSec, soPhutTre: soPhutLamTron, textTre, mucCanhBao };
 }
 
-// Tự động đảm bảo Sheet "LƯU ĐIỂM DANH" có đủ 12 cột (tới Cột L)
 let daDamBaoCotLDiemDanh = false;
 async function damBaoSheetLuuDiemDanhCoCotL() {
   if (daDamBaoCotLDiemDanh) return;
@@ -2020,19 +2018,15 @@ async function damBaoSheetLuuDiemDanhCoCotL() {
       }
       daDamBaoCotLDiemDanh = true;
     }
-  } catch (e) {
-    console.warn('Không thể mở rộng cột L cho LƯU ĐIỂM DANH:', e.message);
-  }
+  } catch (e) {}
 }
 
-// HÀM TỰ ĐỘNG RECHECK CỘT K (TRONG/NGOÀI KHO THEO MỐC 75M) & CỘT L (SỐ MÉT)
 let isRecheckingDD = false;
 async function recheckKhoangCachDiemDanhSheet() {
   if (isRecheckingDD) return;
   isRecheckingDD = true;
   try {
     await damBaoSheetLuuDiemDanhCoCotL();
-
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
       range: "'LƯU ĐIỂM DANH'",
@@ -2051,17 +2045,16 @@ async function recheckKhoangCachDiemDanhSheet() {
 
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i] || [];
-      const viDo = r[8];   // Cột I
-      const kinhDo = r[9]; // Cột J
-      const cotK = (r[10] || '').toString().trim(); // Cột K
-      const cotL = (r[11] || '').toString().trim(); // Cột L
+      const viDo = r[8];
+      const kinhDo = r[9];
+      const cotK = (r[10] || '').toString().trim();
+      const cotL = (r[11] || '').toString().trim();
 
       if (viDo && kinhDo) {
         const soMet = tinhKhoangCachMetTuToaDo(viDo, kinhDo);
         if (soMet !== null) {
           const viTriChuan75m = soMet <= MAX_KHO_DISTANCE_MET ? 'Trong kho' : 'Ngoài kho';
           const kcChuan = `${soMet}m`;
-
           if (cotK !== viTriChuan75m || cotL !== kcChuan) {
             updates.push({
               range: `'LƯU ĐIỂM DANH'!K${i + 1}:L${i + 1}`,
@@ -2075,14 +2068,10 @@ async function recheckKhoangCachDiemDanhSheet() {
     if (updates.length > 0) {
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-        requestBody: {
-          valueInputOption: 'USER_ENTERED',
-          data: updates
-        }
+        requestBody: { valueInputOption: 'USER_ENTERED', data: updates }
       });
     }
   } catch (e) {
-    console.warn('Lỗi recheck khoảng cách điểm danh:', e.message);
   } finally {
     isRecheckingDD = false;
   }
@@ -2115,13 +2104,8 @@ app.post('/api/diem-danh', async (req, res) => {
     const now = new Date();
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
     });
     const parts = formatter.formatToParts(now);
     const p = {};
@@ -2136,17 +2120,16 @@ app.post('/api/diem-danh', async (req, res) => {
     const caChuan = (caThucTe || caDiemDanh || 'COT 1').toUpperCase().includes('2') ? 'COT 2' : 'COT 1';
     const caTag = caChuan === 'COT 2' ? 'COT2' : 'COT1';
 
-    // Xác định khung giờ quy định chuẩn theo Rider (COT 1 có Pick: 12:15, COT 1 không Pick: 12:00, COT 2: 15:45)
-    let gioDongChuan = caTag === 'COT2' ? '15:45' : '12:00';
+    let gioDongChuan = caTag === 'COT2' ? '15:45:00' : '12:00:00';
     if (caTag === 'COT1' && cachedRiderDataResponse && Array.isArray(cachedRiderDataResponse.riders)) {
       const foundRd = cachedRiderDataResponse.riders.find(r => String(r.id).trim() === String(riderId).trim());
       if (foundRd && foundRd.tuyenPick && foundRd.tuyenPick.toString().trim() !== '' && foundRd.tuyenPick.toString().trim() !== '-') {
-        gioDongChuan = '12:15';
+        gioDongChuan = '12:15:00';
       }
     }
 
     const treInfo = tinhChiTietTreGio(gioDiemDanh, gioDongChuan);
-    const trangThaiDiemDanh = treInfo.soGiayTre > 0 ? `Trễ ${treInfo.textTre} (${treInfo.mucCanhBao})` : 'Đã điểm danh';
+    const trangThaiDiemDanh = treInfo.soGiayTre > 0 ? `Trễ ${treInfo.textTre}` : 'Đã điểm danh';
 
     const tuanKey = getTuanKey(now);
     const maAnh = `IMG_${riderId}_${Date.now()}`;
@@ -2155,18 +2138,10 @@ app.post('/api/diem-danh', async (req, res) => {
     if (anhBase64) {
       donDepAnhCuQua7Ngay();
       khoAnhDon[maAnh] = {
-        maAnh,
-        id: riderId,
-        name: riderName,
-        ca: caChuan,
-        gio: gioDiemDanh,
-        ngay: ngayDiemDanh,
-        keyNgayIso,
-        tuanKey,
-        timestamp: tsNow,
-        anhBase64,
+        maAnh, id: riderId, name: riderName, ca: caChuan,
+        gio: gioDiemDanh, ngay: ngayDiemDanh, keyNgayIso, tuanKey,
+        timestamp: tsNow, anhBase64,
       };
-
       const keyAlbum = `${keyNgayIso}_${caTag}`;
       if (!khoAlbumCa[keyAlbum]) khoAlbumCa[keyAlbum] = [];
       khoAlbumCa[keyAlbum].push(maAnh);
@@ -2174,18 +2149,7 @@ app.post('/api/diem-danh', async (req, res) => {
       (async () => {
         try {
           await damBaoTabAnhHomNayTonTai(tenTabAnhNgay);
-          const rowAnh = [
-            maAnh,
-            riderId,
-            riderName,
-            caChuan,
-            gioDiemDanh,
-            ngayDiemDanh,
-            keyNgayIso,
-            tuanKey,
-            tsNow.toString(),
-            anhBase64
-          ];
+          const rowAnh = [maAnh, riderId, riderName, caChuan, gioDiemDanh, ngayDiemDanh, keyNgayIso, tuanKey, tsNow.toString(), anhBase64];
           await sheets.spreadsheets.values.append({
             spreadsheetId: SPREADSHEET_ANH_ID,
             range: `'${tenTabAnhNgay}'!A:J`,
@@ -2197,22 +2161,9 @@ app.post('/api/diem-danh', async (req, res) => {
     }
 
     const ghiChuFinal = anhBase64 ? 'Đã chụp ảnh xác thực tại trạm' : (ghiChu || 'Quét QR');
-
     await damBaoSheetLuuDiemDanhCoCotL();
-    const newRow = [
-      timestamp,
-      ngayDiemDanh,
-      gioDiemDanh,
-      riderId,
-      riderName,
-      caChuan,
-      trangThaiDiemDanh,
-      ghiChuFinal,
-      viDo || '',
-      kinhDo || '',
-      viTri,
-      khoangCachStr
-    ];
+    const newRow = [timestamp, ngayDiemDanh, gioDiemDanh, riderId, riderName, caChuan, trangThaiDiemDanh, ghiChuFinal, viDo || '', kinhDo || '', viTri, khoangCachStr];
+
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
       range: "'LƯU ĐIỂM DANH'!A:L",
@@ -2232,38 +2183,35 @@ app.post('/api/diem-danh', async (req, res) => {
   }
 });
 
-// 7. API: Lịch sử điểm danh hôm nay (Đọc kết hợp LƯU ĐIỂM DANH + BÁO CÁO ĐIỂM DANH + TỔNG QUAN RD)
+// 7. API: Lịch sử điểm danh hôm nay (Đọc độc lập LƯU ĐIỂM DANH + BÁO CÁO ĐIỂM DANH + TỔNG QUAN RD)
 app.get('/api/lich-su-diem-danh', async (req, res) => {
   try {
     recheckKhoangCachDiemDanhSheet();
 
-    const batchRes = await sheets.spreadsheets.values.batchGet({
-      spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
-      ranges: [
-        "'LƯU ĐIỂM DANH'!A1:Z3000",
-        "'BÁO CÁO ĐIỂM DANH'!A1:Z2000",
-        "'TỔNG QUAN RD'!M1:W1000"
-      ]
-    }).catch(async () => {
-      // Dự phòng nếu tên tab BÁO CÁO ĐIỂM DANH khác chữ hoa/thường
-      const r1 = await sheets.spreadsheets.values.get({
+    // Đọc độc lập từng tab bằng Promise.allSettled để không bao giờ bị lỗi giới hạn cột
+    const [resLuu, resBaoCao, resRd] = await Promise.allSettled([
+      sheets.spreadsheets.values.get({
         spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
         range: "'LƯU ĐIỂM DANH'"
-      });
-      return { data: { valueRanges: [{ values: r1.data.values || [] }, { values: [] }, { values: [] }] } };
-    });
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+        range: "'BÁO CÁO ĐIỂM DANH'!A1:J500"
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_TONG_QUAN_ID,
+        range: "'TỔNG QUAN RD'!M1:W1000"
+      })
+    ]);
 
-    const valueRanges = batchRes.data.valueRanges || [];
-    const allRowsLuu = valueRanges[0]?.values || [];
-    const baoCaoRows = valueRanges[1]?.values || [];
-    const rdRosterRows = valueRanges[2]?.values || [];
+    const allRowsLuu = (resLuu.status === 'fulfilled' && resLuu.value?.data?.values) ? resLuu.value.data.values : [];
+    const baoCaoRows = (resBaoCao.status === 'fulfilled' && resBaoCao.value?.data?.values) ? resBaoCao.value.data.values : [];
+    const rdRosterRows = (resRd.status === 'fulfilled' && resRd.value?.data?.values) ? resRd.value.data.values : [];
 
     const now = new Date();
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Ho_Chi_Minh',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
+      year: 'numeric', month: '2-digit', day: '2-digit'
     });
     const parts = formatter.formatToParts(now);
     const p = {};
@@ -2271,64 +2219,62 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
     const homNayChuan = `${p.day}/${p.month}/${p.year}`;
     const homNayKhongSo0 = `${parseInt(p.day, 10)}/${parseInt(p.month, 10)}/${p.year}`;
     const homNayIso = `${p.year}-${p.month}-${p.day}`;
-    const homNayShort = `${p.day}/${p.month}`;
 
-    // 1. Tra cứu Rider có Tuyến Pick hay không từ TỔNG QUAN RD (để áp dụng khung giờ 12h15 hay 12h00 cho COT 1)
+    // 1. Kiểm tra Rider có Tuyến Pick hay không từ TỔNG QUAN RD (hoặc từ cache RAM)
     const riderHasPickMap = {};
-    for (let r = 2; r < rdRosterRows.length; r++) {
-      const row = rdRosterRows[r] || [];
-      const rId = (row[3] || '').toString().trim();
-      const tuyenPick = (row[7] || '').toString().trim();
-      if (rId) {
-        riderHasPickMap[rId] = Boolean(tuyenPick && tuyenPick !== '-' && tuyenPick !== '—' && tuyenPick !== '0');
+    if (rdRosterRows.length > 2) {
+      for (let r = 2; r < rdRosterRows.length; r++) {
+        const row = rdRosterRows[r] || [];
+        const rId = (row[3] || '').toString().trim();
+        const tuyenPick = (row[7] || '').toString().trim();
+        if (rId) {
+          riderHasPickMap[rId] = Boolean(tuyenPick && tuyenPick !== '-' && tuyenPick !== '—' && tuyenPick !== '0');
+        }
       }
+    } else if (cachedRiderDataResponse && Array.isArray(cachedRiderDataResponse.riders)) {
+      cachedRiderDataResponse.riders.forEach(rd => {
+        const tp = (rd.tuyenPick || '').toString().trim();
+        riderHasPickMap[rd.id] = Boolean(tp && tp !== '-' && tp !== '—' && tp !== '0');
+      });
     }
 
-    // 2. Quét tab "BÁO CÁO ĐIỂM DANH" để lấy Khung giờ quy định, Thời gian trễ & Cảnh báo trễ trực tiếp từ Sheet
-    const sheetLateReportMap = {}; // key: riderId -> { khungGio, gioCheckIn, thoiGianTre, canhBao, isLateOnSheet }
+    // 2. Đọc bảng bên trái (Cột A -> J) của tab "BÁO CÁO ĐIỂM DANH"
+    // Cấu trúc cột chuẩn trên Sheet:
+    // A(0): STT | B(1): MÃ ID | C(2): HỌ TÊN | D(3): QUẬN DELI | E(4): TUYẾN PICK | F(5): KHUNG GIỜ QUY ĐỊNH | G(6): GIỜ CHECK-IN | H(7): TRẠNG THÁI | I(8): THỜI GIAN TRỄ | J(9): MỨC CẢNH BÁO
+    const sheetLateReportMap = {};
     for (let r = 0; r < baoCaoRows.length; r++) {
       const row = baoCaoRows[r] || [];
-      if (!row || row.length === 0) continue;
+      const rId = (row[1] || '').toString().trim();
+      if (!/^\d{5,8}$/.test(rId)) continue;
 
-      // Tìm tất cả các vị trí trong dòng có chứa Mã ID Rider (4-8 chữ số)
-      for (let c = 0; c < row.length; c++) {
-        const cellVal = (row[c] || '').toString().trim();
-        if (!/^\d{5,8}$/.test(cellVal)) continue;
+      const tuyenPickCell = (row[4] || '').toString().trim();
+      const khungGioCell = (row[5] || '').toString().trim();
+      const gioCheckInCell = (row[6] || '').toString().trim();
+      const trangThaiCell = (row[7] || '').toString().trim();
+      const thoiGianTreCell = (row[8] || '').toString().trim();
+      const mucCanhBaoCell = (row[9] || '').toString().trim();
 
-        const rId = cellVal;
-        // Kiểm tra nếu là bảng lịch sử có cột NGÀY ở ngay trước Mã ID (c - 1)
-        const prevCell = c > 0 ? (row[c - 1] || '').toString().trim() : '';
-        const isDatePrev = /^\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?$/.test(prevCell);
-        if (isDatePrev) {
-          // Nếu dòng thuộc bảng lịch sử ngày cũ (không phải hôm nay) -> Bỏ qua, chỉ lấy dòng của hôm nay
-          const isTodayHistory = prevCell === homNayChuan || prevCell === homNayKhongSo0 || prevCell === homNayShort || chuanHoaNgayIso(prevCell) === homNayIso;
-          if (!isTodayHistory) continue;
-        }
-
-        // Quét các ô kế tiếp của Rider này (từ c + 1 đến c + 9) để lấy Khung giờ quy định, Giờ Check-in, Thời gian trễ, Cảnh báo
-        const sliceAfter = row.slice(c + 1, c + 9).map(x => (x || '').toString().trim());
-        const joinedAfter = sliceAfter.join(' | ');
-
-        const khungGioCell = sliceAfter.find(x => /\d{1,2}h\d{0,2}\s*-\s*\d{1,2}h\d{0,2}/i.test(x)) || '';
-        const gioCheckInCell = sliceAfter.find(x => /^\d{1,2}:\d{2}(:\d{2})?$/.test(x)) || '';
-        const thoiGianTreCell = sliceAfter.find(x => /^\+\s*\d+\s*(phút|giây|p|s)/i.test(x) || /trễ\s*\d+/i.test(x)) || '';
-        const canhBaoCell = sliceAfter.find(x => /trễ|muộn|quá giờ|⚠️|🚨/i.test(x)) || '';
-
-        const isLateDetected = Boolean(thoiGianTreCell || canhBaoCell || /trễ|muộn/i.test(joinedAfter));
-
-        if (!sheetLateReportMap[rId] || isLateDetected) {
-          sheetLateReportMap[rId] = {
-            khungGio: khungGioCell,
-            gioCheckIn: gioCheckInCell,
-            thoiGianTre: thoiGianTreCell,
-            canhBao: canhBaoCell,
-            isLateOnSheet: isLateDetected
-          };
-        }
+      if (tuyenPickCell && tuyenPickCell !== '-' && tuyenPickCell !== '—') {
+        riderHasPickMap[rId] = true;
       }
+
+      const isLateOnSheet = (
+        thoiGianTreCell.startsWith('+') ||
+        /trễ|muộn|⚠️|🚨/i.test(thoiGianTreCell) ||
+        /trễ|muộn|⚠️|🚨/i.test(mucCanhBaoCell)
+      );
+
+      sheetLateReportMap[rId] = {
+        khungGio: khungGioCell,
+        gioCheckIn: gioCheckInCell,
+        trangThai: trangThaiCell,
+        thoiGianTre: isLateOnSheet ? thoiGianTreCell : '',
+        canhBao: isLateOnSheet ? mucCanhBaoCell : '',
+        isLateOnSheet
+      };
     }
 
-    // 3. Đọc danh sách điểm danh hôm nay từ "LƯU ĐIỂM DANH" và kết hợp với dữ liệu từ "BÁO CÁO ĐIỂM DANH"
+    // 3. Duyệt danh sách điểm danh hôm nay từ "LƯU ĐIỂM DANH"
     const rows = allRowsLuu.slice(1);
     let list = rows
       .filter(r => {
@@ -2353,55 +2299,43 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
         const kc = m !== null ? `${m}m` : ((r[11] || '').toString().trim() || '—');
         const viTriChuan = m !== null ? (m <= MAX_KHO_DISTANCE_MET ? 'Trong kho' : 'Ngoài kho') : (r[10] || '');
 
-        // Đối chiếu với thông tin từ tab BÁO CÁO ĐIỂM DANH
         const sheetInfo = sheetLateReportMap[rId] || {};
+        const hasPick = Boolean(riderHasPickMap[rId]);
 
-        // Xác định khung giờ quy định chuẩn của Rider:
-        // - Nếu BÁO CÁO ĐIỂM DANH có ghi khung giờ riêng (VD: "11h45 - 12h00" hoặc "11h45 - 12h15" hoặc "15h30 - 15h45") -> Dùng khung giờ của Sheet
-        // - Nếu không -> COT 2 là 15:45; COT 1 có Pick là 12:15; COT 1 không Pick là 12:00
-        let gioQuyDinh = sheetInfo.khungGio || '';
-        if (!gioQuyDinh) {
-          if (caRow.includes('2')) {
-            gioQuyDinh = '15:45:00';
-          } else {
-            gioQuyDinh = riderHasPickMap[rId] ? '12:15:00' : '12:00:00';
-          }
-        }
+        // Khung giờ quy định chuẩn của từng Rider giống hệt công thức trên BÁO CÁO ĐIỂM DANH:
+        // - COT 2: 15h30 - 15h45 (Trễ sau 15:45:00)
+        // - COT 1 (Có Pick): 11h45 - 12h15 (Trễ sau 12:15:00)
+        // - COT 1 (Không Pick): 11h45 - 12h00 (Trễ sau 12:00:00)
+        const khungGioChuan = sheetInfo.khungGio || (caRow.includes('2') ? '15h30 - 15h45' : (hasPick ? '11h45 - 12h15' : '11h45 - 12h00'));
+        const calcTre = tinhChiTietTreGio(gioRow, khungGioChuan);
 
-        const calcTre = tinhChiTietTreGio(gioRow || sheetInfo.gioCheckIn, gioQuyDinh);
         let phutTre = calcTre.soPhutTre;
         let textTre = sheetInfo.thoiGianTre || calcTre.textTre;
         let mucCanhBao = sheetInfo.canhBao || calcTre.mucCanhBao;
 
-        // Kiểm tra thêm các cột trên dòng LƯU ĐIỂM DANH xem có chữ "Trễ" không
-        let trangThaiRow = (r[6] || 'Đã điểm danh').toString().trim();
-        const gopCotLuu = `${r[6] || ''} ${r[7] || ''} ${r[12] || ''} ${r[13] || ''}`;
-
-        if (phutTre === 0 && (sheetInfo.isLateOnSheet || /trễ|muộn/i.test(gopCotLuu))) {
-          const matchNum = (sheetInfo.thoiGianTre || gopCotLuu).match(/(\d+)/);
+        if (phutTre === 0 && sheetInfo.isLateOnSheet) {
+          const matchNum = (sheetInfo.thoiGianTre || '').match(/(\d+)/);
           phutTre = matchNum ? parseInt(matchNum[1], 10) : 1;
-          if (!textTre) textTre = sheetInfo.thoiGianTre || `Trễ ${phutTre} phút`;
         }
 
-        if (phutTre > 0 || sheetInfo.isLateOnSheet) {
-          trangThaiRow = textTre
-            ? `${textTre}${mucCanhBao ? ' (' + mucCanhBao + ')' : ''}`
-            : `Trễ ${phutTre} phút`;
-        }
+        const isLateFinal = phutTre > 0 || Boolean(sheetInfo.isLateOnSheet);
+        const trangThaiRow = isLateFinal
+          ? `${textTre || ('Trễ ' + phutTre + ' phút')}${mucCanhBao ? ' (' + mucCanhBao + ')' : ''}`
+          : 'Đúng giờ';
 
         return {
           stt: idx + 1,
           thoiGian: r[0] || '',
           ngay: r[1] || '',
-          gio: gioRow || sheetInfo.gioCheckIn || '',
+          gio: gioRow,
           id: rId,
           name: rName,
           ca: r[5] || '',
-          khungGioQuyDinh: sheetInfo.khungGio || (caRow.includes('2') ? '15h30 - 15h45' : (riderHasPickMap[rId] ? '11h45 - 12h15' : '11h45 - 12h00')),
+          khungGioQuyDinh: khungGioChuan,
           trangThai: trangThaiRow,
           soPhutTre: phutTre,
-          thoiGianTre: textTre || (phutTre > 0 ? `+${phutTre} phút` : ''),
-          canhBaoTre: mucCanhBao || '',
+          thoiGianTre: isLateFinal ? textTre : '',
+          canhBaoTre: isLateFinal ? mucCanhBao : '',
           ghiChu: r[7] || '',
           viDo: rawViDo || '—',
           kinhDo: rawKinhDo || '—',
@@ -2417,7 +2351,6 @@ app.get('/api/lich-su-diem-danh', async (req, res) => {
     res.json([]);
   }
 });
-
 // 8. API: Thông Tin Chung Rider (SERVER TỰ SINH CHUỖI ẢNH QR BASE64 100% HIỂN THỊ)
 app.get('/api/thong-tin-chung-rider', async (req, res) => {
   try {
