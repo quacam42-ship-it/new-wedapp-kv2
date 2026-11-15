@@ -1835,9 +1835,63 @@ window.chotLuuGhepBackupLenSheet = async function() {
   alert(`✅ Đã lưu thành công ${backupMatches.length} lượt gán tuyến lên Sheet ${sheetTb}!`);
 };
 
-// ================= HÀM MỞ POPUP CHI TIẾT KHI CLICK =================
+// ================= HÀM MỞ POPUP CHI TIẾT QUẬN -> 2 THẺ COT 1 & COT 2 -> 2 BẢNG SONG SONG (ĐI LÀM & OFF) =================
+window.currentOffModalState = {
+  ngay: '',
+  thuHienTai: '',
+  quanFilter: '',
+  title: '',
+  activeCa: '',
+  cot1Work: [],
+  cot1Off: [],
+  cot2Work: [],
+  cot2Off: []
+};
+
+function damBaoCauTrucModalChiTietOff() {
+  const modalEl = document.getElementById('modalChiTietRiderOff');
+  if (!modalEl) return null;
+
+  // Mở rộng kích thước Modal lên modal-xl để hiển thị 2 bảng song song thoải mái không cần kéo ngang
+  const dialog = modalEl.querySelector('.modal-dialog');
+  if (dialog) {
+    dialog.classList.remove('modal-lg');
+    dialog.classList.add('modal-xl');
+  }
+
+  const modalBody = modalEl.querySelector('.modal-body');
+  if (modalBody && !document.getElementById('vungChiTietOffTheoCa')) {
+    const existingTableWrap = modalBody.querySelector('.table-responsive');
+    if (existingTableWrap) {
+      existingTableWrap.id = 'vungBangChiTietOffDon';
+    }
+    const divTheoCa = document.createElement('div');
+    divTheoCa.id = 'vungChiTietOffTheoCa';
+    divTheoCa.className = 'p-3 bg-light';
+    modalBody.insertBefore(divTheoCa, modalBody.firstChild);
+  }
+
+  // Tự động ẩn vùng 2 thẻ COT nếu người dùng bấm xem Tổng kết tuần (xemDanhSachOffTuan)
+  const tbodyDon = document.getElementById('tbodyChiTietOff');
+  if (tbodyDon && !tbodyDon._hasObserverOff) {
+    const obs = new MutationObserver(() => {
+      const wrapDon = document.getElementById('vungBangChiTietOffDon');
+      const wrapCa = document.getElementById('vungChiTietOffTheoCa');
+      if (wrapDon) wrapDon.style.display = 'block';
+      if (wrapCa) wrapCa.style.display = 'none';
+    });
+    obs.observe(tbodyDon, { childList: true });
+    tbodyDon._hasObserverOff = true;
+  }
+
+  return modalEl;
+}
+
 function xemDanhSachOff(ngay, quanFilter, caFilter, title, isBKDiLam = false) {
   if (!ngay || !ridersData) return;
+
+  const modalEl = damBaoCauTrucModalChiTietOff();
+  if (!modalEl) return;
 
   let thuHienTai = '';
   if (typeof dateHeadersGlobal !== 'undefined') {
@@ -1850,48 +1904,258 @@ function xemDanhSachOff(ngay, quanFilter, caFilter, title, isBKDiLam = false) {
   const normQuanF = normQ(quanFilter);
   const normCaF = normCa(caFilter);
 
-  const filteredList = ridersData.filter(rd => {
+  // Lọc danh sách Rider thuộc Quận đang chọn (không tính BK dự phòng chung)
+  const districtRiders = ridersData.filter(rd => {
     const isBK = (rd.quanDeli || '').toUpperCase().includes('BK');
-    const sched = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay].toLowerCase().trim() : '';
-    
-    if (isBKDiLam) return isBK && !sched.includes('off');
+    if (isBKDiLam) return isBK;
     if (isBK) return false;
-
     const q = normQ(rd.quanDeli);
-    const c = normCa(rd.ca);
-    return (!normQuanF || q.includes(normQuanF)) && (!normCaF || c.includes(normCaF)) && sched.includes('off');
+    return !normQuanF || q.includes(normQuanF);
   });
 
+  // Phân loại Rider theo COT 1 / COT 2 và Đi làm / Nghỉ OFF
+  const isRiderOffOnDate = (rd) => {
+    const sched = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay].toLowerCase().trim() : '';
+    return sched.includes('off');
+  };
+
+  const cot1Riders = districtRiders.filter(rd => normCa(rd.ca).includes('1') || (!normCa(rd.ca).includes('2')));
+  const cot2Riders = districtRiders.filter(rd => normCa(rd.ca).includes('2'));
+
+  const sortByPhuongAndName = (arr) => [...arr].sort((a, b) => {
+    const pA = (a.phuongDeli || '').toString();
+    const pB = (b.phuongDeli || '').toString();
+    const numA = parseInt((pA.match(/\d+/) || [])[0], 10);
+    const numB = parseInt((pB.match(/\d+/) || [])[0], 10);
+    if (!isNaN(numA) && !isNaN(numB) && numA !== numB) return numA - numB;
+    return (a.name || '').localeCompare(b.name || '', 'vi');
+  });
+
+  window.currentOffModalState = {
+    ngay,
+    thuHienTai,
+    quanFilter,
+    title,
+    // Nếu bấm từ thẻ KPI Quận (caFilter rỗng) -> Hiện 2 thẻ COT trước, chờ bấm vào COT mới bung 2 bảng
+    // Nếu bấm từ dòng Ma trận đã có sẵn COT -> Tự động mở sẵn COT đó
+    activeCa: normCaF.includes('1') ? 'COT1' : (normCaF.includes('2') ? 'COT2' : ''),
+    cot1Work: sortByPhuongAndName(cot1Riders.filter(rd => !isRiderOffOnDate(rd))),
+    cot1Off: sortByPhuongAndName(cot1Riders.filter(rd => isRiderOffOnDate(rd))),
+    cot2Work: sortByPhuongAndName(cot2Riders.filter(rd => !isRiderOffOnDate(rd))),
+    cot2Off: sortByPhuongAndName(cot2Riders.filter(rd => isRiderOffOnDate(rd)))
+  };
+
   const theadTitle = document.getElementById('titleModalChiTietOff');
-  const tbody = document.getElementById('tbodyChiTietOff');
-  
   if (theadTitle) {
     theadTitle.innerHTML = `<i class="bi bi-person-lines-fill me-1"></i>DANH SÁCH CHI TIẾT - ${title} (${thuHienTai}${ngay})`;
   }
 
-  if (filteredList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Không có dữ liệu cho mục này</td></tr>`;
+  const wrapDon = document.getElementById('vungBangChiTietOffDon');
+  const wrapCa = document.getElementById('vungChiTietOffTheoCa');
+  if (wrapDon) wrapDon.style.display = 'none';
+  if (wrapCa) wrapCa.style.display = 'block';
+
+  renderGiaoDienHaiTheCotOff();
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+window.chonTheCotTrongModalOff = function(caKey) {
+  if (!window.currentOffModalState) return;
+  window.currentOffModalState.activeCa = caKey;
+  renderGiaoDienHaiTheCotOff();
+};
+
+function renderGiaoDienHaiTheCotOff() {
+  const wrapCa = document.getElementById('vungChiTietOffTheoCa');
+  if (!wrapCa || !window.currentOffModalState) return;
+
+  const st = window.currentOffModalState;
+  const c1Work = st.cot1Work.length;
+  const c1Off = st.cot1Off.length;
+  const c1Total = c1Work + c1Off;
+
+  const c2Work = st.cot2Work.length;
+  const c2Off = st.cot2Off.length;
+  const c2Total = c2Work + c2Off;
+
+  const isC1Active = st.activeCa === 'COT1';
+  const isC2Active = st.activeCa === 'COT2';
+
+  let html = `
+    <!-- 2 THẺ KPI CHỌN CA: COT 1 & COT 2 -->
+    <div class="row g-3 mb-2">
+      <!-- THẺ CA COT 1 -->
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm ${isC1Active ? 'border-primary border-3 bg-primary-subtle' : 'border-primary border-opacity-50 bg-white'}"
+             style="cursor:pointer; transition: all 0.18s ease; border-radius: 10px;"
+             onclick="window.chonTheCotTrongModalOff('COT1')">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-primary-subtle">
+              <span class="fw-bold text-primary fs-6">
+                <i class="bi bi-sun-fill text-warning me-1"></i>CA COT 1
+              </span>
+              <span class="badge bg-primary rounded-pill px-3 py-1">Tổng: ${c1Total} Rider</span>
+            </div>
+            <div class="row g-2 text-center mt-1">
+              <div class="col-6">
+                <div class="p-2 rounded bg-success-subtle border border-success-subtle">
+                  <div class="small fw-bold text-success"><i class="bi bi-check-circle-fill me-1"></i>ĐI LÀM</div>
+                  <div class="fs-4 fw-bold text-success font-monospace">${c1Work}</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded bg-danger-subtle border border-danger-subtle">
+                  <div class="small fw-bold text-danger"><i class="bi bi-x-circle-fill me-1"></i>NGHỈ OFF</div>
+                  <div class="fs-4 fw-bold text-danger font-monospace">${c1Off}</div>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-2 small ${isC1Active ? 'fw-bold text-primary' : 'text-muted'}" style="font-size: 0.74rem;">
+              <i class="bi bi-hand-index-thumb me-1"></i>${isC1Active ? 'Đang hiển thị danh sách Ca COT 1 bên dưới' : 'Nhấn vào để xem 2 bảng Đi làm & OFF của COT 1'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- THẺ CA COT 2 -->
+      <div class="col-12 col-md-6">
+        <div class="card h-100 shadow-sm ${isC2Active ? 'border-warning border-3 bg-warning-subtle' : 'border-warning border-opacity-50 bg-white'}"
+             style="cursor:pointer; transition: all 0.18s ease; border-radius: 10px;"
+             onclick="window.chonTheCotTrongModalOff('COT2')">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom border-warning-subtle">
+              <span class="fw-bold text-dark fs-6">
+                <i class="bi bi-moon-stars-fill text-warning me-1"></i>CA COT 2
+              </span>
+              <span class="badge bg-warning text-dark rounded-pill px-3 py-1 fw-bold">Tổng: ${c2Total} Rider</span>
+            </div>
+            <div class="row g-2 text-center mt-1">
+              <div class="col-6">
+                <div class="p-2 rounded bg-success-subtle border border-success-subtle">
+                  <div class="small fw-bold text-success"><i class="bi bi-check-circle-fill me-1"></i>ĐI LÀM</div>
+                  <div class="fs-4 fw-bold text-success font-monospace">${c2Work}</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded bg-danger-subtle border border-danger-subtle">
+                  <div class="small fw-bold text-danger"><i class="bi bi-x-circle-fill me-1"></i>NGHỈ OFF</div>
+                  <div class="fs-4 fw-bold text-danger font-monospace">${c2Off}</div>
+                </div>
+              </div>
+            </div>
+            <div class="text-center mt-2 small ${isC2Active ? 'fw-bold text-dark' : 'text-muted'}" style="font-size: 0.74rem;">
+              <i class="bi bi-hand-index-thumb me-1"></i>${isC2Active ? 'Đang hiển thị danh sách Ca COT 2 bên dưới' : 'Nhấn vào để xem 2 bảng Đi làm & OFF của COT 2'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Nếu người dùng đã nhấn chọn 1 thẻ COT -> Hiển thị 2 bảng song song: NGƯỜI ĐI LÀM & NGƯỜI OFF
+  if (st.activeCa === 'COT1' || st.activeCa === 'COT2') {
+    const listWork = st.activeCa === 'COT1' ? st.cot1Work : st.cot2Work;
+    const listOff = st.activeCa === 'COT1' ? st.cot1Off : st.cot2Off;
+    const tenCa = st.activeCa === 'COT1' ? 'CA COT 1' : 'CA COT 2';
+
+    let rowsWorkHtml = '';
+    if (listWork.length === 0) {
+      rowsWorkHtml = `<tr><td colspan="4" class="text-center py-4 text-muted">Không có Rider đi làm trong ${tenCa}</td></tr>`;
+    } else {
+      listWork.forEach((rd, idx) => {
+        const deliDisplay = rd.quanDeli ? `${rd.quanDeli} (P.${rd.phuongDeli || '-'})` : '—';
+        rowsWorkHtml += `
+          <tr>
+            <td class="text-muted small">${idx + 1}</td>
+            <td class="fw-bold font-monospace text-primary">${rd.id}</td>
+            <td class="fw-bold text-start text-dark">${rd.name}</td>
+            <td class="text-start text-secondary fw-semibold small">${deliDisplay}</td>
+          </tr>`;
+      });
+    }
+
+    let rowsOffHtml = '';
+    if (listOff.length === 0) {
+      rowsOffHtml = `<tr><td colspan="5" class="text-center py-4 text-muted">Không có Rider nào OFF trong ${tenCa}</td></tr>`;
+    } else {
+      listOff.forEach((rd, idx) => {
+        const deliDisplay = rd.quanDeli ? `${rd.quanDeli} (P.${rd.phuongDeli || '-'})` : '—';
+        const ghiChu = (rd.dailySchedule && rd.dailySchedule[st.ngay]) ? rd.dailySchedule[st.ngay] : 'OFF';
+        rowsOffHtml += `
+          <tr>
+            <td class="text-muted small">${idx + 1}</td>
+            <td class="fw-bold font-monospace text-danger">${rd.id}</td>
+            <td class="fw-bold text-start text-dark">${rd.name}</td>
+            <td class="text-start text-primary fw-semibold small">${deliDisplay}</td>
+            <td class="text-center"><span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold">${ghiChu}</span></td>
+          </tr>`;
+      });
+    }
+
+    html += `
+      <div class="row g-2 mt-1">
+        <!-- BẢNG TRÁI: DANH SÁCH NGƯỜI ĐI LÀM -->
+        <div class="col-12 col-lg-6">
+          <div class="card border-success shadow-sm h-100 overflow-hidden">
+            <div class="card-header bg-success text-white py-2 px-3 d-flex justify-content-between align-items-center">
+              <span class="fw-bold" style="font-size: 0.82rem;">
+                <i class="bi bi-person-check-fill me-1"></i>DANH SÁCH ĐI LÀM (${tenCa})
+              </span>
+              <span class="badge bg-white text-success fw-bold">${listWork.length} Rider</span>
+            </div>
+            <div class="table-responsive" style="max-height: 52vh;">
+              <table class="table table-hover table-bordered table-sm align-middle mb-0 text-center" style="font-size: 12.5px;">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th style="width: 42px;">STT</th>
+                    <th style="width: 85px;">Mã RD</th>
+                    <th class="text-start">Họ và Tên</th>
+                    <th class="text-start">Địa Bàn Deli</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsWorkHtml}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG PHẢI: DANH SÁCH NGƯỜI NGHỈ OFF -->
+        <div class="col-12 col-lg-6">
+          <div class="card border-danger shadow-sm h-100 overflow-hidden">
+            <div class="card-header bg-danger text-white py-2 px-3 d-flex justify-content-between align-items-center">
+              <span class="fw-bold" style="font-size: 0.82rem;">
+                <i class="bi bi-person-x-fill me-1"></i>DANH SÁCH NGHỈ OFF (${tenCa})
+              </span>
+              <span class="badge bg-white text-danger fw-bold">${listOff.length} Rider</span>
+            </div>
+            <div class="table-responsive" style="max-height: 52vh;">
+              <table class="table table-hover table-bordered table-sm align-middle mb-0 text-center" style="font-size: 12.5px;">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th style="width: 42px;">STT</th>
+                    <th style="width: 85px;">Mã RD</th>
+                    <th class="text-start">Họ và Tên</th>
+                    <th class="text-start">Địa Bàn Deli</th>
+                    <th style="width: 100px;">Ghi chú</th>
+                  </tr>
+                </thead>
+                <tbody>${rowsOffHtml}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   } else {
-    let html = '';
-    filteredList.forEach((rd, idx) => {
-      const caBadge = rd.ca.includes('1') ? 'badge-cot1' : 'badge-cot2';
-      const deliDisplay = rd.quanDeli ? `${rd.quanDeli} (P.${rd.phuongDeli || '-'})` : '—';
-      const ghiChu = (rd.dailySchedule && rd.dailySchedule[ngay]) ? rd.dailySchedule[ngay] : '';
-      
-      html += `
-        <tr>
-          <td class="text-muted small">${idx + 1}</td>
-          <td class="fw-bold font-monospace">${rd.id}</td>
-          <td class="fw-bold text-start text-dark">${rd.name} ${isBKDiLam ? '<span class="badge bg-success ms-1">BK</span>' : ''}</td>
-          <td><span class="badge ${caBadge}">${rd.ca || '—'}</span></td>
-          <td class="text-start text-primary fw-semibold small">${deliDisplay}</td>
-          <td class="text-start text-danger small">${ghiChu}</td>
-        </tr>
-      `;
-    });
-    tbody.innerHTML = html;
+    html += `
+      <div class="text-center py-4 text-muted bg-white rounded border mt-2 shadow-sm">
+        <i class="bi bi-hand-index-thumb fs-3 text-primary d-block mb-1"></i>
+        Hãy nhấn vào thẻ <b>CA COT 1</b> hoặc <b>CA COT 2</b> ở trên để xem 2 bảng song song <b>Người đi làm</b> và <b>Người OFF</b>.
+      </div>
+    `;
   }
-  bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChiTietRiderOff')).show();
+
+  wrapCa.innerHTML = html;
 }
 
 // =======================================================================
