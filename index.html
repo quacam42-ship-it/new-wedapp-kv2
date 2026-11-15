@@ -2974,18 +2974,18 @@
 
     // Hàm chuẩn hóa kiểm tra Trễ giờ & Ngoài kho (> 75m)
     function phanLoaiDiemDanhItem(item) {
-      const gopChuoi = `${item.trangThai || ''} ${item.ghiChu || ''} ${item.viTri || ''}`.toLowerCase();
+      const gopChuoi = `${item.trangThai || ''} ${item.thoiGianTre || ''} ${item.canhBaoTre || ''} ${item.ghiChu || ''} ${item.viTri || ''}`.toLowerCase();
       const soMet = parseInt(String(item.khoangCach || '').replace(/[^\d]/g, ''), 10);
       const phutTre = Number(item.soPhutTre) || 0;
 
-      const isTre = phutTre > 0 || gopChuoi.includes('trễ') || gopChuoi.includes('tre') || gopChuoi.includes('muộn');
+      const isTre = phutTre > 0 || Boolean(item.thoiGianTre) || gopChuoi.includes('trễ') || gopChuoi.includes('tre') || gopChuoi.includes('muộn') || gopChuoi.includes('⚠️') || gopChuoi.includes('🚨');
       const isNgoai = (!isNaN(soMet) ? soMet > 75 : (gopChuoi.includes('ngoài') || gopChuoi.includes('ngoai')));
       return { isTre, isNgoai, phutTre };
     }
 
     async function loadLichSuDiemDanh() {
       try {
-        const res = await fetch(`${API_BASE}/lich-su-diem-danh`);
+        const res = await fetch(`${API_BASE}/lich-su-diem-danh?_t=${Date.now()}`);
         const list = await res.json();
         danhSachDiemDanhHomNay = Array.isArray(list) ? list : [];
         const dStr = new Date().toLocaleDateString('vi-VN');
@@ -3003,7 +3003,6 @@
         const elTre = document.getElementById('ddCountTre'); if (elTre) elTre.innerText = tre;
         const elNgoai = document.getElementById('ddCountNgoai'); if (elNgoai) elNgoai.innerText = ngoai;
 
-        // Tự động hiển thị danh sách ngay khi mở tab Điểm Danh
         hienThiChiTietDD(loaiDiemDanhDangXem || 'dunggio');
       } catch (e) { console.error(e); }
     }
@@ -3025,7 +3024,6 @@
         filtered = danhSachDiemDanhHomNay.filter(i => !phanLoaiDiemDanhItem(i).isTre);
       }
 
-      // Đổi tiêu đề cột linh hoạt theo mục đang nhấn (Đúng giờ / Trễ giờ / Ngoài kho)
       if (thead) {
         if (loai === 'ngoai') {
           thead.innerHTML = `
@@ -3047,7 +3045,7 @@
               <th>Mã RD</th>
               <th>Họ và Tên</th>
               <th style="width: 55px;">Ca</th>
-              <th style="width: 95px;">Số Phút Trễ</th>
+              <th>Thời Gian Trễ</th>
               <th style="width: 75px;">Cách Kho</th>
             </tr>`;
         } else {
@@ -3089,15 +3087,20 @@
               <td>${badgeKC}</td>
             </tr>`;
         } else if (loai === 'tre') {
-          const txtPhutTre = phutTre > 0 ? `Trễ ${phutTre} phút` : (item.trangThai || 'Trễ giờ');
+          const isOver15 = (item.canhBaoTre || '').includes('>') || phutTre > 15;
+          const badgeClassTre = isOver15 ? 'bg-danger text-white' : 'bg-warning text-dark';
+          const txtHienThiTre = item.thoiGianTre
+            ? `${item.thoiGianTre}${item.canhBaoTre ? ' • ' + item.canhBaoTre : ''}`
+            : (phutTre > 0 ? `+${phutTre} phút` : (item.trangThai || 'Trễ giờ'));
+
           html += `
             <tr>
               <td class="text-muted small">${idx + 1}</td>
-              <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
+              <td class="font-monospace small text-primary fw-bold" title="Khung giờ quy định: ${item.khungGioQuyDinh || ''}">${item.gio || item.thoiGian}</td>
               <td class="font-monospace">${item.id}</td>
               <td class="fw-semibold text-start text-truncate" style="max-width:130px;">${item.name}</td>
               <td>${caBadge}</td>
-              <td><span class="badge bg-warning text-dark fw-bold">${txtPhutTre}</span></td>
+              <td><span class="badge ${badgeClassTre} fw-bold font-monospace">${txtHienThiTre}</span></td>
               <td>${badgeKC}</td>
             </tr>`;
         } else {
