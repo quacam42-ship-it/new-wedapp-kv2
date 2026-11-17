@@ -216,6 +216,8 @@ app.get('/api/rider-data', async (req, res) => {
       if (rawQuanDeli.toUpperCase() === 'BACKUP') rawQuanDeli = 'BK';
       const rawPhuongDeli = (row[9] || '').toString().trim();
       const isBackup = rawQuanDeli.toUpperCase().includes('BK') || rawPhuongDeli.toUpperCase().includes('BACKUP');
+      const rawZoneDeli = (row[10] || '').toString().trim();
+      const hasNoteCol = /^\d+$/.test((row[12] || '').toString().trim());
 
       riders.push({
         khuVuc: row[0] || '',
@@ -230,11 +232,13 @@ app.get('/api/rider-data', async (req, res) => {
         quanDeli: rawQuanDeli,
         quan: rawQuanDeli,
         phuongDeli: rawPhuongDeli,
+        zoneDeli: rawZoneDeli,
+        note: hasNoteCol ? (row[11] || '').toString().trim() : '',
         isBackup: isBackup,
         isBK: isBackup,
-        nhom: row[10] || '',
-        tongOff: row[11] || '0',
-        lichOff: row[12] || '',
+        nhom: rawZoneDeli,
+        tongOff: hasNoteCol ? (row[12] || '0') : (row[11] || '0'),
+        lichOff: hasNoteCol ? (row[13] || '') : (row[12] || ''),
         dailySchedule: dailySchedule,
       });
     }
