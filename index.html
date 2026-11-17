@@ -2972,14 +2972,12 @@
     let danhSachDiemDanhHomNay = [];
     let loaiDiemDanhDangXem = null;
 
-    // Hàm chuẩn hóa kiểm tra Trễ giờ & Ngoài kho (> 75m)
+    // Kiểm tra Trễ giờ (dựa trên soPhutTre > 0 theo đúng công thức BÁO CÁO ĐIỂM DANH) & Ngoài kho (> 75m)
     function phanLoaiDiemDanhItem(item) {
-      const gopChuoi = `${item.trangThai || ''} ${item.thoiGianTre || ''} ${item.canhBaoTre || ''} ${item.ghiChu || ''} ${item.viTri || ''}`.toLowerCase();
       const soMet = parseInt(String(item.khoangCach || '').replace(/[^\d]/g, ''), 10);
-      const phutTre = Number(item.soPhutTre) || 0;
-
-      const isTre = phutTre > 0 || Boolean(item.thoiGianTre) || gopChuoi.includes('trễ') || gopChuoi.includes('tre') || gopChuoi.includes('muộn') || gopChuoi.includes('⚠️') || gopChuoi.includes('🚨');
-      const isNgoai = (!isNaN(soMet) ? soMet > 75 : (gopChuoi.includes('ngoài') || gopChuoi.includes('ngoai')));
+      const phutTre = parseFloat(item.soPhutTre) || 0;
+      const isTre = phutTre > 0 || (item.ketQua || '').toLowerCase() === 'trễ';
+      const isNgoai = !isNaN(soMet) ? soMet > 75 : (item.viTri || '').toLowerCase().includes('ngoài');
       return { isTre, isNgoai, phutTre };
     }
 
@@ -3028,25 +3026,25 @@
         if (loai === 'ngoai') {
           thead.innerHTML = `
             <tr>
-              <th style="width: 35px;">STT</th>
+              <th style="width: 32px;">STT</th>
               <th>Giờ</th>
               <th>Mã RD</th>
               <th>Họ và Tên</th>
-              <th style="width: 55px;">Ca</th>
+              <th>Ca</th>
               <th>Vĩ Độ</th>
               <th>Kinh Độ</th>
-              <th style="width: 75px;">Cách Kho</th>
+              <th>Cách Kho</th>
             </tr>`;
         } else if (loai === 'tre') {
           thead.innerHTML = `
             <tr>
-              <th style="width: 35px;">STT</th>
+              <th style="width: 32px;">STT</th>
               <th>Giờ</th>
               <th>Mã RD</th>
               <th>Họ và Tên</th>
-              <th style="width: 55px;">Ca</th>
-              <th>Thời Gian Trễ</th>
-              <th style="width: 75px;">Cách Kho</th>
+              <th>Ca</th>
+              <th>Khung Giờ</th>
+              <th>Trễ (Phút)</th>
             </tr>`;
         } else {
           thead.innerHTML = `
@@ -3080,28 +3078,22 @@
               <td class="text-muted small">${idx + 1}</td>
               <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
               <td class="font-monospace">${item.id}</td>
-              <td class="fw-semibold text-start text-truncate" style="max-width:120px;">${item.name}</td>
+              <td class="fw-semibold text-start text-truncate" style="max-width:115px;">${item.name}</td>
               <td>${caBadge}</td>
               <td class="font-monospace small text-danger">${item.viDo || '—'}</td>
               <td class="font-monospace small text-danger">${item.kinhDo || '—'}</td>
               <td>${badgeKC}</td>
             </tr>`;
         } else if (loai === 'tre') {
-          const isOver15 = (item.canhBaoTre || '').includes('>') || phutTre > 15;
-          const badgeClassTre = isOver15 ? 'bg-danger text-white' : 'bg-warning text-dark';
-          const txtHienThiTre = item.thoiGianTre
-            ? `${item.thoiGianTre}${item.canhBaoTre ? ' • ' + item.canhBaoTre : ''}`
-            : (phutTre > 0 ? `+${phutTre} phút` : (item.trangThai || 'Trễ giờ'));
-
           html += `
             <tr>
               <td class="text-muted small">${idx + 1}</td>
-              <td class="font-monospace small text-primary fw-bold" title="Khung giờ quy định: ${item.khungGioQuyDinh || ''}">${item.gio || item.thoiGian}</td>
-              <td class="font-monospace">${item.id}</td>
-              <td class="fw-semibold text-start text-truncate" style="max-width:130px;">${item.name}</td>
+              <td class="font-monospace small text-primary fw-bold">${item.gio || item.thoiGian}</td>
+              <td class="font-monospace fw-bold">${item.id}</td>
+              <td class="fw-semibold text-start text-truncate" style="max-width:125px;" title="${item.name} (${item.phanLoaiPick || ''})">${item.name}</td>
               <td>${caBadge}</td>
-              <td><span class="badge ${badgeClassTre} fw-bold font-monospace">${txtHienThiTre}</span></td>
-              <td>${badgeKC}</td>
+              <td class="small text-muted font-monospace" style="font-size:0.7rem;" title="${item.phanLoaiPick || ''}">${item.khungGioQuyDinh || '—'}</td>
+              <td><span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold font-monospace">${phutTre}</span></td>
             </tr>`;
         } else {
           const badgeTT = isNgoai
@@ -3117,7 +3109,7 @@
               <td>${badgeKC}</td>
               <td>${badgeTT}</td>
             </tr>`;
-        }
+          }
       });
 
       tbody.innerHTML = html;
