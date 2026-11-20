@@ -615,6 +615,9 @@
           <span class="badge bg-warning text-dark d-none" id="badgeCacheHangHoa" title="Đang giữ dữ liệu lưu ngầm do Sheet đang cập nhật"><i class="bi bi-shield-check me-1"></i>Lưu ngầm</span>
         </div>
         <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-sm btn-success fw-bold py-1 px-3 shadow-sm" id="btnMoModalBaoCaoAnh" onclick="moModalTaoAnhBaoCaoPending()">
+            <i class="bi bi-camera-fill me-1"></i> Tạo Ảnh Báo Cáo
+          </button>
           <button type="button" class="btn btn-sm btn-primary fw-bold py-1 px-3 shadow-sm" id="btnManualSyncHangHoa" onclick="triggerManualHangHoaSync()">
             <i class="bi bi-arrow-repeat me-1"></i> Cập nhật ngay
           </button>
@@ -1554,6 +1557,66 @@
     </div>
   </div>
 
+<!-- MODAL TẠO HÌNH ẢNH BÁO CÁO PENDING ATTEMPT (QUẬN & ĐƠN HV) -->
+  <div class="modal fade" id="modalTaoAnhBaoCaoPending" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 1150px;">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header text-white py-2" style="background: linear-gradient(135deg, #0d3b66, #1d4ed8);">
+          <h6 class="modal-title fw-bold mb-0">
+            <i class="bi bi-image-fill text-warning me-2"></i>TẠO HÌNH ẢNH BÁO CÁO PENDING ATTEMPT & ĐƠN HV
+          </h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3 bg-light">
+          <!-- BỘ CHỌN MẪU BÁO CÁO -->
+          <div class="bg-white p-2 rounded border shadow-sm mb-3">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+              <div class="d-flex flex-wrap gap-1" id="grpNutChonPhamViAnh">
+                <button type="button" class="btn btn-sm btn-primary fw-bold" data-scope="ALL" onclick="chonPhamViBaoCaoAnh('ALL')">📊 Toàn KV2</button>
+                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" data-scope="Quận 2" onclick="chonPhamViBaoCaoAnh('Quận 2')">📍 Quận 2</button>
+                <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold" data-scope="Quận 4" onclick="chonPhamViBaoCaoAnh('Quận 4')">📍 Quận 4</button>
+                <button type="button" class="btn btn-sm btn-outline-info text-dark fw-bold" data-scope="Quận 7" onclick="chonPhamViBaoCaoAnh('Quận 7')">📍 Quận 7</button>
+                <button type="button" class="btn btn-sm btn-outline-success fw-bold" data-scope="Quận 9" onclick="chonPhamViBaoCaoAnh('Quận 9')">📍 Quận 9</button>
+                <button type="button" class="btn btn-sm btn-outline-danger fw-bold" data-scope="Bình Thạnh" onclick="chonPhamViBaoCaoAnh('Bình Thạnh')">📍 Bình Thạnh</button>
+                <button type="button" class="btn btn-sm btn-outline-dark fw-bold" data-scope="HV_ONLY" onclick="chonPhamViBaoCaoAnh('HV_ONLY')">🛡️ Riêng Đơn HV</button>
+              </div>
+              <div class="d-flex flex-wrap align-items-center gap-3 small fw-semibold">
+                <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
+                  <input type="checkbox" class="form-check-input mt-0" id="chkImgShowPhuong" checked onchange="veKhungAnhBaoCaoPending()"> Hiện chi tiết phường
+                </label>
+                <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
+                  <input type="checkbox" class="form-check-input mt-0" id="chkImgShowRider" checked onchange="veKhungAnhBaoCaoPending()"> Hiện RD phụ trách
+                </label>
+                <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
+                  <input type="checkbox" class="form-check-input mt-0" id="chkImgShowHv" checked onchange="veKhungAnhBaoCaoPending()"> Kèm đơn HV
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- VÙNG XEM TRƯỚC & CHỤP ẢNH -->
+          <div class="d-flex justify-content-center" style="overflow-x: auto;">
+            <div id="khungChupAnhBaoCaoPending" style="width: 960px; min-width: 960px; background: #ffffff; border-radius: 10px; border: 2px solid #0d3b66; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <!-- Nội dung báo cáo được JS tự động vẽ vào đây -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span class="small text-muted" id="lblTrangThaiXuatAnh">💡 Bấm <b>Sao chép ảnh</b> rồi sang Zalo nhấn <b>Ctrl + V</b> để gửi ngay.</span>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Đóng</button>
+            <button type="button" class="btn btn-success btn-sm fw-bold px-3 shadow-sm" id="btnCopyAnhBaoCao" onclick="xuatHinhAnhBaoCaoPending('COPY')">
+              <i class="bi bi-clipboard-check-fill me-1"></i> Sao chép ảnh (Dán Zalo)
+            </button>
+            <button type="button" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm" id="btnTaiAnhBaoCao" onclick="xuatHinhAnhBaoCaoPending('DOWNLOAD')">
+              <i class="bi bi-download me-1"></i> Tải ảnh PNG
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
  <!-- CUSTOM POPUP ĐĂNG NHẬP (CHỐNG ĐƠ 100%, KHÔNG DÙNG BOOTSTRAP BACKDROP) -->
   <div id="modalAuthLogin" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.8); z-index:9999999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
     <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="width: 440px; max-width: 94%; margin: auto; animation: fadeIn 0.2s ease-out;">
@@ -2021,6 +2084,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="/js/lich-off.js?v=20261103"></script>
   <script src="/js/thong-tin-rider.js"></script>
   <script src="/js/profile_rider.js"></script>
@@ -3856,6 +3920,8 @@ if (user.role === 'RIDER') {
       const titleEl = document.getElementById('titleKieuHangHoa');
       const vungPending = document.getElementById('vungGiaoDienPending');
       const vungInbound = document.getElementById('vungGiaoDienInbound');
+      const btnImg = document.getElementById('btnMoModalBaoCaoAnh'); if (btnImg) btnImg.style.display = 'none';
+      const btnImg = document.getElementById('btnMoModalBaoCaoAnh'); if (btnImg) btnImg.style.display = 'inline-block';
 
       if (kieu === 'INBOUND') {
         if (titleEl) {
@@ -4499,6 +4565,387 @@ if (user.role === 'RIDER') {
         });
       }
     });
+
+
+// ================= TẠO HÌNH ẢNH BÁO CÁO PENDING ATTEMPT (CÁC QUẬN & ĐƠN HV) =================
+    let currentBaoCaoAnhScope = 'ALL';
+
+    function moModalTaoAnhBaoCaoPending() {
+      currentBaoCaoAnhScope = 'ALL';
+      capNhatNutPhamViBaoCaoAnh();
+      veKhungAnhBaoCaoPending();
+      const elStatus = document.getElementById('lblTrangThaiXuatAnh');
+      if (elStatus) elStatus.innerHTML = '💡 Bấm <b>Sao chép ảnh</b> rồi sang Zalo nhấn <b>Ctrl + V</b> để gửi ngay.';
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTaoAnhBaoCaoPending')).show();
+    }
+
+    function chonPhamViBaoCaoAnh(scope) {
+      currentBaoCaoAnhScope = scope;
+      capNhatNutPhamViBaoCaoAnh();
+      veKhungAnhBaoCaoPending();
+    }
+
+    function capNhatNutPhamViBaoCaoAnh() {
+      document.querySelectorAll('#grpNutChonPhamViAnh button').forEach(btn => {
+        const sc = btn.getAttribute('data-scope');
+        const isActive = sc === currentBaoCaoAnhScope;
+        if (sc === 'ALL') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-primary' : 'btn-outline-primary'}`;
+        else if (sc === 'Quận 2') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-primary' : 'btn-outline-primary'}`;
+        else if (sc === 'Quận 4') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'}`;
+        else if (sc === 'Quận 7') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-info text-dark' : 'btn-outline-info text-dark'}`;
+        else if (sc === 'Quận 9') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-success' : 'btn-outline-success'}`;
+        else if (sc === 'Bình Thạnh') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-danger' : 'btn-outline-danger'}`;
+        else if (sc === 'HV_ONLY') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-dark' : 'btn-outline-dark'}`;
+      });
+    }
+
+    function veKhungAnhBaoCaoPending() {
+      const box = document.getElementById('khungChupAnhBaoCaoPending');
+      if (!box) return;
+
+      const showPhuong = document.getElementById('chkImgShowPhuong')?.checked ?? true;
+      const showRider = document.getElementById('chkImgShowRider')?.checked ?? true;
+      const showHv = document.getElementById('chkImgShowHv')?.checked ?? true;
+
+      const uniqueOrders = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
+      const nowStr = new Date().toLocaleString('vi-VN', { hour12: false });
+      const sheetUpdateTxt = document.getElementById('hangSheetTimeLabel')?.innerText || '';
+      const autoCa = typeof layCaMacDinhTheoGioVN === 'function' ? layCaMacDinhTheoGioVN() : 'COT1';
+      const caLabel = autoCa === 'COT2' ? 'CA COT 2' : 'CA COT 1';
+
+      // Chuẩn hóa danh sách Bàn giao HV
+      const hvHandoverNormalized = (listBanGiaoHv || []).map(item => {
+        const isIp = Boolean(item.isIp) || (item.whsId || '').toUpperCase().includes('VNWL') || (item.maDon || '').toLowerCase().includes('ip');
+        const baseId = (item.maDon || '').split(/\s*-\s*/)[0].trim();
+        const maDonHienThi = isIp ? `${baseId} - đơn IP` : (item.maDon || '—');
+        const ttChuan = typeof chuanHoaTrangThaiHvFrontend === 'function' ? chuanHoaTrangThaiHvFrontend(item) : (item.trangThai || '—');
+        return { ...item, isIp, maDonHienThi, trangThaiChuan: ttChuan };
+      }).sort((a, b) => {
+        const rA = typeof layThuTuTrangThaiHv === 'function' ? layThuTuTrangThaiHv(a.trangThaiChuan) : 5;
+        const rB = typeof layThuTuTrangThaiHv === 'function' ? layThuTuTrangThaiHv(b.trangThaiChuan) : 5;
+        if (rA !== rB) return rA - rB;
+        if (a.isIp !== b.isIp) return a.isIp ? -1 : 1;
+        const qA = typeof layThuTuQuanBanGiaoHv === 'function' ? layThuTuQuanBanGiaoHv(a.quanPhuong) : 6;
+        const qB = typeof layThuTuQuanBanGiaoHv === 'function' ? layThuTuQuanBanGiaoHv(b.quanPhuong) : 6;
+        if (qA !== qB) return qA - qB;
+        return (a.quanPhuong || '').localeCompare(b.quanPhuong || '', 'vi');
+      });
+
+      const scope = currentBaoCaoAnhScope;
+      const isDistrictMode = ['Quận 2', 'Quận 4', 'Quận 7', 'Quận 9', 'Bình Thạnh'].includes(scope);
+
+      // Lọc đơn theo phạm vi đang chọn
+      const ordersInScope = isDistrictMode
+        ? uniqueOrders.filter(d => normQ(d.quan) === normQ(scope))
+        : uniqueOrders;
+
+      const hvPendingOrders = ordersInScope.filter(d => (d.isHv || '').toLowerCase() === 'yes');
+      const mpCount = ordersInScope.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
+      const whCount = ordersInScope.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
+      const tongScope = ordersInScope.length;
+      const pct = (v, total) => total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0.0%';
+
+      const titleMain = scope === 'ALL'
+        ? 'BÁO CÁO TỒN KHO PENDING ATTEMPT & ĐƠN HV — KHU VỰC 2'
+        : (scope === 'HV_ONLY'
+            ? 'BÁO CÁO GIÁM SÁT ĐƠN HÀNG GIÁ TRỊ CAO (HV / IP) — KHU VỰC 2'
+            : `BÁO CÁO PENDING ATTEMPT & ĐƠN HV — ${scope.toUpperCase()}`);
+
+      let html = `
+        <!-- HEADER BÁO CÁO -->
+        <div style="background: linear-gradient(135deg, #0b2e59, #1d4ed8); color: #ffffff; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 18px; font-weight: 800; letter-spacing: 0.4px;">📦 ${titleMain}</div>
+            <div style="font-size: 12px; opacity: 0.9; margin-top: 2px;">🕒 Xuất lúc: <b>${nowStr}</b> ${sheetUpdateTxt} • Phụ trách mặc định: <b>${caLabel}</b></div>
+          </div>
+          <div style="background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; padding: 5px 12px; text-align: right;">
+            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.85;">52-HCM SDD-01 HUB</div>
+            <div style="font-size: 13px; font-weight: 800; color: #fde047;">ĐIỀU PHỐI KV2</div>
+          </div>
+        </div>
+        <div style="padding: 14px 16px; background: #f8fafc;">
+      `;
+
+      // ==================== PHẦN 1: THẺ KPI ====================
+      if (scope !== 'HV_ONLY') {
+        const phuongListScope = isDistrictMode ? layDanhSachPhuongTheoQuan(scope) : layDanhSachPhuongTheoQuan('all');
+        html += `
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px;">
+            <div style="background: #f4cccc; border: 1.5px solid #ea9999; border-radius: 8px; padding: 10px; text-align: center; color: #990000;">
+              <div style="font-size: 11px; font-weight: 800;">TỔNG ĐƠN RỚT</div>
+              <div style="font-size: 28px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${tongScope}</div>
+              <div style="font-size: 11px; font-weight: 600;">${phuongListScope.length} phường chưa gán</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%); border: 2px solid #facc15; border-radius: 8px; padding: 10px; text-align: center; color: #ffffff;">
+              <div style="font-size: 11px; font-weight: 800; color: #fde047;">🛡️ ĐƠN RỚT HV</div>
+              <div style="font-size: 28px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${hvPendingOrders.length}</div>
+              <div style="font-size: 11px; font-weight: 600; color: #fef08a;">${pct(hvPendingOrders.length, tongScope)} tổng đơn</div>
+            </div>
+            <div style="background: #d9ead3; border: 1.5px solid #b6d7a8; border-radius: 8px; padding: 10px; text-align: center; color: #274e13;">
+              <div style="font-size: 11px; font-weight: 800;">ĐƠN MP</div>
+              <div style="font-size: 28px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${mpCount}</div>
+              <div style="font-size: 11px; font-weight: 600;">${pct(mpCount, tongScope)} tổng đơn</div>
+            </div>
+            <div style="background: #e2e8f0; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px; text-align: center; color: #1e293b;">
+              <div style="font-size: 11px; font-weight: 800;">ĐƠN WH</div>
+              <div style="font-size: 28px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${whCount}</div>
+              <div style="font-size: 11px; font-weight: 600;">${pct(whCount, tongScope)} tổng đơn</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Nếu là chế độ Toàn KV2 -> Hiện thêm hàng 5 Quận
+      if (scope === 'ALL') {
+        const qConfigs = [
+          { name: 'QUẬN 2', key: 'quận 2', list: listQ2 || [], bg: '#cfe2f3', bd: '#9fc5e8', cl: '#073763' },
+          { name: 'QUẬN 4', key: 'quận 4', list: listQ4 || [], bg: '#fff2cc', bd: '#ffe599', cl: '#7f6000' },
+          { name: 'QUẬN 7', key: 'quận 7', list: listQ7 || [], bg: '#d9d2e9', bd: '#b4a7d6', cl: '#20124d' },
+          { name: 'QUẬN 9', key: 'quận 9', list: listQ9 || [], bg: '#d0e0e3', bd: '#a2c4c9', cl: '#0c343d' },
+          { name: 'BÌNH THẠNH', key: 'bình thạnh', list: listBT || [], bg: '#f9cb9c', bd: '#f6b26b', cl: '#783f04' }
+        ];
+
+        html += `<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px;">`;
+        qConfigs.forEach(qc => {
+          const cnt = uniqueOrders.filter(d => normQ(d.quan) === qc.key).length;
+          const cntHvQ = uniqueOrders.filter(d => normQ(d.quan) === qc.key && (d.isHv || '').toLowerCase() === 'yes').length;
+          html += `
+            <div style="background: ${qc.bg}; border: 1.5px solid ${qc.bd}; border-radius: 8px; padding: 8px 6px; text-align: center; color: ${qc.cl};">
+              <div style="font-size: 11px; font-weight: 800;">${qc.name}</div>
+              <div style="font-size: 24px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${cnt}</div>
+              <div style="font-size: 10.5px; font-weight: 600;">${pct(cnt, tongScope)} • ${qc.list.length} phường</div>
+              ${cntHvQ > 0 ? `<div style="margin-top: 3px;"><span style="background: #6b21a8; color: #fde047; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px;">🛡️ ${cntHvQ} HV</span></div>` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+      }
+
+      // ==================== PHẦN 2: CHI TIẾT PHƯỜNG RỚT ====================
+      if (showPhuong && scope !== 'HV_ONLY') {
+        const listPhuongToShow = isDistrictMode
+          ? layDanhSachPhuongTheoQuan(scope)
+          : [...layDanhSachPhuongTheoQuan('all')].sort((a, b) => (b.soLuong || 0) - (a.soLuong || 0)).slice(0, 10);
+
+        const tieuDePhuong = isDistrictMode
+          ? `📍 CHI TIẾT PHƯỜNG CHƯA GÁN — ${scope.toUpperCase()} (${listPhuongToShow.length} phường)`
+          : `🔥 TOP 10 PHƯỜNG RỚT NHIỀU NHẤT KHU VỰC 2`;
+
+        if (listPhuongToShow.length > 0) {
+          html += `
+            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+              <div style="background: #1b4965; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 800;">${tieuDePhuong}</div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                  <tr style="background: #f1f5f9; color: #334155; text-align: center;">
+                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 38px;">#</th>
+                    <th style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: left;">Phường</th>
+                    ${!isDistrictMode ? '<th style="padding: 5px; border: 1px solid #e2e8f0; width: 105px;">Quận</th>' : ''}
+                    ${showRider ? `<th style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: left;">Rider Phụ Trách (${caLabel})</th>` : ''}
+                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 70px;">Số Đơn</th>
+                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 65px;">Đơn HV</th>
+                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 65px;">Tỷ Trọng</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+          listPhuongToShow.forEach((p, idx) => {
+            const pNorm = (p.phuong || '').trim().toLowerCase();
+            const qNorm = normQ(p.quan);
+            const hvInWard = uniqueOrders.filter(d => normQ(d.quan) === qNorm && (d.phuong || '').trim().toLowerCase() === pNorm && (d.isHv || '').toLowerCase() === 'yes').length;
+
+            let riderNamesText = '—';
+            if (showRider && typeof timRiderPhuTrachTheoPhuongVaZone === 'function') {
+              const rds = timRiderPhuTrachTheoPhuongVaZone(p.quan, p.phuong, '', false, autoCa);
+              if (rds.length > 0) {
+                riderNamesText = rds.slice(0, 4).map(r => r.name).join(', ') + (rds.length > 4 ? ` (+${rds.length - 4})` : '');
+              }
+            }
+
+            html += `
+              <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; color: #64748b; font-weight: 700;">${idx + 1}</td>
+                <td style="padding: 5px 8px; border: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">${p.phuong || '—'}</td>
+                ${!isDistrictMode ? `<td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #475569;">${p.quan || '—'}</td>` : ''}
+                ${showRider ? `<td style="padding: 5px 8px; border: 1px solid #e2e8f0; font-size: 11px; color: #1e40af; font-weight: 600;">${riderNamesText}</td>` : ''}
+                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #dc2626; font-size: 13px;">${p.soLuong || 0}</td>
+                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: ${hvInWard > 0 ? '#7e22ce' : '#94a3b8'};">${hvInWard > 0 ? `🛡️ ${hvInWard}` : '0'}</td>
+                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; color: #475569;">${pct(p.soLuong || 0, tongScope)}</td>
+              </tr>`;
+          });
+
+          html += `</tbody></table></div>`;
+        }
+      }
+
+      // ==================== PHẦN 3: BÁO CÁO ĐƠN HV (RỚT CHƯA GÁN + BÀN GIAO HV) ====================
+      if (showHv || scope === 'HV_ONLY') {
+        const hvHandoverScope = isDistrictMode
+          ? hvHandoverNormalized.filter(item => normQ(item.quanPhuong) === normQ(scope))
+          : hvHandoverNormalized;
+
+        const ipAll = hvHandoverScope.filter(i => i.isIp);
+        const ipDaBG = ipAll.filter(i => typeof kiemTraDaBanGiaoHvItem === 'function' ? kiemTraDaBanGiaoHvItem(i.trangThaiChuan) : false).length;
+        const ipChuaBG = ipAll.length - ipDaBG;
+        const hvDelivered = hvHandoverScope.filter(i => i.trangThaiChuan === 'Giao thành công').length;
+        const hvChuaXong = hvHandoverScope.filter(i => i.trangThaiChuan !== 'Giao thành công');
+
+        // 3.1. Bảng đơn Rớt HV chưa gán Rider (nếu có)
+        if (hvPendingOrders.length > 0) {
+          html += `
+            <div style="background: #ffffff; border: 2px solid #facc15; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
+              <div style="background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%); color: #fde047; padding: 7px 12px; font-size: 12.5px; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
+                <span>🛡️ DANH SÁCH ĐƠN RỚT HV CHƯA GÁN RIDER (${hvPendingOrders.length} ĐƠN CẦN XỬ LÝ GẤP)</span>
+                <span style="background: #facc15; color: #1e1b4b; padding: 2px 8px; border-radius: 4px; font-size: 11px;">ƯU TIÊN CAO NHẤT</span>
+              </div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
+                <thead>
+                  <tr style="background: #faf5ff; color: #581c87; text-align: center;">
+                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 35px;">#</th>
+                    <th style="padding: 5px 8px; border: 1px solid #e9d5ff; text-align: left;">Mã Đơn (Shipment ID)</th>
+                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 55px;">Loại</th>
+                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 105px;">Zone ID</th>
+                    <th style="padding: 5px 8px; border: 1px solid #e9d5ff; text-align: left;">Quận / Phường</th>
+                    ${showRider ? `<th style="padding: 5px 8px; border: 1px solid #e9d5ff; text-align: left;">Rider Phụ Trách (${caLabel})</th>` : ''}
+                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 130px;">Giờ Nhận Trạm</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+          hvPendingOrders.forEach((don, idx) => {
+            let rdStr = '—';
+            if (showRider && typeof timRiderPhuTrachTheoPhuongVaZone === 'function') {
+              const rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true, autoCa);
+              if (rds.length > 0) rdStr = rds.slice(0, 3).map(r => r.name).join(', ');
+            }
+            html += `
+              <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#fefce8'};">
+                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-weight: 700;">${idx + 1}</td>
+                <td style="padding: 5px 8px; border: 1px solid #e9d5ff; font-family: monospace; font-weight: 800; color: #990000;">${don.shipmentId}</td>
+                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-weight: 700;">${don.loaiHang || 'MP'}</td>
+                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-family: monospace;">${don.zoneId || '—'}</td>
+                <td style="padding: 5px 8px; border: 1px solid #e9d5ff; font-weight: 600;">${don.quan || ''} • ${don.phuong || ''}</td>
+                ${showRider ? `<td style="padding: 5px 8px; border: 1px solid #e9d5ff; color: #1e40af; font-weight: 600;">${rdStr}</td>` : ''}
+                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-family: monospace; color: #475569;">${don.receivedTime || '—'}</td>
+              </tr>`;
+          });
+          html += `</tbody></table></div>`;
+        }
+
+        // 3.2. Tóm tắt & Bảng Bàn Giao Trạng Thái Đơn Hàng HV
+        const rowsHvDisplay = scope === 'HV_ONLY' ? hvHandoverScope : hvChuaXong.slice(0, 15);
+        html += `
+          <div style="background: #ffffff; border: 2px solid #6b21a8; border-radius: 8px; overflow: hidden;">
+            <div style="background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%); color: #ffffff; padding: 7px 12px; font-size: 12px; font-weight: 800; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px;">
+              <span style="color: #fde047;">📋 BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV ${isDistrictMode ? `(${scope.toUpperCase()})` : ''}</span>
+              <div style="display: flex; gap: 6px; font-size: 11px;">
+                <span style="background: #facc15; color: #111827; padding: 2px 7px; border-radius: 4px;">Tổng: ${hvHandoverScope.length} HV</span>
+                <span style="background: #dcfce7; color: #166534; padding: 2px 7px; border-radius: 4px;">✅ Thành công: ${hvDelivered}</span>
+                <span style="background: #dc2626; color: #ffffff; padding: 2px 7px; border-radius: 4px;">⏳ IP chưa BG: ${ipChuaBG}</span>
+                <span style="background: #38bdf8; color: #0f172a; padding: 2px 7px; border-radius: 4px;">✅ IP đã BG: ${ipDaBG}</span>
+              </div>
+            </div>`;
+
+        if (rowsHvDisplay.length > 0) {
+          html += `
+            <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
+              <thead>
+                <tr style="background: #1b4965; color: #ffffff; text-align: center;">
+                  <th style="padding: 5px; border: 1px solid #cbd5e1; width: 32px;">#</th>
+                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Mã Đơn</th>
+                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Quận / Phường</th>
+                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Tên RD (COT)</th>
+                  <th style="padding: 5px; border: 1px solid #cbd5e1; width: 115px;">Trạng Thái</th>
+                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Lý Do On-Hold</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+          rowsHvDisplay.forEach((item, idx) => {
+            const bgRow = item.isIp ? '#fce8e6' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
+            const clText = item.isIp ? '#990000' : '#0f172a';
+            const tt = item.trangThaiChuan;
+            const ttBg = tt === 'Giao thành công' ? '#d9ead3' : ((tt === 'Chờ bàn giao' || tt === 'Chờ kho xử lý') ? '#fee2e2' : '#e0f2fe');
+            const ttCl = tt === 'Giao thành công' ? '#137333' : ((tt === 'Chờ bàn giao' || tt === 'Chờ kho xử lý') ? '#b91c1c' : '#0369a1');
+            const tenRdClean = (item.tenRd && item.tenRd !== '0') ? item.tenRd : '—';
+            const cotClean = (item.cotRd && item.cotRd !== '0') ? ` (${item.cotRd})` : '';
+
+            html += `
+              <tr style="background: ${bgRow}; color: ${clText}; font-weight: ${item.isIp ? '700' : '500'};">
+                <td style="padding: 4px; border: 1px solid #e2e8f0; text-align: center;">${idx + 1}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; font-family: monospace; font-weight: 700;">${item.maDonHienThi}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0;">${item.quanPhuong || '—'}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0;">${tenRdClean}${cotClean}</td>
+                <td style="padding: 4px; border: 1px solid #e2e8f0; text-align: center; background: ${ttBg}; color: ${ttCl}; font-weight: 700;">${tt}</td>
+                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; color: #b91c1c; font-size: 11px;">${item.lyDoOnhold || ''}</td>
+              </tr>`;
+          });
+          html += `</tbody></table>`;
+        } else {
+          html += `<div style="padding: 12px; text-align: center; color: #15803d; font-weight: 700; font-size: 12.5px;">✅ Tất cả đơn bàn giao HV trong phạm vi này đều đã giao thành công!</div>`;
+        }
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+      box.innerHTML = html;
+    }
+
+    async function xuatHinhAnhBaoCaoPending(actionType) {
+      const targetEl = document.getElementById('khungChupAnhBaoCaoPending');
+      const statusEl = document.getElementById('lblTrangThaiXuatAnh');
+      const btnCopy = document.getElementById('btnCopyAnhBaoCao');
+      const btnTai = document.getElementById('btnTaiAnhBaoCao');
+
+      if (!targetEl) return;
+      if (typeof html2canvas === 'undefined') {
+        alert('Thư viện tạo ảnh html2canvas chưa tải xong, vui lòng tải lại trang (Ctrl + F5)!');
+        return;
+      }
+
+      if (btnCopy) btnCopy.disabled = true;
+      if (btnTai) btnTai.disabled = true;
+      if (statusEl) statusEl.innerHTML = '<span class="spinner-border spinner-border-sm text-primary me-1"></span> Đang kết xuất hình ảnh sắc nét...';
+
+      try {
+        const canvas = await html2canvas(targetEl, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+
+        const now = new Date();
+        const fileStamp = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}h${String(now.getMinutes()).padStart(2, '0')}`;
+        const scopeSlug = currentBaoCaoAnhScope.replace(/\s+/g, '_');
+
+        if (actionType === 'COPY') {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            if (statusEl) statusEl.innerHTML = '<span class="text-success fw-bold">✅ Đã sao chép ảnh báo cáo! Sang Zalo nhấn Ctrl + V để dán gửi ngay.</span>';
+          } else {
+            throw new Error('Trình duyệt không hỗ trợ sao chép ảnh trực tiếp, đang tự động tải xuống.');
+          }
+        } else {
+          const link = document.createElement('a');
+          link.download = `BaoCao_Pending_${scopeSlug}_${fileStamp}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          if (statusEl) statusEl.innerHTML = '<span class="text-primary fw-bold">✅ Đã tải file ảnh báo cáo PNG về máy!</span>';
+        }
+      } catch (err) {
+        console.warn('Chuyển sang tải ảnh dự phòng:', err);
+        const canvasFallback = await html2canvas(targetEl, { scale: 2, backgroundColor: '#ffffff' });
+        const link = document.createElement('a');
+        link.download = `BaoCao_Pending_${Date.now()}.png`;
+        link.href = canvasFallback.toDataURL('image/png');
+        link.click();
+        if (statusEl) statusEl.innerHTML = '<span class="text-warning text-dark fw-bold">⚠️ Trình duyệt chặn Copy trực tiếp nên đã tự động tải ảnh PNG về máy!</span>';
+      } finally {
+        if (btnCopy) btnCopy.disabled = false;
+        if (btnTai) btnTai.disabled = false;
+      }
+    }
 
     window.addEventListener('DOMContentLoaded', () => { kiemTraDangNhap(); });
 
