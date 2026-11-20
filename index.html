@@ -3920,10 +3920,10 @@ if (user.role === 'RIDER') {
       const titleEl = document.getElementById('titleKieuHangHoa');
       const vungPending = document.getElementById('vungGiaoDienPending');
       const vungInbound = document.getElementById('vungGiaoDienInbound');
-      const btnImg = document.getElementById('btnMoModalBaoCaoAnh'); if (btnImg) btnImg.style.display = 'none';
-      const btnImg = document.getElementById('btnMoModalBaoCaoAnh'); if (btnImg) btnImg.style.display = 'inline-block';
+      const btnImg = document.getElementById('btnMoModalBaoCaoAnh');
 
       if (kieu === 'INBOUND') {
+        if (btnImg) btnImg.style.display = 'none';
         if (titleEl) {
           titleEl.innerHTML = '<i class="bi bi-box-arrow-in-down me-1"></i> INBOUND';
           titleEl.className = 'badge bg-primary fs-6 py-1 px-2 shadow-sm';
@@ -3932,6 +3932,7 @@ if (user.role === 'RIDER') {
         if (vungInbound) vungInbound.style.display = 'block';
         chuyenTab('hangHoa');
       } else {
+        if (btnImg) btnImg.style.display = 'inline-block';
         if (titleEl) {
           titleEl.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> PENDING ATTEMPT';
           titleEl.className = 'badge bg-danger fs-6 py-1 px-2 shadow-sm';
