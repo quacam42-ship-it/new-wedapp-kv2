@@ -2777,9 +2777,37 @@
     let currentModalPhuongList = [];
     let currentModalTitleBase = '';
     let isRiderModalSectionOpen = true;
-    let currentModalRiderFilterMode = 'ALL'; // ALL | WORK | OFF | COT1 | COT2
+    let currentModalRiderFilterMode = 'COT1'; // Tự động theo khung giờ: COT1 (< 13h30) | COT2 (>= 13h30) | ALL
 
-    // Tách danh sách Phường chuẩn từ chuỗi PHƯỜNG DELI trên TỔNG QUAN RD (VD: "Thủ Thiêm, An Lợi Đông" hoặc "13,14,15,16,18")
+    // Xác định ca phụ trách mặc định theo giờ Việt Nam: trước 13h30 -> COT1, từ 13h30 trở đi -> COT2
+    function layCaMacDinhTheoGioVN() {
+      try {
+        const now = new Date();
+        const parts = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Asia/Ho_Chi_Minh',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).formatToParts(now);
+        const h = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
+        const m = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
+        const totalMin = h * 60 + m;
+        return totalMin < (13 * 60 + 30) ? 'COT1' : 'COT2';
+      } catch (e) {
+        const now = new Date();
+        const totalMin = now.getHours() * 60 + now.getMinutes();
+        return totalMin < (13 * 60 + 30) ? 'COT1' : 'COT2';
+      }
+    }
+
+    function khopCaDangChon(caStr, filterMode) {
+      const c = (caStr || '').toString().toUpperCase();
+      if (filterMode === 'COT1') return c.includes('1') || !c.includes('2');
+      if (filterMode === 'COT2') return c.includes('2');
+      return true; // ALL
+    }
+
+    // Tách danh sách Phường chuẩn từ chuỗi PHƯỜNG DELI trên TỔNG QUAN RD
     function tachPhuongTokens(str) {
       if (!str) return [];
       return str.toString().toLowerCase()
@@ -2788,13 +2816,13 @@
         .map(s => {
           let clean = s.replace(/^(?:phường|p\.?|f\.?)\s*/i, '').trim();
           if (!clean || clean === '-' || clean === '—' || clean.includes('backup') || clean === 'bk' || clean.includes('chưa rõ')) return '';
-          if (/^\d+$/.test(clean)) return String(parseInt(clean, 10)); // Chuẩn hóa "02" -> "2"
+          if (/^\d+$/.test(clean)) return String(parseInt(clean, 10));
           return clean;
         })
         .filter(Boolean);
     }
 
-    // Tách danh sách mã Zone chuẩn từ chuỗi ZONE DELI trên TỔNG QUAN RD (VD: "Z2.02.AK.05, Z2.02.AK.02")
+    // Tách danh sách mã Zone chuẩn từ chuỗi ZONE DELI trên TỔNG QUAN RD
     function tachZoneTokens(zoneStr) {
       if (!zoneStr) return [];
       return zoneStr.toString().toUpperCase()
@@ -2803,37 +2831,8 @@
         .filter(s => s && s.startsWith('Z'));
     }
 
-    // Kiểm tra trạng thái Đi làm / Nghỉ OFF hôm nay của Rider dựa theo lịch ngày trên TỔNG QUAN RD
-    function kiemTraTrangThaiDiLamRiderHomNay(rd) {
-      if (!rd) return { isOff: false, label: 'Đi làm' };
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, '0');
-      const mm = String(now.getMonth() + 1).padStart(2, '0');
-      const yyyy = now.getFullYear();
-      const k1 = `${dd}/${mm}`;
-      const k2 = `${now.getDate()}/${now.getMonth() + 1}`;
-      const k3 = `${dd}/${mm}/${yyyy}`;
-
-      const sched = rd.dailySchedule || {};
-      let val = sched[k1] || sched[k3] || sched[k2] || '';
-      if (!val) {
-        for (const k in sched) {
-          if (k.startsWith(k1) || k.startsWith(k2 + '/')) {
-            val = sched[k];
-            break;
-          }
-        }
-      }
-      const cleanVal = (val || '').toString().trim();
-      const isOff = cleanVal.toLowerCase().includes('off');
-      return {
-        isOff,
-        label: isOff ? cleanVal : (cleanVal && !cleanVal.toLowerCase().includes('full') ? `Đi làm (${cleanVal})` : 'Đi làm')
-      };
-    }
-
-    // Tìm danh sách Rider phụ trách 1 đơn hàng hoặc 1 Phường dựa theo Quận Deli, Phường Deli và Zone Deli trên TỔNG QUAN RD
-    function timRiderPhuTrachTheoPhuongVaZone(quan, phuong, zoneId = '', preferExactZone = false) {
+    // Tìm danh sách Rider phụ trách theo Quận Deli, Phường Deli, Zone Deli và Ca đang áp dụng
+    function timRiderPhuTrachTheoPhuongVaZone(quan, phuong, zoneId = '', preferExactZone = false, caMode = currentModalRiderFilterMode) {
       if (!ridersData || ridersData.length === 0) return [];
       const targetQ = normQ(quan);
       const targetPList = tachPhuongTokens(phuong);
@@ -2844,6 +2843,7 @@
         if (rd.isBackup || (rd.quanDeli || '').toUpperCase().includes('BK')) return;
         const rdQ = normQ(rd.quanDeli);
         if (targetQ && rdQ !== targetQ) return;
+        if (caMode && caMode !== 'ALL' && !khopCaDangChon(rd.ca, caMode)) return;
 
         const rdZones = tachZoneTokens(rd.zoneDeli || rd.nhom || '');
         const rdPhuongs = tachPhuongTokens(rd.phuongDeli || '');
@@ -2854,65 +2854,55 @@
         );
 
         if (isZoneMatch || isPhuongMatch) {
-          const stToday = kiemTraTrangThaiDiLamRiderHomNay(rd);
           matched.push({
             ...rd,
             isZoneMatch,
-            isPhuongMatch,
-            isOffToday: stToday.isOff,
-            todayStatusLabel: stToday.label
+            isPhuongMatch
           });
         }
       });
 
-      // Nếu ưu tiên khớp chính xác mã Zone ID (khi hiển thị trên từng dòng Shipment ID) và đã tìm thấy Rider đúng Zone ID đó
       let result = matched;
       if (preferExactZone) {
         const exactZ = matched.filter(r => r.isZoneMatch);
         if (exactZ.length > 0) result = exactZ;
       }
 
-      // Sắp xếp: Rider Đi làm lên trước Rider OFF, đúng Zone lên trước, COT 1 trước COT 2
       return result.sort((a, b) => {
-        if (a.isOffToday !== b.isOffToday) return a.isOffToday ? 1 : -1;
         if (a.isZoneMatch !== b.isZoneMatch) return a.isZoneMatch ? -1 : 1;
-        return (a.ca || '').localeCompare(b.ca || '');
+        if ((a.ca || '') !== (b.ca || '')) return (a.ca || '').localeCompare(b.ca || '');
+        return (a.name || '').localeCompare(b.name || '', 'vi');
       });
     }
 
-    // Định dạng hiển thị danh sách Rider gọn đẹp trong ô bảng
+    // Hiển thị danh sách tên Rider gọn gàng (đã bỏ hoàn toàn ký hiệu Đi làm / OFF)
     function renderBadgesRiderNganGon(rdList, maxShow = 4) {
       if (!rdList || rdList.length === 0) {
         return '<span class="text-muted small fst-italic">Chưa có RD cố định</span>';
       }
-      const diLamCount = rdList.filter(r => !r.isOffToday).length;
-      const offCount = rdList.length - diLamCount;
 
       let html = '<div class="d-flex flex-wrap gap-1 align-items-center">';
       rdList.slice(0, maxShow).forEach(r => {
         const caShort = (r.ca || '').includes('2') ? 'C2' : 'C1';
         const caCls = caShort === 'C2' ? 'bg-warning text-dark' : 'bg-primary text-white';
-        const statusCls = r.isOffToday
-          ? 'bg-danger-subtle text-danger border border-danger-subtle text-decoration-line-through opacity-75'
-          : 'bg-success-subtle text-dark border border-success';
+        const badgeBorder = caShort === 'C2' ? 'bg-warning-subtle text-dark border border-warning' : 'bg-primary-subtle text-dark border border-primary-subtle';
         const safeId = (r.id || '').replace(/'/g, "\\'");
         const safeName = (r.name || '').replace(/'/g, "\\'");
 
         html += `
-          <span class="badge ${statusCls} fw-semibold p-1 d-inline-flex align-items-center gap-1"
+          <span class="badge ${badgeBorder} fw-semibold p-1 d-inline-flex align-items-center gap-1"
                 style="font-size: 0.7rem; cursor: pointer;"
                 onclick="event.stopPropagation(); locDonTheoRiderTrongModal('${safeId}', '${safeName}')"
-                title="Mã RD: ${r.id} - ${r.name}\nCa: ${r.ca} | Hôm nay: ${r.todayStatusLabel}\nPhường Deli: ${r.phuongDeli || '—'}\nZone Deli: ${r.zoneDeli || r.nhom || '—'}\n(Nhấn để lọc đơn của Rider này)">
+                title="Mã RD: ${r.id} - ${r.name}\nCa: ${r.ca}\nPhường Deli: ${r.phuongDeli || '—'}\nZone Deli: ${r.zoneDeli || r.nhom || '—'}\n(Nhấn để lọc đơn của Rider này)">
             <span class="badge ${caCls}" style="font-size: 0.6rem; padding: 1px 3px;">${caShort}</span>
             <span>${r.name}</span>
-            ${r.isOffToday ? '<span class="text-danger fw-bold">(OFF)</span>' : ''}
           </span>`;
       });
 
       if (rdList.length > maxShow) {
         html += `<span class="badge bg-secondary-subtle text-secondary border" style="font-size: 0.68rem;">+${rdList.length - maxShow} RD</span>`;
       }
-      html += `<span class="small text-muted ms-1" style="font-size: 0.68rem;">(🟢${diLamCount}${offCount > 0 ? ` • 🔴${offCount} OFF` : ''})</span></div>`;
+      html += '</div>';
       return html;
     }
 
@@ -2955,7 +2945,7 @@
 
     function locDonTheoPhuongTrongModal(quan, phuong) {
       if (!phuong) {
-        veBangRiderPhuTrachTrongModal(currentModalAllOrders);
+        veBangRiderPhuTrachTrongModal(currentModalAllOrders, '');
         veBangMaDonTrongModal(currentModalAllOrders, '');
         return;
       }
@@ -2978,9 +2968,9 @@
     function locDonTheoRiderTrongModal(riderId, riderName) {
       if (!riderId) return;
       const subList = currentModalAllOrders.filter(don => {
-        const rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true);
+        const rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true, 'ALL');
         if (rds.some(r => String(r.id) === String(riderId))) return true;
-        const rdsBroad = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, false);
+        const rdsBroad = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, false, 'ALL');
         return rdsBroad.some(r => String(r.id) === String(riderId));
       });
       veBangMaDonTrongModal(subList, `Rider: ${riderName} - ID ${riderId} (${subList.length} đơn)`);
@@ -2996,12 +2986,80 @@
       if (txt) txt.innerText = isRiderModalSectionOpen ? 'Thu gọn' : 'Mở rộng';
     }
 
+    // Khi đổi giữa COT 1 / COT 2 / Tất cả -> Cập nhật đồng bộ cả 3 bảng trong Modal
     function doiBoLocRiderTrongModal(mode) {
       currentModalRiderFilterMode = mode;
+      veBangPhuongTrongModal();
       veBangRiderPhuTrachTrongModal(window._lastOrdersForRiderModal || currentModalAllOrders, window._lastLabelForRiderModal || '');
+      veBangMaDonTrongModal(window._lastOrdersForMaDonModal || currentModalAllOrders, window._lastSubFilterLabelModal || '');
     }
 
-    // Vẽ bảng tổng hợp Danh sách Rider phụ trách đi các đơn hàng trong Pending Attempt
+    // Vẽ Bảng 1: Chi tiết phường chưa được gán (hiển thị Rider theo đúng Ca đang áp dụng)
+    function veBangPhuongTrongModal() {
+      const boxPhuong = document.getElementById('vungChiTietPhuongModal');
+      if (!boxPhuong) return;
+
+      if (!currentModalPhuongList || currentModalPhuongList.length === 0) {
+        boxPhuong.innerHTML = '';
+        boxPhuong.style.display = 'none';
+        return;
+      }
+
+      const caLabelHeader = currentModalRiderFilterMode === 'COT1' ? 'CA COT 1' : (currentModalRiderFilterMode === 'COT2' ? 'CA COT 2' : 'COT 1 & 2');
+      const totalOrders = currentModalAllOrders.length || currentModalPhuongList.reduce((s, i) => s + (Number(i.soLuong) || 0), 0);
+      let pHtml = `
+        <div class="card border-primary shadow-sm">
+          <div class="card-header bg-primary-subtle text-primary py-1 px-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="fw-bold" style="font-size: 0.8rem;">
+              <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT PHƯỜNG CHƯA ĐƯỢC GÁN (${currentModalAllOrders.length} đơn - ${currentModalPhuongList.length} phường)
+            </span>
+            <input type="text" class="form-control form-control-sm" style="width: 210px; height: 24px; font-size: 0.74rem;" placeholder="🔍 Lọc nhanh phường hoặc tên RD..." oninput="locNhanhBangPhuongModal(this.value)">
+          </div>
+          <div class="table-responsive" style="max-height: 210px; overflow-y: auto;">
+            <table class="table table-sm table-bordered table-hover align-middle mb-0 text-center" style="font-size: 0.77rem;">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th style="width: 40px;">STT</th>
+                  <th class="text-start" style="width: 165px;">Phường Chưa Gán</th>
+                  <th style="width: 95px;">Quận</th>
+                  <th class="text-start">Rider Phụ Trách Phường (${caLabelHeader})</th>
+                  <th style="width: 95px;">Số Đơn</th>
+                  <th style="width: 75px;">Tỷ Trọng</th>
+                  <th style="width: 85px;">Lọc Mã Đơn</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyPhuongInModal">`;
+
+      currentModalPhuongList.forEach((p, i) => {
+        const pct = totalOrders > 0 ? `${(((Number(p.soLuong) || 0) / totalOrders) * 100).toFixed(1)}%` : '0.0%';
+        const safeQ = (p.quan || '').replace(/'/g, "\\'");
+        const safeP = (p.phuong || '').replace(/'/g, "\\'");
+        const rdsPhuong = timRiderPhuTrachTheoPhuongVaZone(p.quan, p.phuong, '', false, currentModalRiderFilterMode);
+        const rdNamesSearch = rdsPhuong.map(r => `${r.id} ${r.name}`).join(' ');
+        const rdsBadgesHtml = renderBadgesRiderNganGon(rdsPhuong, 5);
+
+        pHtml += `
+          <tr class="row-phuong-modal" data-search="${p.phuong || ''} ${p.quan || ''} ${rdNamesSearch}">
+            <td class="text-muted small">${i + 1}</td>
+            <td class="text-start fw-bold text-dark">${p.phuong || '—'}</td>
+            <td class="text-secondary small fw-semibold">${p.quan || '—'}</td>
+            <td class="text-start">${rdsBadgesHtml}</td>
+            <td class="font-monospace fw-bold text-danger fs-6">${p.soLuong || 0}</td>
+            <td class="font-monospace small text-muted">${pct}</td>
+            <td>
+              <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="locDonTheoPhuongTrongModal('${safeQ}', '${safeP}')">
+                <i class="bi bi-funnel-fill me-1"></i>Xem đơn
+              </button>
+            </td>
+          </tr>`;
+      });
+
+      pHtml += `</tbody></table></div></div>`;
+      boxPhuong.innerHTML = pHtml;
+      boxPhuong.style.display = 'block';
+    }
+
+    // Vẽ Bảng 2: Danh sách Rider phụ trách tuyến đơn rớt (đã bỏ Đi làm / OFF, auto COT 1 trước 13h30 & COT 2 sau 13h30)
     function veBangRiderPhuTrachTrongModal(ordersList, scopeLabel = '') {
       const boxRider = document.getElementById('vungChiTietRiderPhuTrachModal');
       if (!boxRider) return;
@@ -3011,31 +3069,27 @@
 
       const riderMap = {};
       (ordersList || []).forEach(don => {
-        let rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true);
+        let rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true, 'ALL');
         if (rds.length === 0) {
-          rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, false);
+          rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, false, 'ALL');
         }
         rds.forEach(r => {
           if (!riderMap[r.id]) {
             riderMap[r.id] = {
               ...r,
               orderCount: 0,
-              hvOrderCount: 0,
-              matchedZones: new Set(),
-              matchedWards: new Set()
+              hvOrderCount: 0
             };
           }
           riderMap[r.id].orderCount++;
           if ((don.isHv || '').toLowerCase() === 'yes') riderMap[r.id].hvOrderCount++;
-          if (don.zoneId) riderMap[r.id].matchedZones.add(don.zoneId);
-          if (don.phuong) riderMap[r.id].matchedWards.add(don.phuong);
         });
       });
 
       const allMatchedRiders = Object.values(riderMap).sort((a, b) => {
-        if (a.isOffToday !== b.isOffToday) return a.isOffToday ? 1 : -1;
         if (b.orderCount !== a.orderCount) return b.orderCount - a.orderCount;
-        return (a.ca || '').localeCompare(b.ca || '');
+        if ((a.ca || '') !== (b.ca || '')) return (a.ca || '').localeCompare(b.ca || '');
+        return (a.name || '').localeCompare(b.name || '', 'vi');
       });
 
       if (allMatchedRiders.length === 0) {
@@ -3044,18 +3098,12 @@
         return;
       }
 
-      const countWork = allMatchedRiders.filter(r => !r.isOffToday).length;
-      const countOff = allMatchedRiders.filter(r => r.isOffToday).length;
-      const countC1 = allMatchedRiders.filter(r => (r.ca || '').includes('1')).length;
-      const countC2 = allMatchedRiders.filter(r => (r.ca || '').includes('2')).length;
+      const countC1 = allMatchedRiders.filter(r => khopCaDangChon(r.ca, 'COT1')).length;
+      const countC2 = allMatchedRiders.filter(r => khopCaDangChon(r.ca, 'COT2')).length;
+      const autoCaNow = layCaMacDinhTheoGioVN();
+      const autoNote = autoCaNow === 'COT1' ? '🕒 Auto COT 1 (< 13h30)' : '🕒 Auto COT 2 (≥ 13h30)';
 
-      const filteredRiders = allMatchedRiders.filter(r => {
-        if (currentModalRiderFilterMode === 'WORK') return !r.isOffToday;
-        if (currentModalRiderFilterMode === 'OFF') return r.isOffToday;
-        if (currentModalRiderFilterMode === 'COT1') return (r.ca || '').includes('1');
-        if (currentModalRiderFilterMode === 'COT2') return (r.ca || '').includes('2');
-        return true;
-      });
+      const filteredRiders = allMatchedRiders.filter(r => khopCaDangChon(r.ca, currentModalRiderFilterMode));
 
       let rHtml = `
         <div class="card border-success shadow-sm">
@@ -3064,17 +3112,14 @@
               <span class="fw-bold text-success" style="font-size: 0.8rem;">
                 <i class="bi bi-people-fill me-1"></i>DANH SÁCH RIDER PHỤ TRÁCH TUYẾN ĐƠN RỚT ${scopeLabel ? `(${scopeLabel})` : ''}
               </span>
-              <span class="badge bg-dark">${allMatchedRiders.length} RD</span>
-              <span class="badge bg-success">🟢 ${countWork} Đi làm</span>
-              <span class="badge bg-danger">🔴 ${countOff} OFF</span>
+              <span class="badge bg-dark">${filteredRiders.length} RD</span>
+              <span class="badge bg-info text-dark" style="font-size: 0.7rem;">${autoNote}</span>
             </div>
             <div class="d-flex align-items-center flex-wrap gap-1">
               <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'ALL' ? 'btn-dark' : 'btn-outline-dark'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('ALL')">Tất cả (${allMatchedRiders.length})</button>
-                <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'WORK' ? 'btn-success' : 'btn-outline-success'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('WORK')">Đi làm (${countWork})</button>
-                <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'OFF' ? 'btn-danger' : 'btn-outline-danger'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('OFF')">OFF (${countOff})</button>
                 <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'COT1' ? 'btn-primary' : 'btn-outline-primary'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('COT1')">COT 1 (${countC1})</button>
                 <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'COT2' ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('COT2')">COT 2 (${countC2})</button>
+                <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'ALL' ? 'btn-dark' : 'btn-outline-dark'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('ALL')">Tất cả (${allMatchedRiders.length})</button>
               </div>
               <button type="button" class="btn btn-xs btn-outline-success bg-white py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="toggleBangRiderModal()">
                 <i class="bi ${isRiderModalSectionOpen ? 'bi-chevron-up' : 'bi-chevron-down'}" id="iconToggleRiderModal"></i>
@@ -3088,38 +3133,33 @@
                 <thead class="table-light sticky-top">
                   <tr>
                     <th style="width: 40px;">STT</th>
-                    <th style="width: 80px;">Mã RD</th>
+                    <th style="width: 85px;">Mã RD</th>
                     <th class="text-start">Họ và Tên Rider</th>
-                    <th style="width: 70px;">Ca</th>
-                    <th style="width: 115px;">Lịch Hôm Nay</th>
+                    <th style="width: 75px;">Ca</th>
                     <th class="text-start">Quận / Phường Deli Phụ Trách</th>
                     <th class="text-start">Zone Deli (TỔNG QUAN RD)</th>
-                    <th style="width: 105px;">Đơn Rớt Tuyến</th>
+                    <th style="width: 110px;">Đơn Rớt Tuyến</th>
                     <th style="width: 85px;">Lọc Đơn</th>
                   </tr>
                 </thead>
                 <tbody>`;
 
       if (filteredRiders.length === 0) {
-        rHtml += `<tr><td colspan="9" class="py-3 text-muted">Không có Rider nào trong bộ lọc này</td></tr>`;
+        rHtml += `<tr><td colspan="8" class="py-3 text-muted">Không có Rider nào trong ca này</td></tr>`;
       } else {
         filteredRiders.forEach((r, idx) => {
           const caBadge = (r.ca || '').includes('2')
             ? '<span class="badge badge-cot2">COT 2</span>'
             : '<span class="badge badge-cot1">COT 1</span>';
-          const statusBadge = r.isOffToday
-            ? `<span class="badge bg-danger text-white">🔴 ${r.todayStatusLabel}</span>`
-            : `<span class="badge bg-success text-white">🟢 ${r.todayStatusLabel}</span>`;
           const safeId = (r.id || '').replace(/'/g, "\\'");
           const safeName = (r.name || '').replace(/'/g, "\\'");
 
           rHtml += `
-            <tr class="${r.isOffToday ? 'table-danger bg-opacity-25' : ''}">
+            <tr>
               <td class="text-muted small">${idx + 1}</td>
               <td class="font-monospace fw-bold text-primary">${r.id}</td>
               <td class="text-start fw-bold text-dark">${r.name}</td>
               <td>${caBadge}</td>
-              <td>${statusBadge}</td>
               <td class="text-start small fw-semibold"><span class="text-primary">${r.quanDeli}</span> • P.${r.phuongDeli || '—'}</td>
               <td class="text-start font-monospace small text-secondary">${r.zoneDeli || r.nhom || '—'}</td>
               <td class="font-monospace fw-bold text-danger fs-6">
@@ -3150,6 +3190,8 @@
     function veBangMaDonTrongModal(donList, subFilterLabel = '') {
       const tbody = document.getElementById('modalDonTbody');
       if (!tbody) return;
+      window._lastOrdersForMaDonModal = donList;
+      window._lastSubFilterLabelModal = subFilterLabel;
       currentModalShipmentIds = donList.map(d => d.shipmentId).filter(Boolean);
 
       const lblFilter = document.getElementById('lblSubFilterPhuongModal');
@@ -3168,7 +3210,7 @@
         donList.forEach((don, idx) => {
           const isHv = (don.isHv || '').toLowerCase() === 'yes', isMp = (don.loaiHang || '').toUpperCase() === 'MP';
           const badgeLoai = isMp ? '<span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">MP</span>' : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-bold">WH</span>';
-          const rdsForOrder = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true);
+          const rdsForOrder = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true, currentModalRiderFilterMode);
           const riderCellHtml = renderBadgesRiderNganGon(rdsForOrder, 3);
 
           html += `
@@ -3194,7 +3236,8 @@
       currentModalAllOrders = donList || [];
       currentModalPhuongList = phuongList || [];
       currentModalTitleBase = title;
-      currentModalRiderFilterMode = 'ALL';
+      // Tự động chọn COT 1 nếu trước 13h30, từ 13h30 trở đi tự động chọn COT 2
+      currentModalRiderFilterMode = layCaMacDinhTheoGioVN();
 
       document.getElementById('modalTitle').innerText = title;
 
@@ -3208,66 +3251,7 @@
         countBadgeEl.innerText = badgeText;
       }
 
-      const boxPhuong = document.getElementById('vungChiTietPhuongModal');
-      if (boxPhuong) {
-        if (currentModalPhuongList.length > 0) {
-          const totalOrders = currentModalAllOrders.length || currentModalPhuongList.reduce((s, i) => s + (Number(i.soLuong) || 0), 0);
-          let pHtml = `
-            <div class="card border-primary shadow-sm">
-              <div class="card-header bg-primary-subtle text-primary py-1 px-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <span class="fw-bold" style="font-size: 0.8rem;">
-                  <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT PHƯỜNG CHƯA ĐƯỢC GÁN (${currentModalAllOrders.length} đơn - ${currentModalPhuongList.length} phường)
-                </span>
-                <input type="text" class="form-control form-control-sm" style="width: 210px; height: 24px; font-size: 0.74rem;" placeholder="🔍 Lọc nhanh phường hoặc tên RD..." oninput="locNhanhBangPhuongModal(this.value)">
-              </div>
-              <div class="table-responsive" style="max-height: 210px; overflow-y: auto;">
-                <table class="table table-sm table-bordered table-hover align-middle mb-0 text-center" style="font-size: 0.77rem;">
-                  <thead class="table-light sticky-top">
-                    <tr>
-                      <th style="width: 40px;">STT</th>
-                      <th class="text-start" style="width: 165px;">Phường Chưa Gán</th>
-                      <th style="width: 95px;">Quận</th>
-                      <th class="text-start">Rider Phụ Trách Phường (TỔNG QUAN RD)</th>
-                      <th style="width: 95px;">Số Đơn</th>
-                      <th style="width: 75px;">Tỷ Trọng</th>
-                      <th style="width: 85px;">Lọc Mã Đơn</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbodyPhuongInModal">`;
-
-          currentModalPhuongList.forEach((p, i) => {
-            const pct = totalOrders > 0 ? `${(((Number(p.soLuong) || 0) / totalOrders) * 100).toFixed(1)}%` : '0.0%';
-            const safeQ = (p.quan || '').replace(/'/g, "\\'");
-            const safeP = (p.phuong || '').replace(/'/g, "\\'");
-            const rdsPhuong = timRiderPhuTrachTheoPhuongVaZone(p.quan, p.phuong, '', false);
-            const rdNamesSearch = rdsPhuong.map(r => `${r.id} ${r.name}`).join(' ');
-            const rdsBadgesHtml = renderBadgesRiderNganGon(rdsPhuong, 5);
-
-            pHtml += `
-              <tr class="row-phuong-modal" data-search="${p.phuong || ''} ${p.quan || ''} ${rdNamesSearch}">
-                <td class="text-muted small">${i + 1}</td>
-                <td class="text-start fw-bold text-dark">${p.phuong || '—'}</td>
-                <td class="text-secondary small fw-semibold">${p.quan || '—'}</td>
-                <td class="text-start">${rdsBadgesHtml}</td>
-                <td class="font-monospace fw-bold text-danger fs-6">${p.soLuong || 0}</td>
-                <td class="font-monospace small text-muted">${pct}</td>
-                <td>
-                  <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="locDonTheoPhuongTrongModal('${safeQ}', '${safeP}')">
-                    <i class="bi bi-funnel-fill me-1"></i>Xem đơn
-                  </button>
-                </td>
-              </tr>`;
-          });
-
-          pHtml += `</tbody></table></div></div>`;
-          boxPhuong.innerHTML = pHtml;
-          boxPhuong.style.display = 'block';
-        } else {
-          boxPhuong.innerHTML = '';
-          boxPhuong.style.display = 'none';
-        }
-      }
-
+      veBangPhuongTrongModal();
       veBangRiderPhuTrachTrongModal(currentModalAllOrders, '');
       veBangMaDonTrongModal(currentModalAllOrders, '');
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
