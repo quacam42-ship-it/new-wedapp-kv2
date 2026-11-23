@@ -194,15 +194,23 @@
     .sheet-kpi-total .sheet-kpi-val { color: #0f172a !important; }
 
     .sheet-kpi-hv {
-      background: #ffffff !important;
-      border: 1.5px solid #fecdd3 !important;
-      color: #e11d48 !important;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+      background: linear-gradient(135deg, #2e1065 0%, #5b21b6 60%, #7e22ce 100%) !important;
+      border: 1.5px solid #f59e0b !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(91, 33, 182, 0.22) !important;
       animation: none !important;
     }
-    .sheet-kpi-hv .sheet-kpi-title { color: #e11d48 !important; }
-    .sheet-kpi-hv .sheet-kpi-val { color: #0f172a !important; text-shadow: none !important; }
-    .sheet-kpi-hv .sheet-kpi-sub { color: #64748b !important; }
+    .sheet-kpi-hv:hover {
+      box-shadow: 0 8px 22px rgba(91, 33, 182, 0.35) !important;
+    }
+    .sheet-kpi-hv .sheet-kpi-title { color: #fde047 !important; }
+    .sheet-kpi-hv .sheet-kpi-val { color: #ffffff !important; text-shadow: none !important; }
+    .sheet-kpi-hv .sheet-kpi-sub { color: #e9d5ff !important; }
+    .sheet-kpi-hv .canvas-icon-box {
+      background: rgba(250, 204, 21, 0.16) !important;
+      color: #fde047 !important;
+      border: 1px solid rgba(250, 204, 21, 0.45) !important;
+    }
 
     .sheet-kpi-mp { background: #f0fdf4 !important; border: 1.5px solid #bbf7d0 !important; color: #15803d !important; }
     .sheet-kpi-wh { background: #f8fafc !important; border: 1.5px solid #cbd5e1 !important; color: #334155 !important; }
@@ -925,37 +933,23 @@
         <!-- SUB-TAB 1: TỔNG QUAN & ĐIỂM NÓNG (LƯỚI 2 CỘT CHUẨN CANVAS) -->
         <div id="canvasTabOverview">
           <div class="row g-3">
-            <!-- CỘT TRÁI: PHÂN TÍCH ĐƠN RỚT THEO QUẬN + BIỂU ĐỒ DONUT -->
-            <div class="col-12 col-lg-6 d-flex flex-column gap-3">
-              <!-- Bảng Phân tích đơn rớt theo Quận -->
-              <div class="card overflow-hidden">
-                <div class="card-header bg-white py-2 px-3 d-flex align-items-center gap-2">
-                  <i class="bi bi-layers text-primary"></i>
-                  <span class="fw-bold text-dark" style="font-size: 0.88rem;">Phân tích đơn rớt theo Quận</span>
+            <!-- CỘT TRÁI: BIỂU ĐỒ TỶ TRỌNG & MỨC ĐỘ ĐƠN RỚT THEO QUẬN -->
+            <div class="col-12 col-lg-6 d-flex flex-column">
+              <div class="card p-3 h-100 d-flex flex-column justify-content-between">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pb-2 mb-2 border-bottom">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-pie-chart-fill text-primary"></i>
+                    <span class="fw-bold text-dark" style="font-size: 0.9rem;">Tỷ Trọng &amp; Mức Độ Đơn Rớt Theo Quận</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1" style="font-size: 0.7rem;">
+                    <span class="lvl-pill lvl-low">Thấp &lt;20%</span>
+                    <span class="lvl-pill lvl-mid">TB 20–39%</span>
+                    <span class="lvl-pill lvl-high">Cao ≥40%</span>
+                  </div>
                 </div>
-                <div class="table-responsive">
-                  <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.8rem;">
-                    <thead>
-                      <tr>
-                        <th class="text-start ps-3">Quận</th>
-                        <th class="text-end">Số Lượng Đơn</th>
-                        <th class="text-end">Tỷ Trọng</th>
-                        <th class="text-center">Mức Độ</th>
-                      </tr>
-                    </thead>
-                    <tbody id="tbodyCanvasPhanTichQuan">
-                      <tr><td colspan="4" class="text-center py-3 text-muted">Đang phân tích...</td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <!-- Biểu đồ tròn Donut: Tỷ Trọng Đơn Rớt Theo Quận -->
-              <div class="card p-3">
-                <div class="fw-bold text-dark mb-3" style="font-size: 0.88rem;">Tỷ Trọng Đơn Rớt Theo Quận</div>
-                <div class="d-flex flex-wrap align-items-center justify-content-center gap-4 py-2">
-                  <div id="svgCanvasDonutWrap" style="width: 190px; height: 190px; flex-shrink: 0;"></div>
-                  <div id="legendCanvasDonut" class="d-flex flex-column gap-2" style="min-width: 210px; font-size: 0.82rem;"></div>
+                <div class="d-flex flex-wrap align-items-center justify-content-around gap-3 py-2 flex-grow-1">
+                  <div id="svgCanvasDonutWrap" style="width: 200px; height: 200px; flex-shrink: 0;"></div>
+                  <div id="legendCanvasDonut" class="d-flex flex-column gap-1 flex-grow-1" style="min-width: 255px; max-width: 340px; font-size: 0.82rem;"></div>
                 </div>
               </div>
             </div>
@@ -5295,7 +5289,6 @@ if (user.role === 'RIDER') {
     }
 
     function renderPendingCanvasWidgets(kpiFallback = {}) {
-      // Đồng bộ thời gian Last update lên Hero Banner
       const elUpdate = document.getElementById('pendingCanvasLastUpdate');
       const sheetTime = (kpiFallback && kpiFallback.lastUpdate)
         ? `Last update: ${kpiFallback.lastUpdate}`
@@ -5305,55 +5298,46 @@ if (user.role === 'RIDER') {
       const uniquePending = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
       const tongDon = uniquePending.length;
 
-      const districtStats = [
-        { name: 'Quận 2', key: 'quận 2', color: '#3b82f6', count: uniquePending.filter(d => normQ(d.quan) === 'quận 2').length },
-        { name: 'Quận 4', key: 'quận 4', color: '#f59e0b', count: uniquePending.filter(d => normQ(d.quan) === 'quận 4').length },
-        { name: 'Quận 7', key: 'quận 7', color: '#8b5cf6', count: uniquePending.filter(d => normQ(d.quan) === 'quận 7').length },
-        { name: 'Quận 9', key: 'quận 9', color: '#10b981', count: uniquePending.filter(d => normQ(d.quan) === 'quận 9').length },
-        { name: 'Bình Thạnh', key: 'bình thạnh', color: '#f97316', count: uniquePending.filter(d => normQ(d.quan) === 'bình thạnh').length }
+      // Bảng sắc độ màu theo 3 mức độ tỷ lệ đơn (để các quận cùng mức vẫn phân biệt được trên biểu đồ)
+      const lowShades = ['#10b981', '#059669', '#34d399', '#14b8a6', '#22c55e'];
+      const midShades = ['#f59e0b', '#f97316', '#d97706', '#fb923c', '#ea580c'];
+      const highShades = ['#dc2626', '#ef4444', '#b91c1c', '#e11d48', '#991b1b'];
+      let lowIdx = 0, midIdx = 0, highIdx = 0;
+
+      const rawDistricts = [
+        { name: 'Quận 2', key: 'quận 2' },
+        { name: 'Quận 4', key: 'quận 4' },
+        { name: 'Quận 7', key: 'quận 7' },
+        { name: 'Quận 9', key: 'quận 9' },
+        { name: 'Bình Thạnh', key: 'bình thạnh' }
       ];
 
-      renderCanvasBangPhanTichQuan(districtStats, tongDon);
+      const districtStats = rawDistricts.map(d => {
+        const count = uniquePending.filter(o => normQ(o.quan) === d.key).length;
+        const pctNum = tongDon > 0 ? (count / tongDon) * 100 : 0;
+
+        let color, lvlLabel, lvlCls;
+        if (pctNum >= 40) {
+          color = highShades[highIdx++ % highShades.length];
+          lvlLabel = 'Cao';
+          lvlCls = 'lvl-high';
+        } else if (pctNum >= 20) {
+          color = midShades[midIdx++ % midShades.length];
+          lvlLabel = 'Trung bình';
+          lvlCls = 'lvl-mid';
+        } else {
+          color = lowShades[lowIdx++ % lowShades.length];
+          lvlLabel = 'Thấp';
+          lvlCls = 'lvl-low';
+        }
+
+        return { ...d, count, pctNum, color, lvlLabel, lvlCls };
+      });
+
       veBieuDoDonutCanvas(districtStats, tongDon);
       renderCanvasTop6Phuong(tongDon);
       renderCanvasHvPreview();
       renderCanvasTabChiTietPhuong();
-    }
-
-    function renderCanvasBangPhanTichQuan(districtStats, tongDon) {
-      const tbody = document.getElementById('tbodyCanvasPhanTichQuan');
-      if (!tbody) return;
-
-      const qFilter = document.getElementById('canvasFilterQuanGlobal')?.value || 'ALL';
-      const rowsToShow = qFilter === 'ALL' ? districtStats : districtStats.filter(d => normQ(d.name) === normQ(qFilter));
-
-      let html = '';
-      rowsToShow.forEach(d => {
-        const pctNum = tongDon > 0 ? (d.count / tongDon) * 100 : 0;
-        const lvlHtml = pctNum >= 40
-          ? '<span class="lvl-pill lvl-high">Cao</span>'
-          : (pctNum >= 20 ? '<span class="lvl-pill lvl-mid">Trung bình</span>' : '<span class="lvl-pill lvl-low">Thấp</span>');
-
-        html += `
-          <tr style="cursor:pointer;" onclick="xemDonTheoKpi('${d.name}', '${d.name}')">
-            <td class="text-start ps-3 fw-semibold text-dark">${d.name}</td>
-            <td class="text-end font-monospace fw-bold text-dark">${d.count.toLocaleString('vi-VN')}</td>
-            <td class="text-end font-monospace text-muted">${pctNum.toFixed(1)}%</td>
-            <td class="text-center">${lvlHtml}</td>
-          </tr>`;
-      });
-
-      const sumDisplay = rowsToShow.reduce((s, i) => s + i.count, 0);
-      const sumPct = tongDon > 0 ? ((sumDisplay / tongDon) * 100).toFixed(1) : '0.0';
-      html += `
-        <tr style="background:#f8fafc; font-weight:700;">
-          <td class="text-start ps-3 text-dark">Tổng cộng</td>
-          <td class="text-end font-monospace text-dark">${sumDisplay.toLocaleString('vi-VN')}</td>
-          <td class="text-end font-monospace text-dark">${sumPct}%</td>
-          <td class="text-center text-muted">-</td>
-        </tr>`;
-
-      tbody.innerHTML = html;
     }
 
     function veBieuDoDonutCanvas(districtStats, tongDon) {
@@ -5361,55 +5345,82 @@ if (user.role === 'RIDER') {
       const legendEl = document.getElementById('legendCanvasDonut');
       if (!svgWrap || !legendEl) return;
 
-      const r = 66;
+      const qFilter = document.getElementById('canvasFilterQuanGlobal')?.value || 'ALL';
+      const r = 70;
       const C = 2 * Math.PI * r;
       let offset = 0;
       let circlesHtml = '';
 
       if (tongDon === 0) {
-        circlesHtml = `<circle cx="95" cy="95" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="26" />`;
+        circlesHtml = `<circle cx="100" cy="100" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="26" />`;
       } else {
         districtStats.forEach(d => {
           if (d.count <= 0) return;
           const frac = d.count / tongDon;
           const dashLen = frac * C;
           const gap = dashLen > 5 ? 2.5 : 0;
+          const isDimmed = qFilter !== 'ALL' && normQ(d.name) !== normQ(qFilter);
+
           circlesHtml += `
-            <circle cx="95" cy="95" r="${r}" fill="none"
+            <circle cx="100" cy="100" r="${r}" fill="none"
               stroke="${d.color}" stroke-width="26"
               stroke-dasharray="${Math.max(1, dashLen - gap).toFixed(2)} ${C.toFixed(2)}"
               stroke-dashoffset="${(-offset).toFixed(2)}"
-              transform="rotate(-90 95 95)"
-              style="cursor:pointer; transition: opacity 0.15s;"
+              transform="rotate(-90 100 100)"
+              style="cursor:pointer; opacity:${isDimmed ? '0.22' : '1'}; transition: opacity 0.15s;"
               onclick="xemDonTheoKpi('${d.name}', '${d.name}')">
-              <title>${d.name}: ${d.count} đơn (${(frac * 100).toFixed(1)}%)</title>
+              <title>${d.name}: ${d.count} đơn (${d.pctNum.toFixed(1)}%) - Mức độ: ${d.lvlLabel}</title>
             </circle>`;
           offset += dashLen;
         });
       }
 
       svgWrap.innerHTML = `
-        <svg viewBox="0 0 190 190" width="190" height="190">
+        <svg viewBox="0 0 200 200" width="200" height="200">
           ${circlesHtml}
-          <text x="95" y="86" text-anchor="middle" font-size="11.5" fill="#64748b" font-weight="600">Tổng đơn</text>
-          <text x="95" y="110" text-anchor="middle" font-size="24" fill="#0f172a" font-weight="800">${tongDon.toLocaleString('vi-VN')}</text>
+          <text x="100" y="90" text-anchor="middle" font-size="11.5" fill="#64748b" font-weight="600">Tổng đơn</text>
+          <text x="100" y="116" text-anchor="middle" font-size="26" fill="#0f172a" font-weight="800">${tongDon.toLocaleString('vi-VN')}</text>
         </svg>`;
 
+      const rowsToShow = qFilter === 'ALL'
+        ? districtStats
+        : districtStats.filter(d => normQ(d.name) === normQ(qFilter));
+
       let legendHtml = '';
-      districtStats.forEach(d => {
-        const pctStr = tongDon > 0 ? `${((d.count / tongDon) * 100).toFixed(1)}%` : '0.0%';
+      rowsToShow.forEach(d => {
         legendHtml += `
-          <div class="d-flex align-items-center justify-content-between gap-3" style="cursor:pointer;" onclick="xemDonTheoKpi('${d.name}', '${d.name}')">
-            <div class="d-flex align-items-center gap-2">
-              <span style="width:10px; height:10px; border-radius:3px; background:${d.color}; display:inline-block;"></span>
-              <span class="text-dark fw-medium">${d.name}</span>
+          <div class="d-flex align-items-center justify-content-between py-2 px-2 rounded"
+               style="cursor:pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;"
+               onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'"
+               onclick="xemDonTheoKpi('${d.name}', '${d.name}')">
+            <div class="d-flex align-items-center gap-2" style="min-width: 105px;">
+              <span style="width:11px; height:11px; border-radius:3px; background:${d.color}; display:inline-block; flex-shrink:0;"></span>
+              <span class="text-dark fw-semibold">${d.name}</span>
             </div>
-            <div class="font-monospace">
-              <b class="text-dark">${d.count.toLocaleString('vi-VN')}</b>
-              <span class="text-muted ms-1">(${pctStr})</span>
+            <div class="d-flex align-items-center gap-2">
+              <div class="font-monospace text-end" style="min-width: 92px;">
+                <b class="text-dark">${d.count.toLocaleString('vi-VN')}</b>
+                <span class="text-muted ms-1">(${d.pctNum.toFixed(1)}%)</span>
+              </div>
+              <span class="lvl-pill ${d.lvlCls} text-center" style="min-width: 78px;">${d.lvlLabel}</span>
             </div>
           </div>`;
       });
+
+      const sumCount = rowsToShow.reduce((s, i) => s + i.count, 0);
+      const sumPct = tongDon > 0 ? ((sumCount / tongDon) * 100).toFixed(1) : '0.0';
+      legendHtml += `
+        <div class="d-flex align-items-center justify-content-between pt-2 px-2 mt-1" style="border-top: 1.5px solid #e2e8f0; font-weight: 700;">
+          <span class="text-dark">Tổng cộng</span>
+          <div class="d-flex align-items-center gap-2">
+            <div class="font-monospace text-end" style="min-width: 92px;">
+              <span class="text-dark">${sumCount.toLocaleString('vi-VN')}</span>
+              <span class="text-muted ms-1">(${sumPct}%)</span>
+            </div>
+            <span style="min-width: 78px; text-align:center;" class="text-muted">—</span>
+          </div>
+        </div>`;
+
       legendEl.innerHTML = legendHtml;
     }
 
