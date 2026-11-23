@@ -9,122 +9,349 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0d3b66">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1048/1048313.png">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .has-off-highlight { background-color: #fee2e2 !important; }
-    .has-off-highlight td { background-color: #fee2e2 !important; }
-    
-    /* THANH MENU NATIVE */
+    :root {
+      --canvas-bg: #f8fafc;
+      --canvas-navy: #0f172a;
+      --canvas-navy-soft: #1e293b;
+      --canvas-border: #e2e8f0;
+      --canvas-text: #0f172a;
+      --canvas-muted: #64748b;
+    }
+
+    body {
+      background-color: var(--canvas-bg);
+      color: var(--canvas-text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .has-off-highlight { background-color: #fff1f2 !important; }
+    .has-off-highlight td { background-color: #fff1f2 !important; }
+
+    /* THANH MENU CANVAS DARK NAVY */
     .top-navbar {
-      background: linear-gradient(135deg, #0d3b66, #00509d);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      background: var(--canvas-navy);
+      border-bottom: 1px solid #1e293b;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.14);
       position: sticky;
       top: 0;
       z-index: 1050;
-      padding: 6px 12px;
+      padding: 8px 16px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
     }
     .brand-title {
-      font-weight: 700;
+      font-weight: 800;
       color: #ffffff;
-      font-size: 0.95rem;
+      font-size: 0.96rem;
+      letter-spacing: 0.3px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
-    .menu-group { display: flex; flex-wrap: wrap; gap: 4px; }
+    .menu-group { display: flex; flex-wrap: wrap; gap: 5px; }
     .menu-btn {
       font-weight: 500;
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.9);
-      padding: 5px 10px;
-      border-radius: 5px;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      padding: 6px 12px;
+      border-radius: 999px;
       background: transparent;
       border: 1px solid transparent;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       user-select: none;
-      transition: all 0.1s ease;
+      transition: all 0.15s ease;
     }
-    .menu-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
-    .menu-btn.active { background: #f77f00 !important; color: #fff !important; font-weight: 700; border-color: #f77f00; }
+    .menu-btn:hover { background: rgba(255,255,255,0.1); color: #ffffff; }
+    .menu-btn.active {
+      background: #ffffff !important;
+      color: #0f172a !important;
+      font-weight: 700;
+      border-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
 
-    .badge-cot1 { background-color: #0d6efd; color: white; }
-    .badge-cot2 { background-color: #fd7e14; color: white; }
-    .table th { background-color: #1b4965 !important; color: white !important; vertical-align: middle; }
-    .table td { vertical-align: middle; }
+    /* CARD & MODAL CHUẨN CANVAS */
+    .card {
+      border-radius: 14px !important;
+      border: 1px solid var(--canvas-border) !important;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+      background: #ffffff;
+    }
+    .card-header {
+      border-top-left-radius: 13px !important;
+      border-top-right-radius: 13px !important;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .modal-content {
+      border-radius: 16px !important;
+      border: 1px solid var(--canvas-border) !important;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2) !important;
+    }
+    .modal-header.bg-primary {
+      background: var(--canvas-navy) !important;
+    }
+
+    /* INPUT, SELECT, BUTTON GỌN SẠCH */
+    .form-control, .form-select {
+      border-radius: 10px;
+      border-color: #cbd5e1;
+      font-size: 0.82rem;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+    }
+    .btn { border-radius: 9px; }
+
+    /* BẢNG CHUẨN CANVAS (HEADER TỐI, KẺ NGANG MẢNH, KHÔNG RỐI MẮT) */
+    .table {
+      --bs-table-border-color: #f1f5f9;
+      margin-bottom: 0;
+    }
+    .table th {
+      background-color: var(--canvas-navy) !important;
+      color: #f8fafc !important;
+      font-weight: 600 !important;
+      font-size: 0.76rem;
+      padding: 9px 10px !important;
+      vertical-align: middle;
+      border-color: #1e293b !important;
+    }
+    .table td {
+      vertical-align: middle;
+      padding: 8px 10px !important;
+      border-left: none !important;
+      border-right: none !important;
+      border-bottom: 1px solid #f1f5f9 !important;
+    }
+    .table-hover tbody tr:hover td {
+      background-color: #f8fafc !important;
+    }
+
+    .badge-cot1 { background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .badge-cot2 { background-color: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
 
     .content-section { display: none; }
     .content-section.active { display: block; }
 
-    /* KPI MINI */
-    .kpi-mini-card {
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-      background: #ffffff;
-      padding: 6px 8px;
-      text-align: center;
+    /* THẺ KPI CHUẨN CANVAS (DÙNG CHUNG CHO PENDING, INBOUND, PERFORMANCE) */
+    .sheet-kpi-card {
+      border-radius: 14px !important;
+      padding: 13px 16px !important;
+      text-align: left !important;
+      position: relative;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+      cursor: pointer;
+      min-height: 96px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 72px;
+      justify-content: space-between;
+      align-items: flex-start !important;
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
     }
-    .kpi-mini-card .kpi-label { 
-      font-size: 0.7rem; 
-      text-transform: uppercase; 
-      font-weight: 700; 
+    .sheet-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08) !important;
+    }
+    .sheet-kpi-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
+      justify-content: space-between !important;
+      gap: 6px;
       width: 100%;
     }
-    .kpi-mini-card .kpi-val { font-size: 1.25rem; font-weight: 800; line-height: 1.2; margin-top: 2px; }
-    .kpi-mini-btn { font-size: 0.68rem; padding: 1px 5px; border-radius: 3px; line-height: 1; }
-    .card-hv-mini { background: linear-gradient(135deg, #6f42c1, #482384); color: white; border: none; }
+    .sheet-kpi-val {
+      font-size: 1.75rem !important;
+      font-weight: 800;
+      line-height: 1.15;
+      margin: 4px 0 2px 0;
+      letter-spacing: -0.5px;
+    }
+    .sheet-kpi-sub {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--canvas-muted);
+    }
 
-    /* BẢNG 3 QUẬN */
-    .district-card { border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; }
-    .district-header { padding: 5px 8px; font-size: 0.82rem; font-weight: 700; }
-    .district-search { font-size: 0.72rem; padding: 2px 6px; height: 24px; max-width: 110px; }
-    .district-table th { font-size: 0.75rem; padding: 3px 6px !important; background-color: #f8fafc !important; color: #475569 !important; }
-    .district-table td { font-size: 0.78rem; padding: 3px 6px !important; }
-    .district-badge { font-size: 0.75rem; font-weight: 700; padding: 2px 6px; }
+    /* BẢNG MÀU PASTEL MẢNH GIỐNG CANVAS */
+    .sheet-kpi-total { background: #ffffff !important; border: 1.5px solid #fecdd3 !important; color: #e11d48 !important; }
+    .sheet-kpi-total .sheet-kpi-val { color: #0f172a !important; }
 
-    /* TOP 5 */
-    .top5-card { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 6px; }
-    .top5-table th { font-size: 0.73rem; padding: 2px 5px !important; }
-    .top5-table td { font-size: 0.76rem; padding: 2px 5px !important; }
-    .top5-toggle-btn { font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; }
+    .sheet-kpi-hv {
+      background: #ffffff !important;
+      border: 1.5px solid #fecdd3 !important;
+      color: #e11d48 !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+      animation: none !important;
+    }
+    .sheet-kpi-hv .sheet-kpi-title { color: #e11d48 !important; }
+    .sheet-kpi-hv .sheet-kpi-val { color: #0f172a !important; text-shadow: none !important; }
+    .sheet-kpi-hv .sheet-kpi-sub { color: #64748b !important; }
 
-    /* NGÀY ĐẶC BIỆT */
+    .sheet-kpi-mp { background: #f0fdf4 !important; border: 1.5px solid #bbf7d0 !important; color: #15803d !important; }
+    .sheet-kpi-wh { background: #f8fafc !important; border: 1.5px solid #cbd5e1 !important; color: #334155 !important; }
+    .sheet-kpi-q2 { background: #eff6ff !important; border: 1.5px solid #bfdbfe !important; color: #1d4ed8 !important; }
+    .sheet-kpi-q4 { background: #fffbeb !important; border: 1.5px solid #fde68a !important; color: #b45309 !important; }
+    .sheet-kpi-q7 { background: #f5f3ff !important; border: 1.5px solid #ddd6fe !important; color: #6d28d9 !important; }
+    .sheet-kpi-q9 { background: #ecfdf5 !important; border: 1.5px solid #a7f3d0 !important; color: #047857 !important; }
+    .sheet-kpi-bt { background: #fff7ed !important; border: 1.5px solid #fed7aa !important; color: #c2410c !important; }
+
+    .canvas-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .canvas-icon-red { background: #fff1f2; color: #e11d48; border: 1px solid #ffe4e6; }
+
+    /* HERO BANNER CANVAS */
+    .canvas-hero-banner {
+      background: var(--canvas-navy);
+      color: #ffffff;
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .canvas-update-pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* THANH SUB-TAB DẠNG PILL */
+    .canvas-pill-bar {
+      background: #ffffff;
+      border: 1px solid var(--canvas-border);
+      border-radius: 14px;
+      padding: 8px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .canvas-pill-btn {
+      border: none;
+      background: transparent;
+      color: #475569;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .canvas-pill-btn:hover { background: #f1f5f9; color: #0f172a; }
+    .canvas-pill-btn.active {
+      background: var(--canvas-navy);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+    }
+
+    /* BADGE MỨC ĐỘ & RANK PASTEL */
+    .lvl-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .lvl-low { background: #dcfce7; color: #15803d; }
+    .lvl-mid { background: #fef3c7; color: #b45309; }
+    .lvl-high { background: #fee2e2; color: #dc2626; }
+
+    .rank-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .rank-1 { background: #fee2e2; color: #dc2626; }
+    .rank-2 { background: #fef3c7; color: #d97706; }
+    .rank-3 { background: #fef9c3; color: #a16207; }
+    .rank-n { background: #f1f5f9; color: #475569; }
+
+    /* THANH ĐỒNG BỘ */
+    .sync-bar {
+      background: #ffffff;
+      border: 1px solid var(--canvas-border);
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+    }
+    .kpi-mini-btn { font-size: 0.68rem; padding: 2px 6px; border-radius: 6px; line-height: 1; }
+
+    /* BẢNG BÀN GIAO HV PHONG CÁCH CANVAS */
+    .hv-handover-card {
+      border-radius: 14px;
+      border: 1px solid var(--canvas-border);
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    .hv-handover-card.fullscreen-mode {
+      position: fixed !important;
+      top: 10px; left: 10px; right: 10px; bottom: 10px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 48px rgba(15, 23, 42, 0.35);
+    }
+    .hv-handover-header {
+      background: var(--canvas-navy);
+      color: #ffffff;
+      padding: 10px 14px;
+    }
+    .hv-cell-ip { background-color: #fff1f2 !important; color: #be123c !important; font-weight: 700 !important; }
+    .hv-row-ip td { background-color: #fff1f2 !important; color: #be123c !important; font-weight: 600 !important; }
+    .hv-status-success { background-color: #dcfce7 !important; color: #15803d !important; font-weight: 700 !important; }
+    .hv-status-onhold { background-color: #fee2e2 !important; color: #dc2626 !important; font-weight: 700 !important; }
+
+    /* NGÀY ĐẶC BIỆT LỊCH OFF */
     .special-day-thu2 { background-color: #fef08a !important; color: #854d0e !important; }
     .special-day-sal { background-color: #ffedd5 !important; color: #9a3412 !important; }
     .special-day-double { background-color: #fee2e2 !important; color: #991b1b !important; font-weight: 700 !important; }
 
-    /* THANH ĐỒNG BỘ */
-    .sync-bar { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 5px; padding: 6px 12px; font-size: 0.8rem; }
     .badge-pulse {
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background-color: #198754;
-      margin-right: 5px;
-      animation: pulse 1.8s infinite;
+      display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+      background-color: #10b981; margin-right: 5px; animation: pulse 1.8s infinite;
     }
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
-      70% { box-shadow: 0 0 0 5px rgba(25, 135, 84, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
   </style>
 </head>
@@ -472,136 +699,7 @@
 
     <!-- ==================== 4. HÀNG HÓA ==================== -->
     <div id="section-hangHoa" class="content-section">
-      <style>
-        /* CSS THẺ KPI CHUẨN GOOGLE SHEET */
-        .sheet-kpi-card {
-          border-radius: 6px;
-          padding: 8px 10px;
-          text-align: center;
-          position: relative;
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-          cursor: pointer;
-          min-height: 84px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
-        .sheet-kpi-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-        }
-        .sheet-kpi-title {
-          font-size: 0.72rem;
-          font-weight: 800;
-          text-transform: uppercase;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          width: 100%;
-        }
-        .sheet-kpi-val {
-          font-size: 1.55rem;
-          font-weight: 800;
-          line-height: 1.15;
-          margin: 3px 0;
-        }
-        .sheet-kpi-sub {
-          font-size: 0.7rem;
-          font-weight: 600;
-          opacity: 0.9;
-        }
-        .sheet-kpi-total { background-color: #f4cccc; border: 1px solid #ea9999; color: #990000; }
-        .sheet-kpi-hv {
-          background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%);
-          border: 2px solid #facc15 !important;
-          color: #ffffff;
-          box-shadow: 0 0 14px rgba(250, 204, 21, 0.45);
-          animation: hvPulseGlow 2.2s infinite ease-in-out;
-        }
-        .sheet-kpi-hv .sheet-kpi-title {
-          color: #fde047;
-          letter-spacing: 0.4px;
-        }
-        .sheet-kpi-hv .sheet-kpi-val {
-          color: #ffffff;
-          text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
-        }
-        .sheet-kpi-hv .sheet-kpi-sub {
-          color: #fef08a;
-          opacity: 1;
-        }
-        @keyframes hvPulseGlow {
-          0%, 100% { box-shadow: 0 0 10px rgba(250, 204, 21, 0.35), inset 0 0 8px rgba(250, 204, 21, 0.15); }
-          50% { box-shadow: 0 0 20px rgba(250, 204, 21, 0.75), inset 0 0 12px rgba(250, 204, 21, 0.25); }
-        }
-        .sheet-kpi-mp    { background-color: #d9ead3; border: 1px solid #b6d7a8; color: #274e13; }
-        .sheet-kpi-wh    { background-color: #e2e8f0; border: 1px solid #cbd5e1; color: #1e293b; }
-        .sheet-kpi-q2    { background-color: #cfe2f3; border: 1px solid #9fc5e8; color: #073763; }
-        .sheet-kpi-q4    { background-color: #fff2cc; border: 1px solid #ffe599; color: #7f6000; }
-        .sheet-kpi-q7    { background-color: #d9d2e9; border: 1px solid #b4a7d6; color: #20124d; }
-        .sheet-kpi-q9    { background-color: #d0e0e3; border: 1px solid #a2c4c9; color: #0c343d; }
-        .sheet-kpi-bt    { background-color: #f9cb9c; border: 1px solid #f6b26b; color: #783f04; }
-
-        /* CSS BẢNG BÀN GIAO HV ĐỒNG BỘ MÀU VỚI THẺ ĐƠN RỚT HV */
-        .hv-handover-card {
-          border-radius: 6px;
-          border: 2px solid #facc15;
-          background: #ffffff;
-          overflow: hidden;
-          box-shadow: 0 2px 12px rgba(107, 33, 168, 0.2);
-        }
-        .hv-handover-card.fullscreen-mode {
-          position: fixed !important;
-          top: 8px;
-          left: 8px;
-          right: 8px;
-          bottom: 8px;
-          z-index: 2000;
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 10px 40px rgba(0,0,0,0.45);
-        }
-        .hv-handover-header {
-          background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%);
-          border-bottom: 2px solid #facc15;
-          color: #fde047;
-          padding: 7px 12px;
-        }
-        .hv-handover-table th {
-          background-color: #1b4965 !important;
-          color: #ffffff !important;
-          font-size: 0.74rem;
-          padding: 6px 8px !important;
-          white-space: nowrap;
-        }
-        .hv-handover-table td {
-          font-size: 0.76rem;
-          padding: 4px 8px !important;
-          white-space: nowrap;
-        }
-        .hv-cell-ip {
-          background-color: #f4cccc !important;
-          color: #990000 !important;
-          font-weight: 700 !important;
-        }
-        .hv-row-ip td {
-          background-color: #fce8e6 !important;
-          color: #990000 !important;
-          font-weight: 700 !important;
-        }
-        .hv-status-success {
-          background-color: #d9ead3 !important;
-          color: #137333 !important;
-          font-weight: 700 !important;
-        }
-        .hv-status-onhold {
-          background-color: #fce8e6 !important;
-          color: #c5221f !important;
-          font-weight: 700 !important;
-        }
-      </style>
+      
 
       <!-- THANH ĐỒNG BỘ + NÚT CẬP NHẬT NGAY -->
       <div class="sync-bar shadow-sm mb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -625,118 +723,113 @@
       </div>
 
       <!-- ================================================================================= -->
-      <!-- VÙNG 1: GIAO DIỆN DÀNH RIÊNG CHO PENDING ATTEMPT (KHÔNG DÙNG CHUNG VỚI INBOUND) -->
+      <!-- VÙNG 1: GIAO DIỆN CANVAS CHO PENDING ATTEMPT (Y HỆT MẪU CANVAS)                   -->
       <!-- ================================================================================= -->
       <div id="vungGiaoDienPending">
-        <!-- HÀNG 1: TỔNG ĐƠN RỚT, ĐƠN RỚT HV, ĐƠN MP, ĐƠN WH -->
-        <div class="row g-2 mb-2" id="hangHoaKpiTopRow">
-          <div class="col-6 col-md-3">
-            <div class="sheet-kpi-card sheet-kpi-total shadow-sm" onclick="xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')">
-              <div class="sheet-kpi-title">
-                <span>TỔNG ĐƠN RỚT</span>
-                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')" title="Xem chi tiết phường & mã đơn">
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-              <div class="sheet-kpi-val" id="kpiTongDon">0</div>
-              <div class="sheet-kpi-sub" id="subKpiTongDon">Toàn bộ khu vực (0 phường)</div>
+        <!-- HEADER BANNER TỐI MÀU -->
+        <div class="canvas-hero-banner shadow-sm">
+          <div>
+            <div class="fw-bold" style="font-size: 1.1rem; letter-spacing: 0.4px;">THEO DÕI TỒN KHO TRONG NGÀY</div>
+            <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">
+              Dữ liệu vận hành Inbound • Phân tích chi tiết theo Quận / Phường &amp; Điểm nóng cần ưu tiên xử lý
             </div>
           </div>
-          <div class="col-6 col-md-3">
+          <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="canvas-update-pill">
+              <i class="bi bi-clock text-info"></i>
+              <span id="pendingCanvasLastUpdate">Last update: —</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- HÀNG 1: 2 THẺ KPI LỚN (TỔNG ĐƠN RỚT & ĐƠN RỚT HV) -->
+        <div class="row g-3 mb-3" id="hangHoaKpiTopRow">
+          <div class="col-12 col-md-6">
+            <div class="sheet-kpi-card sheet-kpi-total" onclick="xemDonTheoKpi('all', 'Tất Cả Đơn Rớt')">
+              <div class="d-flex justify-content-between align-items-start w-100">
+                <div>
+                  <div class="sheet-kpi-title" style="color: #e11d48;">TỔNG ĐƠN RỚT</div>
+                  <div class="sheet-kpi-val" id="kpiTongDon">0</div>
+                  <div class="sheet-kpi-sub" id="subKpiTongDon">Toàn bộ khu vực • 0 phường chưa gán</div>
+                  <div class="d-flex flex-wrap gap-2 mt-2">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold" style="font-size:0.7rem;" onclick="event.stopPropagation(); xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Nhấn để xem riêng đơn MP">
+                      MP: <b id="kpiMp">0</b> (<span id="subKpiMp">0.0%</span>)
+                    </span>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-semibold" style="font-size:0.7rem;" onclick="event.stopPropagation(); xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Nhấn để xem riêng đơn WH">
+                      WH: <b id="kpiWh">0</b> (<span id="subKpiWh">0.0%</span>)
+                    </span>
+                  </div>
+                </div>
+                <span class="canvas-icon-box canvas-icon-red">
+                  <i class="bi bi-box-seam"></i>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6">
             <div class="sheet-kpi-card sheet-kpi-hv" onclick="xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')">
-              <div class="sheet-kpi-title">
-                <span><i class="bi bi-shield-fill-exclamation text-warning me-1"></i>ĐƠN RỚT HV</span>
-                <button type="button" class="btn btn-warning text-dark fw-bold kpi-mini-btn border-warning shadow-sm" onclick="event.stopPropagation(); xemDonTheoKpi('hv_only', 'Tất Cả Đơn Rớt HV')" title="Xem chi tiết đơn giá trị cao (HV)">
-                  <i class="bi bi-search"></i>
-                </button>
+              <div class="d-flex justify-content-between align-items-start w-100">
+                <div>
+                  <div class="sheet-kpi-title">ĐƠN RỚT HV</div>
+                  <div class="sheet-kpi-val" id="kpiHv">0</div>
+                  <div class="sheet-kpi-sub" id="subKpiHv">0.0% tổng đơn (Chờ bàn giao &amp; OnHold)</div>
+                </div>
+                <span class="canvas-icon-box canvas-icon-red">
+                  <i class="bi bi-exclamation-triangle"></i>
+                </span>
               </div>
-              <div class="sheet-kpi-val" id="kpiHv">0</div>
-              <div class="sheet-kpi-sub" id="subKpiHv">0.0% tổng đơn</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="sheet-kpi-card sheet-kpi-mp shadow-sm" onclick="xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')">
-              <div class="sheet-kpi-title">
-                <span>ĐƠN MP</span>
-                <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('mp_only', 'Tất Cả Đơn Hàng MP')" title="Xem chi tiết đơn MP">
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-              <div class="sheet-kpi-val" id="kpiMp">0</div>
-              <div class="sheet-kpi-sub" id="subKpiMp">0.0% tổng đơn</div>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="sheet-kpi-card sheet-kpi-wh shadow-sm" onclick="xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')">
-              <div class="sheet-kpi-title">
-                <span>ĐƠN WH</span>
-                <button type="button" class="btn btn-light text-secondary kpi-mini-btn border-secondary" onclick="event.stopPropagation(); xemDonTheoKpi('wh_only', 'Tất Cả Đơn Hàng WH')" title="Xem chi tiết đơn WH">
-                  <i class="bi bi-search"></i>
-                </button>
-              </div>
-              <div class="sheet-kpi-val" id="kpiWh">0</div>
-              <div class="sheet-kpi-sub" id="subKpiWh">0.0% tổng đơn</div>
             </div>
           </div>
         </div>
 
-        <!-- HÀNG 2: 5 THẺ QUẬN CỦA PENDING ATTEMPT -->
-        <div class="row row-cols-2 row-cols-md-5 g-2 mb-2" id="hangHoaKpiRow">
+        <!-- HÀNG 2: 5 THẺ QUẬN PASTEL -->
+        <div class="row row-cols-2 row-cols-md-5 g-3 mb-3" id="hangHoaKpiRow">
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q2 shadow-sm" onclick="xemDonTheoKpi('Quận 2', 'Quận 2')">
+            <div class="sheet-kpi-card sheet-kpi-q2" onclick="xemDonTheoKpi('Quận 2', 'Quận 2')">
               <div class="sheet-kpi-title" id="lblKpi1">
                 <span>QUẬN 2</span>
-                <button type="button" class="btn btn-light text-primary kpi-mini-btn border-primary" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 2', 'Quận 2')">
-                  <i class="bi bi-search"></i>
-                </button>
+                <i class="bi bi-geo-alt opacity-75"></i>
               </div>
               <div class="sheet-kpi-val" id="kpiQ2">0</div>
               <div class="sheet-kpi-sub" id="subKpiQ2">0.0% tổng đơn • 0 phường</div>
             </div>
           </div>
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q4 shadow-sm" onclick="xemDonTheoKpi('Quận 4', 'Quận 4')">
+            <div class="sheet-kpi-card sheet-kpi-q4" onclick="xemDonTheoKpi('Quận 4', 'Quận 4')">
               <div class="sheet-kpi-title" id="lblKpi2">
                 <span>QUẬN 4</span>
-                <button type="button" class="btn btn-light text-warning text-dark kpi-mini-btn border-warning" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 4', 'Quận 4')">
-                  <i class="bi bi-search"></i>
-                </button>
+                <i class="bi bi-geo-alt opacity-75"></i>
               </div>
               <div class="sheet-kpi-val" id="kpiQ4">0</div>
               <div class="sheet-kpi-sub" id="subKpiQ4">0.0% tổng đơn • 0 phường</div>
             </div>
           </div>
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q7 shadow-sm" onclick="xemDonTheoKpi('Quận 7', 'Quận 7')">
+            <div class="sheet-kpi-card sheet-kpi-q7" onclick="xemDonTheoKpi('Quận 7', 'Quận 7')">
               <div class="sheet-kpi-title" id="lblKpi3">
                 <span>QUẬN 7</span>
-                <button type="button" class="btn btn-light text-info text-dark kpi-mini-btn border-info" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 7', 'Quận 7')">
-                  <i class="bi bi-search"></i>
-                </button>
+                <i class="bi bi-geo-alt opacity-75"></i>
               </div>
               <div class="sheet-kpi-val" id="kpiQ7">0</div>
               <div class="sheet-kpi-sub" id="subKpiQ7">0.0% tổng đơn • 0 phường</div>
             </div>
           </div>
           <div class="col">
-            <div class="sheet-kpi-card sheet-kpi-q9 shadow-sm" onclick="xemDonTheoKpi('Quận 9', 'Quận 9')">
+            <div class="sheet-kpi-card sheet-kpi-q9" onclick="xemDonTheoKpi('Quận 9', 'Quận 9')">
               <div class="sheet-kpi-title" id="lblKpi4">
                 <span>QUẬN 9</span>
-                <button type="button" class="btn btn-light text-success kpi-mini-btn border-success" onclick="event.stopPropagation(); xemDonTheoKpi('Quận 9', 'Quận 9')">
-                  <i class="bi bi-search"></i>
-                </button>
+                <i class="bi bi-geo-alt opacity-75"></i>
               </div>
               <div class="sheet-kpi-val" id="kpiQ9">0</div>
               <div class="sheet-kpi-sub" id="subKpiQ9">0.0% tổng đơn • 0 phường</div>
             </div>
           </div>
           <div class="col-12 col-md">
-            <div class="sheet-kpi-card sheet-kpi-bt shadow-sm" onclick="xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')">
+            <div class="sheet-kpi-card sheet-kpi-bt" onclick="xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')">
               <div class="sheet-kpi-title" id="lblKpi5">
                 <span>BÌNH THẠNH</span>
-                <button type="button" class="btn btn-light text-danger kpi-mini-btn border-danger" onclick="event.stopPropagation(); xemDonTheoKpi('Bình Thạnh', 'Bình Thạnh')">
-                  <i class="bi bi-search"></i>
-                </button>
+                <i class="bi bi-geo-alt opacity-75"></i>
               </div>
               <div class="sheet-kpi-val" id="kpiBT">0</div>
               <div class="sheet-kpi-sub" id="subKpiBT">0.0% tổng đơn • 0 phường</div>
@@ -744,35 +837,172 @@
           </div>
         </div>
 
-        <!-- BẢNG TOP PHƯỜNG RỚT NHIỀU NHẤT -->
-        <div class="card shadow-sm border-0 mb-2 top5-card">
-          <div class="card-header bg-transparent py-1 px-3 d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-              <span class="fw-bold text-danger" style="font-size: 0.78rem;">
-                <i class="bi bi-fire me-1"></i>TOP PHƯỜNG RỚT NHIỀU NHẤT
-              </span>
-              <span class="text-muted d-none d-sm-inline" style="font-size: 0.7rem;">(Điểm nóng cần ưu tiên xử lý)</span>
-            </div>
-            <button class="btn btn-outline-danger top5-toggle-btn d-flex align-items-center gap-1" type="button" onclick="dongMoTop5()" id="btnToggleTop5">
-              <i class="bi bi-chevron-up" id="iconToggleTop5"></i>
-              <span id="textToggleTop5">Thu gọn</span>
+        <!-- HÀNG 3: THANH ĐIỀU HƯỚNG PILL + TÌM KIẾM & LỌC QUẬN -->
+        <div class="canvas-pill-bar shadow-sm">
+          <div class="d-flex flex-wrap gap-1">
+            <button type="button" class="canvas-pill-btn active" id="btnCanvasTabOverview" onclick="switchPendingCanvasTab('overview')">
+              Tổng quan &amp; Điểm nóng
+            </button>
+            <button type="button" class="canvas-pill-btn" id="btnCanvasTabHv" onclick="switchPendingCanvasTab('hv')">
+              Bàn giao đơn HV (<span id="badgeCanvasTabHvCount">0</span>)
+            </button>
+            <button type="button" class="canvas-pill-btn" id="btnCanvasTabWards" onclick="switchPendingCanvasTab('wards')">
+              Chi tiết Quận / Phường
             </button>
           </div>
-          <div id="collapseTop5">
-            <div class="card-body p-1 border-top border-danger-subtle">
-              <div class="table-responsive">
-                <table class="table table-hover table-bordered table-sm top5-table align-middle mb-0 bg-white">
-                  <thead class="table-light">
-                    <tr class="text-center">
-                      <th style="width: 48px;">Hạng</th>
-                      <th>Phường</th>
-                      <th style="width: 90px;">Số Đơn</th>
-                      <th style="width: 65px;">Tỷ Trọng</th>
-                      <th style="width: 50px;">Xem</th>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="input-group input-group-sm" style="width: 220px;">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input type="text" id="canvasSearchGlobal" class="form-control border-start-0" placeholder="Tìm mã đơn, phường, RD..." oninput="xuLyLocGlobalCanvasPending()">
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <i class="bi bi-funnel text-muted small"></i>
+              <select id="canvasFilterQuanGlobal" class="form-select form-select-sm fw-semibold" style="width: 145px;" onchange="xuLyLocGlobalCanvasPending()">
+                <option value="ALL">Tất cả</option>
+                <option value="Quận 2">Quận 2</option>
+                <option value="Quận 4">Quận 4</option>
+                <option value="Quận 7">Quận 7</option>
+                <option value="Quận 9">Quận 9</option>
+                <option value="Bình Thạnh">Bình Thạnh</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 1: TỔNG QUAN & ĐIỂM NÓNG (LƯỚI 2 CỘT CHUẨN CANVAS) -->
+        <div id="canvasTabOverview">
+          <div class="row g-3">
+            <!-- CỘT TRÁI: PHÂN TÍCH ĐƠN RỚT THEO QUẬN + BIỂU ĐỒ DONUT -->
+            <div class="col-12 col-lg-6 d-flex flex-column gap-3">
+              <!-- Bảng Phân tích đơn rớt theo Quận -->
+              <div class="card overflow-hidden">
+                <div class="card-header bg-white py-2 px-3 d-flex align-items-center gap-2">
+                  <i class="bi bi-layers text-primary"></i>
+                  <span class="fw-bold text-dark" style="font-size: 0.88rem;">Phân tích đơn rớt theo Quận</span>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.8rem;">
+                    <thead>
+                      <tr>
+                        <th class="text-start ps-3">Quận</th>
+                        <th class="text-end">Số Lượng Đơn</th>
+                        <th class="text-end">Tỷ Trọng</th>
+                        <th class="text-center">Mức Độ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tbodyCanvasPhanTichQuan">
+                      <tr><td colspan="4" class="text-center py-3 text-muted">Đang phân tích...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Biểu đồ tròn Donut: Tỷ Trọng Đơn Rớt Theo Quận -->
+              <div class="card p-3">
+                <div class="fw-bold text-dark mb-3" style="font-size: 0.88rem;">Tỷ Trọng Đơn Rớt Theo Quận</div>
+                <div class="d-flex flex-wrap align-items-center justify-content-center gap-4 py-2">
+                  <div id="svgCanvasDonutWrap" style="width: 190px; height: 190px; flex-shrink: 0;"></div>
+                  <div id="legendCanvasDonut" class="d-flex flex-column gap-2" style="min-width: 210px; font-size: 0.82rem;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CỘT PHẢI: TOP 6 PHƯỜNG ĐIỂM NÓNG + XEM NHANH BÀN GIAO HV -->
+            <div class="col-12 col-lg-6 d-flex flex-column gap-3">
+              <!-- Bảng TOP 6 Phường điểm nóng -->
+              <div class="card overflow-hidden">
+                <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-graph-up-arrow text-danger"></i>
+                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">TOP 6 Phường điểm nóng</span>
+                  </div>
+                  <button class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size:0.72rem;" type="button" onclick="dongMoTop5()" id="btnToggleTop5">
+                    <i class="bi bi-chevron-up" id="iconToggleTop5"></i>
+                    <span id="textToggleTop5">Thu gọn</span>
+                  </button>
+                </div>
+                <div id="collapseTop5">
+                  <div class="table-responsive">
+                    <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.8rem;">
+                      <thead>
+                        <tr>
+                          <th class="text-center" style="width: 58px;">TOP</th>
+                          <th class="text-start">TOP PHƯỜNG</th>
+                          <th class="text-end" style="width: 110px;">Số Lượng Đơn</th>
+                          <th class="text-end pe-3" style="width: 115px;">Tỷ Trọng / Tổng</th>
+                        </tr>
+                      </thead>
+                      <tbody id="bangTop5Body">
+                        <tr><td colspan="4" class="text-center py-3 text-muted">Đang nạp Top 6...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Xem nhanh Bàn giao trạng thái đơn hàng HV -->
+              <div class="card overflow-hidden">
+                <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+                  <span class="fw-bold text-dark text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.3px;">
+                    BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
+                  </span>
+                  <a href="javascript:void(0)" class="small fw-semibold text-decoration-none text-primary" onclick="switchPendingCanvasTab('hv')">
+                    Xem tất cả →
+                  </a>
+                </div>
+                <div class="card-body p-2" id="canvasHvPreviewList" style="max-height: 250px; overflow-y: auto;">
+                  <div class="text-center py-3 text-muted small">Đang tải đơn HV...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-TAB 2: BẢNG ĐẦY ĐỦ BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV -->
+        <div id="canvasTabHv" style="display: none;">
+          <div class="hv-handover-card shadow-sm mb-2" id="cardBanGiaoHv">
+            <div class="hv-handover-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL')">
+                  <i class="bi bi-shield-check text-warning me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
+                </span>
+                <span class="badge bg-warning text-dark fw-bold" id="badgeCountBanGiaoHv" style="cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL')">0 đơn HV</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle" id="badgeCountHvDelivered" style="font-size: 0.72rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('DELIVERED')">0 Giao thành công</span>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle" id="badgeCountHvIp" style="font-size: 0.72rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL_IP')">0 đơn IP</span>
+                <span class="badge bg-danger text-white border border-warning fw-bold shadow-sm" id="badgeCountHvIpChuaBG" style="font-size: 0.73rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('IP_CHUA_BG')">⏳ 0 IP Chưa bàn giao</span>
+                <span class="badge bg-info text-dark border border-light fw-bold shadow-sm" id="badgeCountHvIpDaBG" style="font-size: 0.73rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('IP_DA_BG')">✅ 0 IP Đã bàn giao</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <input type="text" id="searchBanGiaoHv" class="form-control form-control-sm" style="width: 210px; height: 28px; font-size: 0.75rem;" placeholder="🔍 Tìm mã đơn, RD, phường..." oninput="renderBangBanGiaoHv()">
+                <button type="button" class="btn btn-xs btn-outline-light py-0 px-2 d-flex align-items-center gap-1" style="height: 28px; font-size: 0.74rem;" onclick="toggleZoomBanGiaoHv()" id="btnZoomBanGiaoHv">
+                  <i class="bi bi-arrows-fullscreen" id="iconZoomBanGiaoHv"></i>
+                  <span id="txtZoomBanGiaoHv">Phóng to</span>
+                </button>
+                <button type="button" class="btn btn-xs btn-warning text-dark fw-bold py-0 px-2 d-flex align-items-center gap-1" style="height: 28px; font-size: 0.74rem;" onclick="dongMoBanGiaoHv()" id="btnToggleBanGiaoHv">
+                  <i class="bi bi-chevron-up" id="iconToggleBanGiaoHv"></i>
+                  <span id="txtToggleBanGiaoHv">Thu gọn</span>
+                </button>
+              </div>
+            </div>
+            <div id="collapseBanGiaoHv">
+              <div class="table-responsive" id="tableWrapBanGiaoHv" style="max-height: 540px; overflow-y: auto;">
+                <table class="table table-hover table-sm hv-handover-table align-middle mb-0 text-center">
+                  <thead class="sticky-top">
+                    <tr>
+                      <th style="width: 42px;">STT</th>
+                      <th>Mã đơn</th>
+                      <th>Zone ID</th>
+                      <th>Quận / Phường cũ</th>
+                      <th>ID RD</th>
+                      <th>Tên RD</th>
+                      <th>COT RD</th>
+                      <th>Thời gian quét giao</th>
+                      <th>Trạng thái hiện tại</th>
+                      <th>Lý do onhold</th>
                     </tr>
                   </thead>
-                  <tbody id="bangTop5Body">
-                    <tr><td colspan="5" class="text-center py-2 text-muted">Đang nạp Top...</td></tr>
+                  <tbody id="tbodyBanGiaoHv">
+                    <tr><td colspan="10" class="text-center py-3 text-muted">Đang tải bảng bàn giao đơn hàng HV...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -780,50 +1010,29 @@
           </div>
         </div>
 
-        <!-- BẢNG BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV -->
-        <div class="hv-handover-card shadow-sm mb-2" id="cardBanGiaoHv">
-          <div class="hv-handover-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div class="d-flex align-items-center flex-wrap gap-2">
-            <span class="fw-bold" style="font-size: 0.85rem; letter-spacing: 0.3px; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL')" title="Nhấn để xem tất cả đơn HV">
-              <i class="bi bi-shield-check text-warning me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
-            </span>
-            <span class="badge bg-warning text-dark fw-bold" id="badgeCountBanGiaoHv" style="cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL')" title="Xem tất cả đơn HV">0 đơn HV</span>
-            <span class="badge bg-success-subtle text-success border border-success-subtle" id="badgeCountHvDelivered" style="font-size: 0.72rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('DELIVERED')">0 Giao thành công</span>
-            <span class="badge bg-danger-subtle text-danger border border-danger-subtle" id="badgeCountHvIp" style="font-size: 0.72rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('ALL_IP')">0 đơn IP</span>
-            <span class="badge bg-danger text-white border border-warning fw-bold shadow-sm" id="badgeCountHvIpChuaBG" style="font-size: 0.73rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('IP_CHUA_BG')" title="Nhấn để lọc riêng các đơn IP chưa bàn giao">⏳ 0 IP Chưa bàn giao</span>
-            <span class="badge bg-info text-dark border border-light fw-bold shadow-sm" id="badgeCountHvIpDaBG" style="font-size: 0.73rem; cursor:pointer;" onclick="locNhanhTrangThaiIpHv('IP_DA_BG')" title="Nhấn để lọc riêng các đơn IP đã bàn giao">✅ 0 IP Đã bàn giao</span>
-          </div>
-            <div class="d-flex align-items-center gap-2">
-              <input type="text" id="searchBanGiaoHv" class="form-control form-control-sm" style="width: 210px; height: 26px; font-size: 0.75rem;" placeholder="🔍 Tìm mã đơn, RD, phường, trạng thái..." oninput="renderBangBanGiaoHv()">
-              <button type="button" class="btn btn-xs btn-outline-light py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="toggleZoomBanGiaoHv()" id="btnZoomBanGiaoHv" title="Phóng to toàn màn hình / Thu nhỏ">
-                <i class="bi bi-arrows-fullscreen" id="iconZoomBanGiaoHv"></i>
-                <span id="txtZoomBanGiaoHv">Phóng to</span>
-              </button>
-              <button type="button" class="btn btn-xs btn-warning text-dark fw-bold py-0 px-2 d-flex align-items-center gap-1" style="height: 26px; font-size: 0.74rem;" onclick="dongMoBanGiaoHv()" id="btnToggleBanGiaoHv">
-                <i class="bi bi-chevron-up" id="iconToggleBanGiaoHv"></i>
-                <span id="txtToggleBanGiaoHv">Thu gọn</span>
-              </button>
+        <!-- SUB-TAB 3: CHI TIẾT TẤT CẢ QUẬN / PHƯỜNG -->
+        <div id="canvasTabWards" style="display: none;">
+          <div class="card overflow-hidden">
+            <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark" style="font-size: 0.88rem;">
+                <i class="bi bi-geo-alt-fill text-primary me-1"></i>CHI TIẾT TOÀN BỘ PHƯỜNG ĐANG RỚT ĐƠN
+              </span>
+              <span class="badge bg-primary-subtle text-primary fw-bold" id="badgeCanvasWardsCount">0 phường</span>
             </div>
-          </div>
-          <div id="collapseBanGiaoHv">
-            <div class="table-responsive" id="tableWrapBanGiaoHv" style="max-height: 520px; overflow-y: auto;">
-              <table class="table table-bordered table-hover table-sm hv-handover-table align-middle mb-0 text-center">
+            <div class="table-responsive" style="max-height: 560px;">
+              <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.8rem;">
                 <thead class="sticky-top">
                   <tr>
-                    <th style="width: 42px;">STT</th>
-                    <th>Mã đơn</th>
-                    <th>Zone ID</th>
-                    <th>Quận / Phường cũ</th>
-                    <th>ID RD</th>
-                    <th>Tên RD</th>
-                    <th>COT RD</th>
-                    <th>Thời gian quét giao</th>
-                    <th>Trạng thái hiện tại</th>
-                    <th>Lý do onhold</th>
+                    <th class="text-center" style="width: 50px;">STT</th>
+                    <th class="text-start">Quận</th>
+                    <th class="text-start">Phường</th>
+                    <th class="text-end" style="width: 110px;">Số Lượng Đơn</th>
+                    <th class="text-end" style="width: 100px;">Tỷ Trọng</th>
+                    <th class="text-center" style="width: 110px;">Xem Chi Tiết</th>
                   </tr>
                 </thead>
-                <tbody id="tbodyBanGiaoHv">
-                  <tr><td colspan="10" class="text-center py-3 text-muted">Đang tải bảng bàn giao đơn hàng HV...</td></tr>
+                <tbody id="tbodyCanvasChiTietPhuongAll">
+                  <tr><td colspan="6" class="text-center py-3 text-muted">Đang tải danh sách phường...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -2547,6 +2756,7 @@
       capNhatKpiPendingTuCache(data.kpi || {});
       renderTop5Table(data.top5Phuong || [], data.kpi?.tongDon || cachedInboundOrders.length);
       renderBangBanGiaoHv();
+      if (typeof renderPendingCanvasWidgets === 'function') renderPendingCanvasWidgets(data.kpi || {});
     }
 
     async function loadHangHoaData(isBackgroundSync = false) {
@@ -2824,6 +3034,7 @@
           </tr>`;
       });
       tbody.innerHTML = html;
+      if (typeof renderCanvasHvPreview === 'function') renderCanvasHvPreview();
     }
 
     function normQ(q) {
@@ -4936,6 +5147,286 @@ if (user.role === 'RIDER') {
         if (btnCopy) btnCopy.disabled = false;
         if (btnTai) btnTai.disabled = false;
       }
+    }
+
+// ================= LOGIC GIAO DIỆN CANVAS PENDING ATTEMPT (DONUT CHART + PHÂN TÍCH QUẬN + TOP 6) =================
+    let currentPendingCanvasSubTab = 'overview';
+
+    function switchPendingCanvasTab(tabName) {
+      currentPendingCanvasSubTab = tabName;
+      const mapEl = {
+        overview: { sec: 'canvasTabOverview', btn: 'btnCanvasTabOverview' },
+        hv: { sec: 'canvasTabHv', btn: 'btnCanvasTabHv' },
+        wards: { sec: 'canvasTabWards', btn: 'btnCanvasTabWards' }
+      };
+      Object.keys(mapEl).forEach(k => {
+        const secEl = document.getElementById(mapEl[k].sec);
+        const btnEl = document.getElementById(mapEl[k].btn);
+        if (secEl) secEl.style.display = (k === tabName) ? 'block' : 'none';
+        if (btnEl) btnEl.classList.toggle('active', k === tabName);
+      });
+      if (tabName === 'wards') renderCanvasTabChiTietPhuong();
+    }
+
+    function xuLyLocGlobalCanvasPending() {
+      const kw = (document.getElementById('canvasSearchGlobal')?.value || '').trim();
+      const inpHv = document.getElementById('searchBanGiaoHv');
+      if (inpHv && currentPendingCanvasSubTab === 'hv') {
+        inpHv.value = kw;
+        renderBangBanGiaoHv();
+      }
+      renderPendingCanvasWidgets();
+    }
+
+    function renderPendingCanvasWidgets(kpiFallback = {}) {
+      // Đồng bộ thời gian Last update lên Hero Banner
+      const elUpdate = document.getElementById('pendingCanvasLastUpdate');
+      const sheetTime = (kpiFallback && kpiFallback.lastUpdate)
+        ? `Last update: ${kpiFallback.lastUpdate}`
+        : (document.getElementById('hangSheetTimeLabel')?.innerText || '').replace(/[()]/g, '').trim() || `Last update: ${getGioVietNamHienTai()}`;
+      if (elUpdate) elUpdate.innerText = sheetTime;
+
+      const uniquePending = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
+      const tongDon = uniquePending.length;
+
+      const districtStats = [
+        { name: 'Quận 2', key: 'quận 2', color: '#3b82f6', count: uniquePending.filter(d => normQ(d.quan) === 'quận 2').length },
+        { name: 'Quận 4', key: 'quận 4', color: '#f59e0b', count: uniquePending.filter(d => normQ(d.quan) === 'quận 4').length },
+        { name: 'Quận 7', key: 'quận 7', color: '#8b5cf6', count: uniquePending.filter(d => normQ(d.quan) === 'quận 7').length },
+        { name: 'Quận 9', key: 'quận 9', color: '#10b981', count: uniquePending.filter(d => normQ(d.quan) === 'quận 9').length },
+        { name: 'Bình Thạnh', key: 'bình thạnh', color: '#f97316', count: uniquePending.filter(d => normQ(d.quan) === 'bình thạnh').length }
+      ];
+
+      renderCanvasBangPhanTichQuan(districtStats, tongDon);
+      veBieuDoDonutCanvas(districtStats, tongDon);
+      renderCanvasTop6Phuong(tongDon);
+      renderCanvasHvPreview();
+      renderCanvasTabChiTietPhuong();
+    }
+
+    function renderCanvasBangPhanTichQuan(districtStats, tongDon) {
+      const tbody = document.getElementById('tbodyCanvasPhanTichQuan');
+      if (!tbody) return;
+
+      const qFilter = document.getElementById('canvasFilterQuanGlobal')?.value || 'ALL';
+      const rowsToShow = qFilter === 'ALL' ? districtStats : districtStats.filter(d => normQ(d.name) === normQ(qFilter));
+
+      let html = '';
+      rowsToShow.forEach(d => {
+        const pctNum = tongDon > 0 ? (d.count / tongDon) * 100 : 0;
+        const lvlHtml = pctNum >= 40
+          ? '<span class="lvl-pill lvl-high">Cao</span>'
+          : (pctNum >= 20 ? '<span class="lvl-pill lvl-mid">Trung bình</span>' : '<span class="lvl-pill lvl-low">Thấp</span>');
+
+        html += `
+          <tr style="cursor:pointer;" onclick="xemDonTheoKpi('${d.name}', '${d.name}')">
+            <td class="text-start ps-3 fw-semibold text-dark">${d.name}</td>
+            <td class="text-end font-monospace fw-bold text-dark">${d.count.toLocaleString('vi-VN')}</td>
+            <td class="text-end font-monospace text-muted">${pctNum.toFixed(1)}%</td>
+            <td class="text-center">${lvlHtml}</td>
+          </tr>`;
+      });
+
+      const sumDisplay = rowsToShow.reduce((s, i) => s + i.count, 0);
+      const sumPct = tongDon > 0 ? ((sumDisplay / tongDon) * 100).toFixed(1) : '0.0';
+      html += `
+        <tr style="background:#f8fafc; font-weight:700;">
+          <td class="text-start ps-3 text-dark">Tổng cộng</td>
+          <td class="text-end font-monospace text-dark">${sumDisplay.toLocaleString('vi-VN')}</td>
+          <td class="text-end font-monospace text-dark">${sumPct}%</td>
+          <td class="text-center text-muted">-</td>
+        </tr>`;
+
+      tbody.innerHTML = html;
+    }
+
+    function veBieuDoDonutCanvas(districtStats, tongDon) {
+      const svgWrap = document.getElementById('svgCanvasDonutWrap');
+      const legendEl = document.getElementById('legendCanvasDonut');
+      if (!svgWrap || !legendEl) return;
+
+      const r = 66;
+      const C = 2 * Math.PI * r;
+      let offset = 0;
+      let circlesHtml = '';
+
+      if (tongDon === 0) {
+        circlesHtml = `<circle cx="95" cy="95" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="26" />`;
+      } else {
+        districtStats.forEach(d => {
+          if (d.count <= 0) return;
+          const frac = d.count / tongDon;
+          const dashLen = frac * C;
+          const gap = dashLen > 5 ? 2.5 : 0;
+          circlesHtml += `
+            <circle cx="95" cy="95" r="${r}" fill="none"
+              stroke="${d.color}" stroke-width="26"
+              stroke-dasharray="${Math.max(1, dashLen - gap).toFixed(2)} ${C.toFixed(2)}"
+              stroke-dashoffset="${(-offset).toFixed(2)}"
+              transform="rotate(-90 95 95)"
+              style="cursor:pointer; transition: opacity 0.15s;"
+              onclick="xemDonTheoKpi('${d.name}', '${d.name}')">
+              <title>${d.name}: ${d.count} đơn (${(frac * 100).toFixed(1)}%)</title>
+            </circle>`;
+          offset += dashLen;
+        });
+      }
+
+      svgWrap.innerHTML = `
+        <svg viewBox="0 0 190 190" width="190" height="190">
+          ${circlesHtml}
+          <text x="95" y="86" text-anchor="middle" font-size="11.5" fill="#64748b" font-weight="600">Tổng đơn</text>
+          <text x="95" y="110" text-anchor="middle" font-size="24" fill="#0f172a" font-weight="800">${tongDon.toLocaleString('vi-VN')}</text>
+        </svg>`;
+
+      let legendHtml = '';
+      districtStats.forEach(d => {
+        const pctStr = tongDon > 0 ? `${((d.count / tongDon) * 100).toFixed(1)}%` : '0.0%';
+        legendHtml += `
+          <div class="d-flex align-items-center justify-content-between gap-3" style="cursor:pointer;" onclick="xemDonTheoKpi('${d.name}', '${d.name}')">
+            <div class="d-flex align-items-center gap-2">
+              <span style="width:10px; height:10px; border-radius:3px; background:${d.color}; display:inline-block;"></span>
+              <span class="text-dark fw-medium">${d.name}</span>
+            </div>
+            <div class="font-monospace">
+              <b class="text-dark">${d.count.toLocaleString('vi-VN')}</b>
+              <span class="text-muted ms-1">(${pctStr})</span>
+            </div>
+          </div>`;
+      });
+      legendEl.innerHTML = legendHtml;
+    }
+
+    function renderCanvasTop6Phuong(tongDon) {
+      const tbody = document.getElementById('bangTop5Body');
+      if (!tbody) return;
+
+      const kw = (document.getElementById('canvasSearchGlobal')?.value || '').trim().toLowerCase();
+      const qFilter = document.getElementById('canvasFilterQuanGlobal')?.value || 'ALL';
+
+      const allWards = [...(listQ2 || []), ...(listQ4 || []), ...(listQ7 || []), ...(listQ9 || []), ...(listBT || [])]
+        .filter(w => {
+          const matchQ = qFilter === 'ALL' || normQ(w.quan) === normQ(qFilter);
+          const matchKw = !kw || `${w.phuong} ${w.quan}`.toLowerCase().includes(kw);
+          return matchQ && matchKw;
+        })
+        .sort((a, b) => (Number(b.soLuong) || 0) - (Number(a.soLuong) || 0))
+        .slice(0, 6);
+
+      if (allWards.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Không có điểm nóng phù hợp</td></tr>';
+        return;
+      }
+
+      const total = Number(tongDon) || allWards.reduce((s, i) => s + (Number(i.soLuong) || 0), 0);
+      let html = '';
+      allWards.forEach((w, idx) => {
+        const rankCls = idx === 0 ? 'rank-1' : (idx === 1 ? 'rank-2' : (idx === 2 ? 'rank-3' : 'rank-n'));
+        const tyTrong = total > 0 ? `${(((Number(w.soLuong) || 0) / total) * 100).toFixed(1)}%` : '0.0%';
+        const quanNgan = (w.quan || '').replace(/^Quận\s+/i, '');
+        const safeQ = (w.quan || '').replace(/'/g, "\\'");
+        const safeP = (w.phuong || '').replace(/'/g, "\\'");
+
+        html += `
+          <tr style="cursor:pointer;" onclick="xemChiTietDon('${safeQ}', '${safeP}')">
+            <td class="text-center"><span class="rank-pill ${rankCls}">#${idx + 1}</span></td>
+            <td class="text-start fw-semibold text-dark">${w.phuong || '—'} <span class="text-muted fw-normal">(${quanNgan})</span></td>
+            <td class="text-end font-monospace fw-bold text-dark">${w.soLuong || 0}</td>
+            <td class="text-end pe-3 font-monospace text-muted">${tyTrong}</td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function renderCanvasHvPreview() {
+      const wrap = document.getElementById('canvasHvPreviewList');
+      const tabBadge = document.getElementById('badgeCanvasTabHvCount');
+      const allHv = listBanGiaoHv || [];
+      if (tabBadge) tabBadge.innerText = allHv.length;
+      if (!wrap) return;
+
+      const kw = (document.getElementById('canvasSearchGlobal')?.value || '').trim().toLowerCase();
+      const qFilter = document.getElementById('canvasFilterQuanGlobal')?.value || 'ALL';
+
+      const filtered = allHv.filter(item => {
+        const matchQ = qFilter === 'ALL' || normQ(item.quanPhuong) === normQ(qFilter);
+        const matchKw = !kw || `${item.maDon} ${item.quanPhuong} ${item.tenRd} ${item.trangThai}`.toLowerCase().includes(kw);
+        return matchQ && matchKw;
+      });
+
+      if (filtered.length === 0) {
+        wrap.innerHTML = '<div class="text-center py-3 text-muted small">Không có đơn hàng HV nào trong phạm vi này</div>';
+        return;
+      }
+
+      let html = '';
+      filtered.slice(0, 6).forEach(item => {
+        const tt = typeof chuanHoaTrangThaiHvFrontend === 'function' ? chuanHoaTrangThaiHvFrontend(item) : (item.trangThai || '—');
+        const isIp = Boolean(item.isIp) || (item.maDon || '').toLowerCase().includes('ip');
+        const ttPill = tt === 'Giao thành công'
+          ? 'background:#dcfce7; color:#15803d;'
+          : (tt === 'Đang đi giao' ? 'background:#e0f2fe; color:#0369a1;' : 'background:#f1f5f9; color:#334155;');
+        const rdTen = (item.tenRd && item.tenRd !== '0') ? item.tenRd : 'Chưa gán';
+
+        html += `
+          <div class="d-flex justify-content-between align-items-center p-2 rounded mb-1" style="border-bottom: 1px solid #f1f5f9; background:${isIp ? '#fff1f2' : '#ffffff'}; cursor:pointer;" onclick="switchPendingCanvasTab('hv')">
+            <div>
+              <div class="font-monospace fw-bold ${isIp ? 'text-danger' : 'text-dark'}" style="font-size:0.8rem;">${item.maDon || '—'}</div>
+              <div class="text-muted" style="font-size:0.72rem;">${item.quanPhuong || '—'} • RD: <b>${rdTen}</b></div>
+            </div>
+            <span class="badge fw-semibold px-2 py-1" style="${ttPill} border-radius:999px; font-size:0.7rem;">${tt}</span>
+          </div>`;
+      });
+
+      if (filtered.length > 6) {
+        html += `<div class="text-center pt-1"><a href="javascript:void(0)" class="small fw-semibold text-primary text-decoration-none" onclick="switchPendingCanvasTab('hv')">+ Xem thêm ${filtered.length - 6} đơn HV khác →</a></div>`;
+      }
+      wrap.innerHTML = html;
+    }
+
+    function renderCanvasTabChiTietPhuong() {
+      const tbody = document.getElementById('tbodyCanvasChiTietPhuongAll');
+      const badge = document.getElementById('badgeCanvasWardsCount');
+      if (!tbody) return;
+
+      const kw = (document.getElementById('canvasSearchGlobal')?.value || '').trim().toLowerCase();
+      const qFilter = document.getElementById('canvasFilterQuanGlobal')?.value || 'ALL';
+      const allWards = [...(listQ2 || []), ...(listQ4 || []), ...(listQ7 || []), ...(listQ9 || []), ...(listBT || [])];
+      const totalAll = allWards.reduce((s, i) => s + (Number(i.soLuong) || 0), 0);
+
+      const filtered = allWards.filter(w => {
+        const matchQ = qFilter === 'ALL' || normQ(w.quan) === normQ(qFilter);
+        const matchKw = !kw || `${w.phuong} ${w.quan}`.toLowerCase().includes(kw);
+        return matchQ && matchKw;
+      }).sort((a, b) => (Number(b.soLuong) || 0) - (Number(a.soLuong) || 0));
+
+      if (badge) badge.innerText = `${filtered.length} phường`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Không có phường nào phù hợp</td></tr>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((w, idx) => {
+        const pct = totalAll > 0 ? `${(((Number(w.soLuong) || 0) / totalAll) * 100).toFixed(1)}%` : '0.0%';
+        const safeQ = (w.quan || '').replace(/'/g, "\\'");
+        const safeP = (w.phuong || '').replace(/'/g, "\\'");
+        html += `
+          <tr style="cursor:pointer;" onclick="xemChiTietDon('${safeQ}', '${safeP}')">
+            <td class="text-center text-muted small">${idx + 1}</td>
+            <td class="text-start fw-semibold text-secondary">${w.quan || '—'}</td>
+            <td class="text-start fw-bold text-dark">${w.phuong || '—'}</td>
+            <td class="text-end font-monospace fw-bold text-danger">${w.soLuong || 0}</td>
+            <td class="text-end font-monospace text-muted">${pct}</td>
+            <td class="text-center">
+              <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-semibold" style="font-size:0.72rem;" onclick="event.stopPropagation(); xemChiTietDon('${safeQ}', '${safeP}')">
+                <i class="bi bi-search me-1"></i>Xem đơn
+              </button>
+            </td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
     }
 
     window.addEventListener('DOMContentLoaded', () => { kiemTraDangNhap(); });
