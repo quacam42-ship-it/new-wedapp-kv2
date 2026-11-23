@@ -373,16 +373,67 @@
       <button class="menu-btn" id="btn-performance" onclick="chuyenTab('performance')">
         <i class="bi bi-speedometer2"></i> Performance
       </button>
-      <div class="dropdown" onmouseover="this.querySelector('.dropdown-menu').style.display='block'" onmouseout="this.querySelector('.dropdown-menu').style.display='none'">
+      <div class="dropdown canvas-nav-dropdown" onmouseover="this.querySelector('.dropdown-menu').style.display='block'" onmouseout="this.querySelector('.dropdown-menu').style.display='none'">
         <button class="menu-btn" id="btn-hangHoa" onclick="chuyenTab('hangHoa')" style="border:none;">
-          <i class="bi bi-box-seam-fill"></i> Hàng Hóa <i class="bi bi-caret-down-fill ms-1" style="font-size: 0.6rem;"></i>
+          <i class="bi bi-box-seam-fill"></i> Hàng Hóa <i class="bi bi-chevron-down ms-1" style="font-size: 0.65rem;"></i>
         </button>
-        <ul class="dropdown-menu shadow mt-0 border-0" style="background-color: #0d3b66; min-width: 200px;">
-          <li id="btnInboundDropdown"><a class="dropdown-item text-white fw-bold py-2 custom-hover" href="#" onclick="chuyenSubTabHangHoa('INBOUND')"><i class="bi bi-box-arrow-in-down me-2"></i>INBOUND</a></li>
-          <li><a class="dropdown-item text-white fw-bold py-2 custom-hover" href="#" onclick="chuyenSubTabHangHoa('PENDING')"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>PENDING ATTEMPT</a></li>
-        </ul>
+        <div class="dropdown-menu canvas-dropdown-menu shadow-lg">
+          <div id="btnInboundDropdown">
+            <a class="canvas-dd-item" id="ddItemInbound" href="#" onclick="event.preventDefault(); chuyenSubTabHangHoa('INBOUND')">
+              <span class="canvas-dd-icon" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
+                <i class="bi bi-box-arrow-in-down"></i>
+              </span>
+              <span class="d-flex flex-column">
+                <span class="fw-bold text-dark" style="font-size:0.82rem; line-height:1.2;">INBOUND</span>
+                <span class="text-muted" style="font-size:0.68rem;">Thống kê sản lượng ngày &amp; tuần</span>
+              </span>
+            </a>
+          </div>
+          <div>
+            <a class="canvas-dd-item" id="ddItemPending" href="#" onclick="event.preventDefault(); chuyenSubTabHangHoa('PENDING')">
+              <span class="canvas-dd-icon" style="background:#fff1f2; color:#e11d48; border:1px solid #fecdd3;">
+                <i class="bi bi-exclamation-triangle"></i>
+              </span>
+              <span class="d-flex flex-column">
+                <span class="fw-bold text-dark" style="font-size:0.82rem; line-height:1.2;">PENDING ATTEMPT</span>
+                <span class="text-muted" style="font-size:0.68rem;">Tồn kho, điểm nóng &amp; bàn giao HV</span>
+              </span>
+            </a>
+          </div>
+        </div>
         <style>
-          .custom-hover:hover { background-color: #f77f00 !important; color: white !important; }
+          .canvas-nav-dropdown { position: relative; }
+          .canvas-nav-dropdown .canvas-dropdown-menu {
+            margin-top: 0;
+            padding: 6px;
+            min-width: 245px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            box-shadow: 0 14px 32px rgba(15, 23, 42, 0.18) !important;
+          }
+          .canvas-dd-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            text-decoration: none;
+            transition: background-color 0.14s ease;
+          }
+          .canvas-dd-item:hover {
+            background-color: #f1f5f9;
+          }
+          .canvas-dd-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+          }
         </style>
       </div>
       <button class="menu-btn" id="btn-diemDanh" onclick="chuyenTab('diemDanh')">
@@ -1857,59 +1908,66 @@
     </div>
   </div>
 
-<!-- MODAL TẠO HÌNH ẢNH BÁO CÁO PENDING ATTEMPT (QUẬN & ĐƠN HV) -->
+<!-- MODAL TẠO HÌNH ẢNH BÁO CÁO PENDING ATTEMPT (PHONG CÁCH CANVAS) -->
   <div class="modal fade" id="modalTaoAnhBaoCaoPending" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 1150px;">
-      <div class="modal-content border-0 shadow-lg">
-        <div class="modal-header text-white py-2" style="background: linear-gradient(135deg, #0d3b66, #1d4ed8);">
-          <h6 class="modal-title fw-bold mb-0">
-            <i class="bi bi-image-fill text-warning me-2"></i>TẠO HÌNH ẢNH BÁO CÁO PENDING ATTEMPT & ĐƠN HV
-          </h6>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" style="max-width: 1120px;">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <!-- HEADER TRẮNG SẠCH CHUẨN CANVAS -->
+        <div class="modal-header bg-white border-bottom py-3 px-4 align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="canvas-icon-box" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe;">
+              <i class="bi bi-image-fill"></i>
+            </span>
+            <div>
+              <h6 class="modal-title fw-bold text-dark mb-0" style="font-size: 1rem;">Tạo Hình Ảnh Báo Cáo Pending Attempt &amp; Đơn HV</h6>
+              <div class="text-muted" style="font-size: 0.74rem;">Chọn phạm vi và tùy chọn hiển thị, sau đó sao chép dán thẳng vào Zalo</div>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body p-3 bg-light">
-          <!-- BỘ CHỌN MẪU BÁO CÁO -->
-          <div class="bg-white p-2 rounded border shadow-sm mb-3">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-              <div class="d-flex flex-wrap gap-1" id="grpNutChonPhamViAnh">
-                <button type="button" class="btn btn-sm btn-primary fw-bold" data-scope="ALL" onclick="chonPhamViBaoCaoAnh('ALL')">📊 Toàn KV2</button>
-                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" data-scope="Quận 2" onclick="chonPhamViBaoCaoAnh('Quận 2')">📍 Quận 2</button>
-                <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold" data-scope="Quận 4" onclick="chonPhamViBaoCaoAnh('Quận 4')">📍 Quận 4</button>
-                <button type="button" class="btn btn-sm btn-outline-info text-dark fw-bold" data-scope="Quận 7" onclick="chonPhamViBaoCaoAnh('Quận 7')">📍 Quận 7</button>
-                <button type="button" class="btn btn-sm btn-outline-success fw-bold" data-scope="Quận 9" onclick="chonPhamViBaoCaoAnh('Quận 9')">📍 Quận 9</button>
-                <button type="button" class="btn btn-sm btn-outline-danger fw-bold" data-scope="Bình Thạnh" onclick="chonPhamViBaoCaoAnh('Bình Thạnh')">📍 Bình Thạnh</button>
-                <button type="button" class="btn btn-sm btn-outline-dark fw-bold" data-scope="HV_ONLY" onclick="chonPhamViBaoCaoAnh('HV_ONLY')">🛡️ Riêng Đơn HV</button>
-              </div>
-              <div class="d-flex flex-wrap align-items-center gap-3 small fw-semibold">
-                <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
-                  <input type="checkbox" class="form-check-input mt-0" id="chkImgShowPhuong" checked onchange="veKhungAnhBaoCaoPending()"> Hiện chi tiết phường
-                </label>
-                <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
-                  <input type="checkbox" class="form-check-input mt-0" id="chkImgShowRider" checked onchange="veKhungAnhBaoCaoPending()"> Hiện RD phụ trách
-                </label>
-                <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
-                  <input type="checkbox" class="form-check-input mt-0" id="chkImgShowHv" checked onchange="veKhungAnhBaoCaoPending()"> Kèm đơn HV
-                </label>
-              </div>
+
+        <div class="modal-body p-3" style="background: #f8fafc;">
+          <!-- THANH ĐIỀU KHIỂN DẠNG PILL CHUẨN CANVAS -->
+          <div class="canvas-pill-bar shadow-sm mb-3">
+            <div class="d-flex flex-wrap gap-1" id="grpNutChonPhamViAnh">
+              <button type="button" class="canvas-pill-btn active" data-scope="ALL" onclick="chonPhamViBaoCaoAnh('ALL')">Toàn KV2</button>
+              <button type="button" class="canvas-pill-btn" data-scope="Quận 2" onclick="chonPhamViBaoCaoAnh('Quận 2')">Quận 2</button>
+              <button type="button" class="canvas-pill-btn" data-scope="Quận 4" onclick="chonPhamViBaoCaoAnh('Quận 4')">Quận 4</button>
+              <button type="button" class="canvas-pill-btn" data-scope="Quận 7" onclick="chonPhamViBaoCaoAnh('Quận 7')">Quận 7</button>
+              <button type="button" class="canvas-pill-btn" data-scope="Quận 9" onclick="chonPhamViBaoCaoAnh('Quận 9')">Quận 9</button>
+              <button type="button" class="canvas-pill-btn" data-scope="Bình Thạnh" onclick="chonPhamViBaoCaoAnh('Bình Thạnh')">Bình Thạnh</button>
+              <button type="button" class="canvas-pill-btn" data-scope="HV_ONLY" onclick="chonPhamViBaoCaoAnh('HV_ONLY')">Riêng Đơn HV</button>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-3 small fw-semibold text-secondary px-1">
+              <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
+                <input type="checkbox" class="form-check-input mt-0" id="chkImgShowPhuong" checked onchange="veKhungAnhBaoCaoPending()"> Chi tiết phường
+              </label>
+              <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
+                <input type="checkbox" class="form-check-input mt-0" id="chkImgShowRider" checked onchange="veKhungAnhBaoCaoPending()"> RD phụ trách
+              </label>
+              <label class="form-check-label d-flex align-items-center gap-1" style="cursor:pointer;">
+                <input type="checkbox" class="form-check-input mt-0" id="chkImgShowHv" checked onchange="veKhungAnhBaoCaoPending()"> Kèm đơn HV
+              </label>
             </div>
           </div>
 
           <!-- VÙNG XEM TRƯỚC & CHỤP ẢNH -->
           <div class="d-flex justify-content-center" style="overflow-x: auto;">
-            <div id="khungChupAnhBaoCaoPending" style="width: 960px; min-width: 960px; background: #ffffff; border-radius: 10px; border: 2px solid #0d3b66; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              <!-- Nội dung báo cáo được JS tự động vẽ vào đây -->
+            <div id="khungChupAnhBaoCaoPending" style="width: 960px; min-width: 960px; background: #f8fafc; border-radius: 14px; border: 1px solid #cbd5e1; overflow: hidden; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <!-- Nội dung báo cáo Canvas được JS tự động vẽ vào đây -->
             </div>
           </div>
         </div>
-        <div class="modal-footer bg-white py-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <span class="small text-muted" id="lblTrangThaiXuatAnh">💡 Bấm <b>Sao chép ảnh</b> rồi sang Zalo nhấn <b>Ctrl + V</b> để gửi ngay.</span>
+
+        <div class="modal-footer bg-white border-top py-2 px-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span class="small text-muted" id="lblTrangThaiXuatAnh">Bấm <b>Sao chép ảnh</b> rồi sang Zalo nhấn <b>Ctrl + V</b> để gửi ngay.</span>
           <div class="d-flex gap-2">
-            <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Đóng</button>
-            <button type="button" class="btn btn-success btn-sm fw-bold px-3 shadow-sm" id="btnCopyAnhBaoCao" onclick="xuatHinhAnhBaoCaoPending('COPY')">
-              <i class="bi bi-clipboard-check-fill me-1"></i> Sao chép ảnh (Dán Zalo)
+            <button type="button" class="btn btn-light border btn-sm px-3 fw-semibold text-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button type="button" class="btn btn-dark btn-sm fw-semibold px-3 shadow-sm" id="btnCopyAnhBaoCao" style="background:#0f172a; border-color:#0f172a;" onclick="xuatHinhAnhBaoCaoPending('COPY')">
+              <i class="bi bi-clipboard-check me-1"></i> Sao chép ảnh (Dán Zalo)
             </button>
-            <button type="button" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm" id="btnTaiAnhBaoCao" onclick="xuatHinhAnhBaoCaoPending('DOWNLOAD')">
-              <i class="bi bi-download me-1"></i> Tải ảnh PNG
+            <button type="button" class="btn btn-outline-primary btn-sm fw-semibold px-3" id="btnTaiAnhBaoCao" onclick="xuatHinhAnhBaoCaoPending('DOWNLOAD')">
+              <i class="bi bi-download me-1"></i> Tải PNG
             </button>
           </div>
         </div>
@@ -4847,14 +4905,7 @@ if (user.role === 'RIDER') {
     function capNhatNutPhamViBaoCaoAnh() {
       document.querySelectorAll('#grpNutChonPhamViAnh button').forEach(btn => {
         const sc = btn.getAttribute('data-scope');
-        const isActive = sc === currentBaoCaoAnhScope;
-        if (sc === 'ALL') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-primary' : 'btn-outline-primary'}`;
-        else if (sc === 'Quận 2') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-primary' : 'btn-outline-primary'}`;
-        else if (sc === 'Quận 4') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'}`;
-        else if (sc === 'Quận 7') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-info text-dark' : 'btn-outline-info text-dark'}`;
-        else if (sc === 'Quận 9') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-success' : 'btn-outline-success'}`;
-        else if (sc === 'Bình Thạnh') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-danger' : 'btn-outline-danger'}`;
-        else if (sc === 'HV_ONLY') btn.className = `btn btn-sm fw-bold ${isActive ? 'btn-dark' : 'btn-outline-dark'}`;
+        btn.classList.toggle('active', sc === currentBaoCaoAnhScope);
       });
     }
 
@@ -4868,7 +4919,7 @@ if (user.role === 'RIDER') {
 
       const uniqueOrders = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
       const nowStr = new Date().toLocaleString('vi-VN', { hour12: false });
-      const sheetUpdateTxt = document.getElementById('hangSheetTimeLabel')?.innerText || '';
+      const sheetUpdateRaw = (document.getElementById('hangSheetTimeLabel')?.innerText || '').replace(/[()]/g, '').trim();
       const autoCa = typeof layCaMacDinhTheoGioVN === 'function' ? layCaMacDinhTheoGioVN() : 'COT1';
       const caLabel = autoCa === 'COT2' ? 'CA COT 2' : 'CA COT 1';
 
@@ -4893,106 +4944,117 @@ if (user.role === 'RIDER') {
       const scope = currentBaoCaoAnhScope;
       const isDistrictMode = ['Quận 2', 'Quận 4', 'Quận 7', 'Quận 9', 'Bình Thạnh'].includes(scope);
 
-      // Lọc đơn theo phạm vi đang chọn
       const ordersInScope = isDistrictMode
         ? uniqueOrders.filter(d => normQ(d.quan) === normQ(scope))
         : uniqueOrders;
 
       const hvPendingOrders = ordersInScope.filter(d => (d.isHv || '').toLowerCase() === 'yes');
-      const mpCount = ordersInScope.filter(d => (d.loaiHang || '').toUpperCase() === 'MP').length;
-      const whCount = ordersInScope.filter(d => (d.loaiHang || '').toUpperCase() === 'WH').length;
       const tongScope = ordersInScope.length;
       const pct = (v, total) => total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0.0%';
 
       const titleMain = scope === 'ALL'
-        ? 'BÁO CÁO TỒN KHO PENDING ATTEMPT & ĐƠN HV — KHU VỰC 2'
+        ? 'THEO DÕI TỒN KHO TRONG NGÀY — KHU VỰC 2'
         : (scope === 'HV_ONLY'
-            ? 'BÁO CÁO GIÁM SÁT ĐƠN HÀNG GIÁ TRỊ CAO (HV / IP) — KHU VỰC 2'
-            : `BÁO CÁO PENDING ATTEMPT & ĐƠN HV — ${scope.toUpperCase()}`);
+            ? 'GIÁM SÁT ĐƠN HÀNG GIÁ TRỊ CAO (HV / IP) — KHU VỰC 2'
+            : `THEO DÕI TỒN KHO PENDING ATTEMPT — ${scope.toUpperCase()}`);
 
       let html = `
-        <!-- HEADER BÁO CÁO -->
-        <div style="background: linear-gradient(135deg, #0b2e59, #1d4ed8); color: #ffffff; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <!-- HEADER CANVAS NAVY -->
+        <div style="background: #0f172a; color: #ffffff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <div style="font-size: 18px; font-weight: 800; letter-spacing: 0.4px;">📦 ${titleMain}</div>
-            <div style="font-size: 12px; opacity: 0.9; margin-top: 2px;">🕒 Xuất lúc: <b>${nowStr}</b> ${sheetUpdateTxt} • Phụ trách mặc định: <b>${caLabel}</b></div>
+            <div style="font-size: 17px; font-weight: 800; letter-spacing: 0.3px;">${titleMain}</div>
+            <div style="font-size: 11.5px; color: #94a3b8; margin-top: 3px;">
+              Dữ liệu vận hành Inbound • Phụ trách mặc định: <b style="color:#e2e8f0;">${caLabel}</b> • 52-HCM SDD-01 HUB
+            </div>
           </div>
-          <div style="background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; padding: 5px 12px; text-align: right;">
-            <div style="font-size: 10px; text-transform: uppercase; opacity: 0.85;">52-HCM SDD-01 HUB</div>
-            <div style="font-size: 13px; font-weight: 800; color: #fde047;">ĐIỀU PHỐI KV2</div>
+          <div style="background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 999px; padding: 6px 14px; font-size: 11.5px; font-weight: 600;">
+            🕒 ${sheetUpdateRaw || `Xuất lúc: ${nowStr}`}
           </div>
         </div>
-        <div style="padding: 14px 16px; background: #f8fafc;">
+
+        <div style="padding: 16px 18px; background: #f8fafc;">
       `;
 
-      // ==================== PHẦN 1: THẺ KPI (CHỈ GIỮ TỔNG ĐƠN RỚT & ĐƠN RỚT HV) ====================
+      // ==================== PHẦN 1: 2 THẺ KPI LỚN CHUẨN CANVAS (BỎ MP/WH) ====================
       if (scope !== 'HV_ONLY') {
         const phuongListScope = isDistrictMode ? layDanhSachPhuongTheoQuan(scope) : layDanhSachPhuongTheoQuan('all');
         html += `
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
-            <div style="background: #f4cccc; border: 1.5px solid #ea9999; border-radius: 8px; padding: 10px; text-align: center; color: #990000;">
-              <div style="font-size: 12px; font-weight: 800;">TỔNG ĐƠN RỚT</div>
-              <div style="font-size: 30px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${tongScope}</div>
-              <div style="font-size: 11.5px; font-weight: 600;">${phuongListScope.length} phường chưa gán</div>
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 12px;">
+            <div style="background: #ffffff; border: 1.5px solid #fecdd3; border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div style="font-size: 11px; font-weight: 700; color: #e11d48; letter-spacing: 0.3px;">TỔNG ĐƠN RỚT</div>
+                <div style="font-size: 30px; font-weight: 800; color: #0f172a; line-height: 1.15; margin: 4px 0;">${tongScope.toLocaleString('vi-VN')}</div>
+                <div style="font-size: 11.5px; color: #64748b; font-weight: 500;">${isDistrictMode ? scope : 'Toàn bộ khu vực'} • ${phuongListScope.length} phường chưa gán</div>
+              </div>
+              <div style="width: 36px; height: 36px; border-radius: 10px; background: #fff1f2; border: 1px solid #ffe4e6; color: #e11d48; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">📦</div>
             </div>
-            <div style="background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%); border: 2px solid #facc15; border-radius: 8px; padding: 10px; text-align: center; color: #ffffff;">
-              <div style="font-size: 12px; font-weight: 800; color: #fde047;">🛡️ ĐƠN RỚT HV</div>
-              <div style="font-size: 30px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${hvPendingOrders.length}</div>
-              <div style="font-size: 11.5px; font-weight: 600; color: #fef08a;">${pct(hvPendingOrders.length, tongScope)} tổng đơn</div>
+
+            <div style="background: #ffffff; border: 1.5px solid #fecdd3; border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <div style="font-size: 11px; font-weight: 700; color: #e11d48; letter-spacing: 0.3px;">ĐƠN RỚT HV</div>
+                <div style="font-size: 30px; font-weight: 800; color: #0f172a; line-height: 1.15; margin: 4px 0;">${hvPendingOrders.length.toLocaleString('vi-VN')}</div>
+                <div style="font-size: 11.5px; color: #64748b; font-weight: 500;">${pct(hvPendingOrders.length, tongScope)} tổng đơn (Chờ bàn giao &amp; OnHold)</div>
+              </div>
+              <div style="width: 36px; height: 36px; border-radius: 10px; background: #fff1f2; border: 1px solid #ffe4e6; color: #e11d48; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">⚠️</div>
             </div>
           </div>
         `;
       }
 
-      // Nếu là chế độ Toàn KV2 -> Hiện thêm hàng 5 Quận
+      // ==================== HÀNG 5 THẺ QUẬN PASTEL CHUẨN CANVAS ====================
       if (scope === 'ALL') {
         const qConfigs = [
-          { name: 'QUẬN 2', key: 'quận 2', list: listQ2 || [], bg: '#cfe2f3', bd: '#9fc5e8', cl: '#073763' },
-          { name: 'QUẬN 4', key: 'quận 4', list: listQ4 || [], bg: '#fff2cc', bd: '#ffe599', cl: '#7f6000' },
-          { name: 'QUẬN 7', key: 'quận 7', list: listQ7 || [], bg: '#d9d2e9', bd: '#b4a7d6', cl: '#20124d' },
-          { name: 'QUẬN 9', key: 'quận 9', list: listQ9 || [], bg: '#d0e0e3', bd: '#a2c4c9', cl: '#0c343d' },
-          { name: 'BÌNH THẠNH', key: 'bình thạnh', list: listBT || [], bg: '#f9cb9c', bd: '#f6b26b', cl: '#783f04' }
+          { name: 'QUẬN 2', key: 'quận 2', list: listQ2 || [], bg: '#eff6ff', bd: '#bfdbfe', cl: '#1d4ed8' },
+          { name: 'QUẬN 4', key: 'quận 4', list: listQ4 || [], bg: '#fffbeb', bd: '#fde68a', cl: '#b45309' },
+          { name: 'QUẬN 7', key: 'quận 7', list: listQ7 || [], bg: '#f5f3ff', bd: '#ddd6fe', cl: '#6d28d9' },
+          { name: 'QUẬN 9', key: 'quận 9', list: listQ9 || [], bg: '#ecfdf5', bd: '#a7f3d0', cl: '#047857' },
+          { name: 'BÌNH THẠNH', key: 'bình thạnh', list: listBT || [], bg: '#fff7ed', bd: '#fed7aa', cl: '#c2410c' }
         ];
 
-        html += `<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px;">`;
+        html += `<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px;">`;
         qConfigs.forEach(qc => {
           const cnt = uniqueOrders.filter(d => normQ(d.quan) === qc.key).length;
           const cntHvQ = uniqueOrders.filter(d => normQ(d.quan) === qc.key && (d.isHv || '').toLowerCase() === 'yes').length;
           html += `
-            <div style="background: ${qc.bg}; border: 1.5px solid ${qc.bd}; border-radius: 8px; padding: 8px 6px; text-align: center; color: ${qc.cl};">
-              <div style="font-size: 11px; font-weight: 800;">${qc.name}</div>
-              <div style="font-size: 24px; font-weight: 900; line-height: 1.15; margin: 2px 0;">${cnt}</div>
-              <div style="font-size: 10.5px; font-weight: 600;">${pct(cnt, tongScope)} • ${qc.list.length} phường</div>
-              ${cntHvQ > 0 ? `<div style="margin-top: 3px;"><span style="background: #6b21a8; color: #fde047; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px;">🛡️ ${cntHvQ} HV</span></div>` : ''}
+            <div style="background: ${qc.bg}; border: 1.5px solid ${qc.bd}; border-radius: 12px; padding: 11px 13px; text-align: left; color: ${qc.cl};">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.3px;">${qc.name}</span>
+                ${cntHvQ > 0 ? `<span style="background: #e11d48; color: #ffffff; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px;">${cntHvQ} HV</span>` : ''}
+              </div>
+              <div style="font-size: 24px; font-weight: 800; line-height: 1.2; margin: 4px 0 2px 0;">${cnt.toLocaleString('vi-VN')}</div>
+              <div style="font-size: 10.5px; font-weight: 600; opacity: 0.9;">${pct(cnt, tongScope)} • ${qc.list.length} phường</div>
             </div>`;
         });
         html += `</div>`;
       }
 
-      // ==================== PHẦN 2: CHI TIẾT PHƯỜNG RỚT ====================
+      // ==================== PHẦN 2: CHI TIẾT PHƯỜNG RỚT CHUẨN CANVAS ====================
       if (showPhuong && scope !== 'HV_ONLY') {
         const listPhuongToShow = isDistrictMode
           ? layDanhSachPhuongTheoQuan(scope)
           : [...layDanhSachPhuongTheoQuan('all')].sort((a, b) => (b.soLuong || 0) - (a.soLuong || 0)).slice(0, 10);
 
         const tieuDePhuong = isDistrictMode
-          ? `📍 CHI TIẾT PHƯỜNG CHƯA GÁN — ${scope.toUpperCase()} (${listPhuongToShow.length} phường)`
-          : `🔥 TOP 10 PHƯỜNG RỚT NHIỀU NHẤT KHU VỰC 2`;
+          ? `Chi tiết Phường chưa gán — ${scope} (${listPhuongToShow.length} phường)`
+          : `TOP ${listPhuongToShow.length} Phường điểm nóng — Khu vực 2`;
 
         if (listPhuongToShow.length > 0) {
           html += `
-            <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
-              <div style="background: #1b4965; color: #ffffff; padding: 6px 12px; font-size: 12px; font-weight: 800;">${tieuDePhuong}</div>
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 14px;">
+              <div style="background: #ffffff; border-bottom: 1px solid #f1f5f9; padding: 10px 14px; font-size: 13px; font-weight: 700; color: #0f172a; display: flex; justify-content: space-between; align-items: center;">
+                <span>📈 ${tieuDePhuong}</span>
+                <span style="font-size: 11px; color: #64748b; font-weight: 600;">Tuyến phụ trách: ${caLabel}</span>
+              </div>
               <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
                 <thead>
-                  <tr style="background: #f1f5f9; color: #334155; text-align: center;">
-                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 38px;">#</th>
-                    <th style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: left;">Phường</th>
-                    ${!isDistrictMode ? '<th style="padding: 5px; border: 1px solid #e2e8f0; width: 105px;">Quận</th>' : ''}
-                    ${showRider ? `<th style="padding: 5px 8px; border: 1px solid #e2e8f0; text-align: left;">Rider Phụ Trách (${caLabel})</th>` : ''}
-                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 70px;">Số Đơn</th>
-                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 65px;">Đơn HV</th>
-                    <th style="padding: 5px; border: 1px solid #e2e8f0; width: 65px;">Tỷ Trọng</th>
+                  <tr style="background: #0f172a; color: #f8fafc;">
+                    <th style="padding: 8px 10px; text-align: center; width: 48px; font-weight: 600;">TOP</th>
+                    <th style="padding: 8px 10px; text-align: left; font-weight: 600;">Phường</th>
+                    ${!isDistrictMode ? '<th style="padding: 8px 10px; text-align: left; width: 110px; font-weight: 600;">Quận</th>' : ''}
+                    ${showRider ? `<th style="padding: 8px 10px; text-align: left; font-weight: 600;">Rider Phụ Trách (${caLabel})</th>` : ''}
+                    <th style="padding: 8px 10px; text-align: right; width: 78px; font-weight: 600;">Số Đơn</th>
+                    <th style="padding: 8px 10px; text-align: center; width: 62px; font-weight: 600;">HV</th>
+                    <th style="padding: 8px 10px; text-align: right; width: 74px; font-weight: 600;">Tỷ Trọng</th>
                   </tr>
                 </thead>
                 <tbody>`;
@@ -5010,15 +5072,22 @@ if (user.role === 'RIDER') {
               }
             }
 
+            const rankBg = idx === 0 ? '#fee2e2' : (idx === 1 ? '#fef3c7' : (idx === 2 ? '#fef9c3' : '#f1f5f9'));
+            const rankCl = idx === 0 ? '#dc2626' : (idx === 1 ? '#d97706' : (idx === 2 ? '#a16207' : '#475569'));
+
             html += `
-              <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
-                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; color: #64748b; font-weight: 700;">${idx + 1}</td>
-                <td style="padding: 5px 8px; border: 1px solid #e2e8f0; font-weight: 700; color: #0f172a;">${p.phuong || '—'}</td>
-                ${!isDistrictMode ? `<td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: 600; color: #475569;">${p.quan || '—'}</td>` : ''}
-                ${showRider ? `<td style="padding: 5px 8px; border: 1px solid #e2e8f0; font-size: 11px; color: #1e40af; font-weight: 600;">${riderNamesText}</td>` : ''}
-                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: #dc2626; font-size: 13px;">${p.soLuong || 0}</td>
-                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; font-weight: 800; color: ${hvInWard > 0 ? '#7e22ce' : '#94a3b8'};">${hvInWard > 0 ? `🛡️ ${hvInWard}` : '0'}</td>
-                <td style="padding: 5px; border: 1px solid #e2e8f0; text-align: center; color: #475569;">${pct(p.soLuong || 0, tongScope)}</td>
+              <tr style="border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+                <td style="padding: 7px 10px; text-align: center;">
+                  <span style="background: ${rankBg}; color: ${rankCl}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;">#${idx + 1}</span>
+                </td>
+                <td style="padding: 7px 10px; font-weight: 600; color: #0f172a;">${p.phuong || '—'}</td>
+                ${!isDistrictMode ? `<td style="padding: 7px 10px; color: #64748b; font-weight: 500;">${p.quan || '—'}</td>` : ''}
+                ${showRider ? `<td style="padding: 7px 10px; font-size: 11px; color: #1d4ed8; font-weight: 500;">${riderNamesText}</td>` : ''}
+                <td style="padding: 7px 10px; text-align: right; font-weight: 800; color: #0f172a; font-family: monospace; font-size: 13px;">${p.soLuong || 0}</td>
+                <td style="padding: 7px 10px; text-align: center;">
+                  ${hvInWard > 0 ? `<span style="background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; font-weight:700; font-size:10.5px; padding:1px 6px; border-radius:999px;">${hvInWard} HV</span>` : '<span style="color:#cbd5e1;">-</span>'}
+                </td>
+                <td style="padding: 7px 10px; text-align: right; color: #64748b; font-family: monospace;">${pct(p.soLuong || 0, tongScope)}</td>
               </tr>`;
           });
 
@@ -5026,7 +5095,7 @@ if (user.role === 'RIDER') {
         }
       }
 
-      // ==================== PHẦN 3: BÁO CÁO ĐƠN HV (RỚT CHƯA GÁN + BÀN GIAO HV) ====================
+      // ==================== PHẦN 3: BÁO CÁO ĐƠN HV CHUẨN CANVAS ====================
       if (showHv || scope === 'HV_ONLY') {
         const hvHandoverScope = isDistrictMode
           ? hvHandoverNormalized.filter(item => normQ(item.quanPhuong) === normQ(scope))
@@ -5038,24 +5107,23 @@ if (user.role === 'RIDER') {
         const hvDelivered = hvHandoverScope.filter(i => i.trangThaiChuan === 'Giao thành công').length;
         const hvChuaXong = hvHandoverScope.filter(i => i.trangThaiChuan !== 'Giao thành công');
 
-        // 3.1. Bảng đơn Rớt HV chưa gán Rider (nếu có)
+        // 3.1. Bảng đơn Rớt HV chưa gán Rider
         if (hvPendingOrders.length > 0) {
           html += `
-            <div style="background: #ffffff; border: 2px solid #facc15; border-radius: 8px; overflow: hidden; margin-bottom: 12px;">
-              <div style="background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%); color: #fde047; padding: 7px 12px; font-size: 12.5px; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
-                <span>🛡️ DANH SÁCH ĐƠN RỚT HV CHƯA GÁN RIDER (${hvPendingOrders.length} ĐƠN CẦN XỬ LÝ GẤP)</span>
-                <span style="background: #facc15; color: #1e1b4b; padding: 2px 8px; border-radius: 4px; font-size: 11px;">ƯU TIÊN CAO NHẤT</span>
+            <div style="background: #ffffff; border: 1.5px solid #fecdd3; border-radius: 12px; overflow: hidden; margin-bottom: 14px;">
+              <div style="background: #fff1f2; border-bottom: 1px solid #ffe4e6; padding: 9px 14px; font-size: 12.5px; font-weight: 700; color: #be123c; display: flex; justify-content: space-between; align-items: center;">
+                <span>⚠️ Danh sách Đơn Rớt HV chưa gán Rider (${hvPendingOrders.length} đơn)</span>
+                <span style="background: #e11d48; color: #ffffff; padding: 2px 9px; border-radius: 999px; font-size: 10.5px;">Ưu tiên xử lý</span>
               </div>
               <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
                 <thead>
-                  <tr style="background: #faf5ff; color: #581c87; text-align: center;">
-                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 35px;">#</th>
-                    <th style="padding: 5px 8px; border: 1px solid #e9d5ff; text-align: left;">Mã Đơn (Shipment ID)</th>
-                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 55px;">Loại</th>
-                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 105px;">Zone ID</th>
-                    <th style="padding: 5px 8px; border: 1px solid #e9d5ff; text-align: left;">Quận / Phường</th>
-                    ${showRider ? `<th style="padding: 5px 8px; border: 1px solid #e9d5ff; text-align: left;">Rider Phụ Trách (${caLabel})</th>` : ''}
-                    <th style="padding: 5px; border: 1px solid #e9d5ff; width: 130px;">Giờ Nhận Trạm</th>
+                  <tr style="background: #0f172a; color: #f8fafc;">
+                    <th style="padding: 7px 8px; text-align: center; width: 38px;">#</th>
+                    <th style="padding: 7px 10px; text-align: left;">Mã Đơn (Shipment ID)</th>
+                    <th style="padding: 7px 8px; text-align: center; width: 105px;">Zone ID</th>
+                    <th style="padding: 7px 10px; text-align: left;">Quận / Phường</th>
+                    ${showRider ? `<th style="padding: 7px 10px; text-align: left;">Rider Phụ Trách (${caLabel})</th>` : ''}
+                    <th style="padding: 7px 10px; text-align: right; width: 132px;">Giờ Nhận Trạm</th>
                   </tr>
                 </thead>
                 <tbody>`;
@@ -5067,30 +5135,29 @@ if (user.role === 'RIDER') {
               if (rds.length > 0) rdStr = rds.slice(0, 3).map(r => r.name).join(', ');
             }
             html += `
-              <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#fefce8'};">
-                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-weight: 700;">${idx + 1}</td>
-                <td style="padding: 5px 8px; border: 1px solid #e9d5ff; font-family: monospace; font-weight: 800; color: #990000;">${don.shipmentId}</td>
-                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-weight: 700;">${don.loaiHang || 'MP'}</td>
-                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-family: monospace;">${don.zoneId || '—'}</td>
-                <td style="padding: 5px 8px; border: 1px solid #e9d5ff; font-weight: 600;">${don.quan || ''} • ${don.phuong || ''}</td>
-                ${showRider ? `<td style="padding: 5px 8px; border: 1px solid #e9d5ff; color: #1e40af; font-weight: 600;">${rdStr}</td>` : ''}
-                <td style="padding: 5px; border: 1px solid #e9d5ff; text-align: center; font-family: monospace; color: #475569;">${don.receivedTime || '—'}</td>
+              <tr style="border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+                <td style="padding: 7px 8px; text-align: center; color: #64748b; font-weight: 600;">${idx + 1}</td>
+                <td style="padding: 7px 10px; font-family: monospace; font-weight: 700; color: #be123c;">${don.shipmentId}</td>
+                <td style="padding: 7px 8px; text-align: center; font-family: monospace; color: #475569;">${don.zoneId || '—'}</td>
+                <td style="padding: 7px 10px; font-weight: 600; color: #0f172a;">${don.quan || ''} • ${don.phuong || ''}</td>
+                ${showRider ? `<td style="padding: 7px 10px; color: #1d4ed8; font-weight: 500;">${rdStr}</td>` : ''}
+                <td style="padding: 7px 10px; text-align: right; font-family: monospace; color: #64748b;">${don.receivedTime || '—'}</td>
               </tr>`;
           });
           html += `</tbody></table></div>`;
         }
 
-        // 3.2. Tóm tắt & Bảng Bàn Giao Trạng Thái Đơn Hàng HV
+        // 3.2. Bảng Bàn Giao Trạng Thái Đơn Hàng HV
         const rowsHvDisplay = scope === 'HV_ONLY' ? hvHandoverScope : hvChuaXong.slice(0, 15);
         html += `
-          <div style="background: #ffffff; border: 2px solid #6b21a8; border-radius: 8px; overflow: hidden;">
-            <div style="background: linear-gradient(135deg, #3b0764 0%, #6b21a8 55%, #9f1239 100%); color: #ffffff; padding: 7px 12px; font-size: 12px; font-weight: 800; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px;">
-              <span style="color: #fde047;">📋 BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV ${isDistrictMode ? `(${scope.toUpperCase()})` : ''}</span>
-              <div style="display: flex; gap: 6px; font-size: 11px;">
-                <span style="background: #facc15; color: #111827; padding: 2px 7px; border-radius: 4px;">Tổng: ${hvHandoverScope.length} HV</span>
-                <span style="background: #dcfce7; color: #166534; padding: 2px 7px; border-radius: 4px;">✅ Thành công: ${hvDelivered}</span>
-                <span style="background: #dc2626; color: #ffffff; padding: 2px 7px; border-radius: 4px;">⏳ IP chưa BG: ${ipChuaBG}</span>
-                <span style="background: #38bdf8; color: #0f172a; padding: 2px 7px; border-radius: 4px;">✅ IP đã BG: ${ipDaBG}</span>
+          <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <div style="background: #ffffff; border-bottom: 1px solid #f1f5f9; padding: 10px 14px; font-size: 12.5px; font-weight: 700; color: #0f172a; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+              <span>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV ${isDistrictMode ? `(${scope.toUpperCase()})` : ''}</span>
+              <div style="display: flex; gap: 6px; font-size: 11px; font-weight: 700;">
+                <span style="background: #f1f5f9; color: #0f172a; padding: 3px 9px; border-radius: 999px;">Tổng: ${hvHandoverScope.length}</span>
+                <span style="background: #dcfce7; color: #15803d; padding: 3px 9px; border-radius: 999px;">Thành công: ${hvDelivered}</span>
+                <span style="background: #fee2e2; color: #dc2626; padding: 3px 9px; border-radius: 999px;">IP chưa BG: ${ipChuaBG}</span>
+                <span style="background: #e0f2fe; color: #0369a1; padding: 3px 9px; border-radius: 999px;">IP đã BG: ${ipDaBG}</span>
               </div>
             </div>`;
 
@@ -5098,39 +5165,41 @@ if (user.role === 'RIDER') {
           html += `
             <table style="width: 100%; border-collapse: collapse; font-size: 11.5px;">
               <thead>
-                <tr style="background: #1b4965; color: #ffffff; text-align: center;">
-                  <th style="padding: 5px; border: 1px solid #cbd5e1; width: 32px;">#</th>
-                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Mã Đơn</th>
-                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Quận / Phường</th>
-                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Tên RD (COT)</th>
-                  <th style="padding: 5px; border: 1px solid #cbd5e1; width: 115px;">Trạng Thái</th>
-                  <th style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: left;">Lý Do On-Hold</th>
+                <tr style="background: #0f172a; color: #f8fafc;">
+                  <th style="padding: 7px 8px; text-align: center; width: 34px;">#</th>
+                  <th style="padding: 7px 10px; text-align: left;">Mã Đơn</th>
+                  <th style="padding: 7px 10px; text-align: left;">Quận / Phường</th>
+                  <th style="padding: 7px 10px; text-align: left;">Rider (COT)</th>
+                  <th style="padding: 7px 10px; text-align: center; width: 125px;">Trạng Thái</th>
+                  <th style="padding: 7px 10px; text-align: left;">Lý Do On-Hold</th>
                 </tr>
               </thead>
               <tbody>`;
 
           rowsHvDisplay.forEach((item, idx) => {
-            const bgRow = item.isIp ? '#fce8e6' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
-            const clText = item.isIp ? '#990000' : '#0f172a';
+            const bgRow = item.isIp ? '#fff1f2' : '#ffffff';
+            const clText = item.isIp ? '#be123c' : '#0f172a';
             const tt = item.trangThaiChuan;
-            const ttBg = tt === 'Giao thành công' ? '#d9ead3' : ((tt === 'Chờ bàn giao' || tt === 'Chờ kho xử lý') ? '#fee2e2' : '#e0f2fe');
-            const ttCl = tt === 'Giao thành công' ? '#137333' : ((tt === 'Chờ bàn giao' || tt === 'Chờ kho xử lý') ? '#b91c1c' : '#0369a1');
+            const ttBg = tt === 'Giao thành công' ? '#dcfce7' : ((tt === 'Chờ bàn giao' || tt === 'Chờ kho xử lý') ? '#fee2e2' : '#e0f2fe');
+            const ttCl = tt === 'Giao thành công' ? '#15803d' : ((tt === 'Chờ bàn giao' || tt === 'Chờ kho xử lý') ? '#dc2626' : '#0369a1');
             const tenRdClean = (item.tenRd && item.tenRd !== '0') ? item.tenRd : '—';
             const cotClean = (item.cotRd && item.cotRd !== '0') ? ` (${item.cotRd})` : '';
 
             html += `
-              <tr style="background: ${bgRow}; color: ${clText}; font-weight: ${item.isIp ? '700' : '500'};">
-                <td style="padding: 4px; border: 1px solid #e2e8f0; text-align: center;">${idx + 1}</td>
-                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; font-family: monospace; font-weight: 700;">${item.maDonHienThi}</td>
-                <td style="padding: 4px 8px; border: 1px solid #e2e8f0;">${item.quanPhuong || '—'}</td>
-                <td style="padding: 4px 8px; border: 1px solid #e2e8f0;">${tenRdClean}${cotClean}</td>
-                <td style="padding: 4px; border: 1px solid #e2e8f0; text-align: center; background: ${ttBg}; color: ${ttCl}; font-weight: 700;">${tt}</td>
-                <td style="padding: 4px 8px; border: 1px solid #e2e8f0; color: #b91c1c; font-size: 11px;">${item.lyDoOnhold || ''}</td>
+              <tr style="border-bottom: 1px solid #f1f5f9; background: ${bgRow}; color: ${clText}; font-weight: ${item.isIp ? '700' : '500'};">
+                <td style="padding: 7px 8px; text-align: center; color: #64748b;">${idx + 1}</td>
+                <td style="padding: 7px 10px; font-family: monospace; font-weight: 700;">${item.maDonHienThi}</td>
+                <td style="padding: 7px 10px;">${item.quanPhuong || '—'}</td>
+                <td style="padding: 7px 10px;">${tenRdClean}${cotClean}</td>
+                <td style="padding: 7px 10px; text-align: center;">
+                  <span style="background: ${ttBg}; color: ${ttCl}; font-weight: 700; font-size: 10.5px; padding: 3px 9px; border-radius: 999px; display: inline-block;">${tt}</span>
+                </td>
+                <td style="padding: 7px 10px; color: #dc2626; font-size: 11px;">${item.lyDoOnhold || ''}</td>
               </tr>`;
           });
           html += `</tbody></table>`;
         } else {
-          html += `<div style="padding: 12px; text-align: center; color: #15803d; font-weight: 700; font-size: 12.5px;">✅ Tất cả đơn bàn giao HV trong phạm vi này đều đã giao thành công!</div>`;
+          html += `<div style="padding: 14px; text-align: center; color: #15803d; font-weight: 600; font-size: 12.5px;">✅ Tất cả đơn bàn giao HV trong phạm vi này đều đã hoàn thành.</div>`;
         }
         html += `</div>`;
       }
