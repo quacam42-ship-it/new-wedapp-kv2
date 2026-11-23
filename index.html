@@ -954,56 +954,22 @@
               </div>
             </div>
 
-            <!-- CỘT PHẢI: TOP 6 PHƯỜNG ĐIỂM NÓNG + XEM NHANH BÀN GIAO HV -->
-            <div class="col-12 col-lg-6 d-flex flex-column gap-3">
-              <!-- Bảng TOP 6 Phường điểm nóng -->
-              <div class="card overflow-hidden">
+            <!-- CỘT PHẢI: XEM NHANH BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV -->
+            <div class="col-12 col-lg-6 d-flex flex-column">
+              <div class="card overflow-hidden h-100 d-flex flex-column">
                 <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                  <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-graph-up-arrow text-danger"></i>
-                    <span class="fw-bold text-dark" style="font-size: 0.88rem;">TOP 6 Phường điểm nóng</span>
-                  </div>
-                  <button class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size:0.72rem;" type="button" onclick="dongMoTop5()" id="btnToggleTop5">
-                    <i class="bi bi-chevron-up" id="iconToggleTop5"></i>
-                    <span id="textToggleTop5">Thu gọn</span>
-                  </button>
-                </div>
-                <div id="collapseTop5">
-                  <div class="table-responsive">
-                    <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.8rem;">
-                      <thead>
-                        <tr>
-                          <th class="text-center" style="width: 58px;">TOP</th>
-                          <th class="text-start">TOP PHƯỜNG</th>
-                          <th class="text-end" style="width: 110px;">Số Lượng Đơn</th>
-                          <th class="text-end pe-3" style="width: 115px;">Tỷ Trọng / Tổng</th>
-                        </tr>
-                      </thead>
-                      <tbody id="bangTop5Body">
-                        <tr><td colspan="4" class="text-center py-3 text-muted">Đang nạp Top 6...</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Xem nhanh Bàn giao trạng thái đơn hàng HV -->
-              <div class="card overflow-hidden">
-                <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                  <span class="fw-bold text-dark text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.3px;">
-                    BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
+                  <span class="fw-bold text-dark text-uppercase" style="font-size: 0.82rem; letter-spacing: 0.3px;">
+                    <i class="bi bi-shield-check text-primary me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
                   </span>
                   <a href="javascript:void(0)" class="small fw-semibold text-decoration-none text-primary" onclick="switchPendingCanvasTab('hv')">
                     Xem tất cả →
                   </a>
                 </div>
-                <div class="card-body p-2" id="canvasHvPreviewList" style="max-height: 250px; overflow-y: auto;">
+                <div class="card-body p-2 flex-grow-1" id="canvasHvPreviewList" style="max-height: 330px; overflow-y: auto;">
                   <div class="text-center py-3 text-muted small">Đang tải đơn HV...</div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
         <!-- SUB-TAB 2: BẢNG ĐẦY ĐỦ BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV -->
         <div id="canvasTabHv" style="display: none;">
@@ -5298,44 +5264,32 @@ if (user.role === 'RIDER') {
       const uniquePending = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
       const tongDon = uniquePending.length;
 
-      // Bảng sắc độ màu theo 3 mức độ tỷ lệ đơn (để các quận cùng mức vẫn phân biệt được trên biểu đồ)
-      const lowShades = ['#10b981', '#059669', '#34d399', '#14b8a6', '#22c55e'];
-      const midShades = ['#f59e0b', '#f97316', '#d97706', '#fb923c', '#ea580c'];
-      const highShades = ['#dc2626', '#ef4444', '#b91c1c', '#e11d48', '#991b1b'];
-      let lowIdx = 0, midIdx = 0, highIdx = 0;
-
+      // Mã màu biểu đồ & ô chú thích đồng bộ 100% với 5 thẻ KPI Quận ở trên
       const rawDistricts = [
-        { name: 'Quận 2', key: 'quận 2' },
-        { name: 'Quận 4', key: 'quận 4' },
-        { name: 'Quận 7', key: 'quận 7' },
-        { name: 'Quận 9', key: 'quận 9' },
-        { name: 'Bình Thạnh', key: 'bình thạnh' }
+        { name: 'Quận 2',     key: 'quận 2',     color: '#2563eb' }, // Xanh dương (.sheet-kpi-q2)
+        { name: 'Quận 4',     key: 'quận 4',     color: '#f59e0b' }, // Vàng (.sheet-kpi-q4)
+        { name: 'Quận 7',     key: 'quận 7',     color: '#7c3aed' }, // Tím (.sheet-kpi-q7)
+        { name: 'Quận 9',     key: 'quận 9',     color: '#10b981' }, // Xanh lá (.sheet-kpi-q9)
+        { name: 'Bình Thạnh', key: 'bình thạnh', color: '#f97316' }  // Cam (.sheet-kpi-bt)
       ];
 
       const districtStats = rawDistricts.map(d => {
         const count = uniquePending.filter(o => normQ(o.quan) === d.key).length;
         const pctNum = tongDon > 0 ? (count / tongDon) * 100 : 0;
 
-        let color, lvlLabel, lvlCls;
+        let lvlLabel = 'Thấp', lvlCls = 'lvl-low';
         if (pctNum >= 40) {
-          color = highShades[highIdx++ % highShades.length];
           lvlLabel = 'Cao';
           lvlCls = 'lvl-high';
         } else if (pctNum >= 20) {
-          color = midShades[midIdx++ % midShades.length];
           lvlLabel = 'Trung bình';
           lvlCls = 'lvl-mid';
-        } else {
-          color = lowShades[lowIdx++ % lowShades.length];
-          lvlLabel = 'Thấp';
-          lvlCls = 'lvl-low';
         }
 
-        return { ...d, count, pctNum, color, lvlLabel, lvlCls };
+        return { ...d, count, pctNum, lvlLabel, lvlCls };
       });
 
       veBieuDoDonutCanvas(districtStats, tongDon);
-      renderCanvasTop6Phuong(tongDon);
       renderCanvasHvPreview();
       renderCanvasTabChiTietPhuong();
     }
