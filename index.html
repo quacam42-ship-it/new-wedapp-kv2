@@ -1728,40 +1728,129 @@
     </div>
   </div>
 
-  <!-- MODAL XEM CHI TIẾT ĐƠN HÀNG (KÍNH LÚP HÀNG HÓA + RIDER PHỤ TRÁCH TỪ TỔNG QUAN RD) -->
+  <!-- MODAL XEM CHI TIẾT ĐƠN HÀNG (LUỒNG 2 BƯỚC CANVAS: PHƯỜNG -> 2 BẢNG RIDER & MÃ ĐƠN) -->
   <div class="modal fade" id="modalChiTietDon" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 1380px;">
-      <div class="modal-content">
-        <div class="modal-header bg-primary text-white py-2">
-          <h5 class="modal-title fs-6 fw-bold" id="modalTitle">Chi Tiết Đơn Hàng</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body p-2 bg-light">
-          <div class="d-flex flex-wrap justify-content-between align-items-center bg-white p-2 rounded border shadow-sm mb-2 gap-2">
-            <span class="badge bg-danger fs-6" id="modalCountBadge">0 đơn rớt</span>
-            <button class="btn btn-sm btn-outline-primary fw-bold py-0 px-2" onclick="copyAllShipmentIds()">
-              <i class="bi bi-clipboard me-1"></i> Sao chép tất cả mã đơn
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" id="dialogModalChiTietDon" style="max-width: 820px; transition: max-width 0.2s ease;">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
+        <!-- HEADER SÁNG CHUẨN CANVAS -->
+        <div class="modal-header bg-white border-bottom py-3 px-4 align-items-start">
+          <div class="d-flex align-items-start gap-2 flex-grow-1">
+            <button type="button" class="btn btn-sm btn-light border fw-bold mt-1" id="btnBackToWardListModal" style="display: none; border-radius: 8px;" onclick="quayLaiBuoc1PhuongModal()" title="Quay lại danh sách Phường">
+              <i class="bi bi-arrow-left"></i>
             </button>
+            <div>
+              <h5 class="modal-title fw-bold text-dark mb-0" id="modalTitle" style="font-size: 1.1rem;">Tổng hợp theo Phường</h5>
+              <div class="text-muted mt-1" id="modalSubtitleCanvas" style="font-size: 0.78rem;">Hiển thị chi tiết phường (nhấn vào phường để xem tuyến Rider &amp; chi tiết đơn)</div>
+            </div>
           </div>
-          <div id="vungChiTietPhuongModal" class="mb-2"></div>
-          <div id="vungChiTietRiderPhuTrachModal" class="mb-2"></div>
-          <div id="lblSubFilterPhuongModal" class="mb-2 d-flex align-items-center"></div>
-          <div class="table-responsive bg-white rounded border shadow-sm" style="max-height: 420px;">
-            <table class="table table-sm table-bordered table-hover align-middle mb-0" style="font-size: 0.78rem;">
-              <thead class="table-light sticky-top">
-                <tr class="text-center">
-                  <th style="width: 40px;">STT</th>
-                  <th>Mã Đơn (Shipment ID)</th>
-                  <th style="width: 75px;">Loại Hàng</th>
-                  <th>Phường</th>
-                  <th style="width: 105px;">Zone ID</th>
-                  <th class="text-start" style="min-width: 240px;">Rider Phụ Trách (TỔNG QUAN RD)</th>
-                  <th style="width: 65px;">Đơn HV</th>
-                  <th style="width: 135px;">Thời Gian Nhận Trạm</th>
-                </tr>
-              </thead>
-              <tbody id="modalDonTbody"></tbody>
-            </table>
+          <button type="button" class="btn-close mt-1" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-0 bg-white">
+          <!-- BƯỚC 1: BẢNG TỔNG HỢP THEO PHƯỜNG -->
+          <div id="viewModalBuoc1Phuong">
+            <div class="p-3 bg-white border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
+              <div class="input-group flex-grow-1" style="max-width: 540px;">
+                <span class="input-group-text bg-white border-primary border-end-0 text-muted" style="border-radius: 10px 0 0 10px;">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input type="text" id="inputSearchPhuongBuoc1" class="form-control border-primary border-start-0" style="border-radius: 0 10px 10px 0; height: 38px;" placeholder="Tìm kiếm tên phường..." oninput="locNhanhBangPhuongModal(this.value)">
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary fw-semibold px-3" id="btnXemTatCaDonQuanModal" style="height: 36px; border-radius: 10px;" onclick="moTatCaDonKhongLocPhuongModal()">
+                <i class="bi bi-list-ul me-1"></i>Xem tất cả đơn (<span id="lblCountAllOrdersStep1">0</span>)
+              </button>
+            </div>
+            <div class="table-responsive" style="max-height: 62vh;">
+              <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                <thead class="sticky-top" id="theadPhuongBuoc1">
+                  <tr>
+                    <th class="text-start ps-4">Phường</th>
+                    <th class="text-end" style="width: 140px;">Số lượng đơn</th>
+                    <th class="text-end" style="width: 120px;">Tỷ trọng</th>
+                    <th class="text-center pe-3" style="width: 115px;">Chi tiết</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyPhuongInModal">
+                  <tr><td colspan="4" class="text-center py-4 text-muted">Đang tải danh sách phường...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- BƯỚC 2: 2 BẢNG SONG SONG (TRÁI: TUYẾN RIDER PHỤ TRÁCH | PHẢI: CHI TIẾT MÃ ĐƠN) -->
+          <div id="viewModalBuoc2ChiTiet" class="p-3 bg-light" style="display: none;">
+            <div class="row g-3 align-items-stretch">
+              <!-- CỘT TRÁI: BẢNG TUYẾN RIDER PHỤ TRÁCH -->
+              <div class="col-12 col-lg-5 d-flex flex-column">
+                <div class="card h-100 overflow-hidden shadow-sm">
+                  <div class="card-header bg-white py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                      <div class="fw-bold text-dark" style="font-size: 0.85rem;">
+                        <i class="bi bi-people-fill text-primary me-1"></i>Tuyến Rider Phụ Trách
+                        <span class="badge bg-primary-subtle text-primary ms-1" id="badgeCountRiderStep2">0 RD</span>
+                      </div>
+                      <div class="text-muted" id="lblAutoCaNoteStep2" style="font-size: 0.7rem;">Auto COT 1 (&lt; 13h30) • Nhấn vào RD để lọc đơn</div>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group" id="grpCaFilterStep2">
+                      <button type="button" class="btn btn-xs btn-primary fw-bold px-2" style="font-size: 0.72rem;" data-ca="COT1" onclick="doiBoLocRiderTrongModal('COT1')">COT 1 (<span id="cntRdStep2C1">0</span>)</button>
+                      <button type="button" class="btn btn-xs btn-outline-warning text-dark fw-bold px-2" style="font-size: 0.72rem;" data-ca="COT2" onclick="doiBoLocRiderTrongModal('COT2')">COT 2 (<span id="cntRdStep2C2">0</span>)</button>
+                      <button type="button" class="btn btn-xs btn-outline-dark fw-bold px-2" style="font-size: 0.72rem;" data-ca="ALL" onclick="doiBoLocRiderTrongModal('ALL')">Tất cả (<span id="cntRdStep2All">0</span>)</button>
+                    </div>
+                  </div>
+                  <div class="table-responsive flex-grow-1" style="max-height: 58vh;">
+                    <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.77rem; table-layout: fixed; width: 100%;">
+                      <thead class="sticky-top">
+                        <tr>
+                          <th class="text-center" style="width: 34px;">#</th>
+                          <th class="text-start" style="width: 36%;">Rider (ID - Tên)</th>
+                          <th class="text-center" style="width: 58px;">Ca</th>
+                          <th class="text-start">Zone Deli</th>
+                          <th class="text-center" style="width: 56px;">Đơn</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tbodyRiderPhuTrachStep2">
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Không có Rider phụ trách</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CỘT PHẢI: BẢNG CHI TIẾT MÃ ĐƠN -->
+              <div class="col-12 col-lg-7 d-flex flex-column">
+                <div class="card h-100 overflow-hidden shadow-sm">
+                  <div class="card-header bg-white py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                      <span class="fw-bold text-dark" style="font-size: 0.85rem;">
+                        <i class="bi bi-box-seam-fill text-danger me-1"></i>Chi Tiết Mã Đơn
+                      </span>
+                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold" id="modalCountBadge">0 đơn</span>
+                      <span id="lblActiveRiderFilterChip"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary fw-semibold py-0 px-2" style="height: 28px; font-size: 0.76rem;" onclick="copyAllShipmentIds()">
+                      <i class="bi bi-clipboard me-1"></i>Sao chép mã đơn
+                    </button>
+                  </div>
+                  <div class="table-responsive flex-grow-1" style="max-height: 58vh;">
+                    <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.78rem;">
+                      <thead class="sticky-top">
+                        <tr class="text-center">
+                          <th style="width: 38px;">STT</th>
+                          <th class="text-start">Mã Đơn (Shipment ID)</th>
+                          <th style="width: 65px;">Loại</th>
+                          <th style="width: 105px;">Zone ID</th>
+                          <th style="width: 60px;">HV</th>
+                          <th style="width: 138px;">Giờ Nhận Trạm</th>
+                        </tr>
+                      </thead>
+                      <tbody id="modalDonTbody">
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Chưa có mã đơn</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -3050,11 +3139,16 @@
       return s.trim();
     }
 
-    let currentModalAllOrders = [];
+let currentModalAllOrders = [];
     let currentModalPhuongList = [];
     let currentModalTitleBase = '';
-    let isRiderModalSectionOpen = true;
+    let currentModalScopeType = '';
     let currentModalRiderFilterMode = 'COT1'; // Tự động theo khung giờ: COT1 (< 13h30) | COT2 (>= 13h30) | ALL
+    let currentModalStep = 1; // 1 = Bảng Phường, 2 = 2 Bảng song song (Rider trái | Mã đơn phải)
+    let currentModalCanGoBack = true;
+    let currentStep2Orders = [];
+    let currentStep2WardLabel = '';
+    let currentStep2ActiveRiderId = '';
 
     // Xác định ca phụ trách mặc định theo giờ Việt Nam: trước 13h30 -> COT1, từ 13h30 trở đi -> COT2
     function layCaMacDinhTheoGioVN() {
@@ -3068,12 +3162,10 @@
         }).formatToParts(now);
         const h = parseInt(parts.find(p => p.type === 'hour')?.value || '0', 10);
         const m = parseInt(parts.find(p => p.type === 'minute')?.value || '0', 10);
-        const totalMin = h * 60 + m;
-        return totalMin < (13 * 60 + 30) ? 'COT1' : 'COT2';
+        return (h * 60 + m) < (13 * 60 + 30) ? 'COT1' : 'COT2';
       } catch (e) {
         const now = new Date();
-        const totalMin = now.getHours() * 60 + now.getMinutes();
-        return totalMin < (13 * 60 + 30) ? 'COT1' : 'COT2';
+        return (now.getHours() * 60 + now.getMinutes()) < (13 * 60 + 30) ? 'COT1' : 'COT2';
       }
     }
 
@@ -3081,10 +3173,9 @@
       const c = (caStr || '').toString().toUpperCase();
       if (filterMode === 'COT1') return c.includes('1') || !c.includes('2');
       if (filterMode === 'COT2') return c.includes('2');
-      return true; // ALL
+      return true;
     }
 
-    // Tách danh sách Phường chuẩn từ chuỗi PHƯỜNG DELI trên TỔNG QUAN RD
     function tachPhuongTokens(str) {
       if (!str) return [];
       return str.toString().toLowerCase()
@@ -3099,7 +3190,6 @@
         .filter(Boolean);
     }
 
-    // Tách danh sách mã Zone chuẩn từ chuỗi ZONE DELI trên TỔNG QUAN RD
     function tachZoneTokens(zoneStr) {
       if (!zoneStr) return [];
       return zoneStr.toString().toUpperCase()
@@ -3108,7 +3198,6 @@
         .filter(s => s && s.startsWith('Z'));
     }
 
-    // Tìm danh sách Rider phụ trách theo Quận Deli, Phường Deli, Zone Deli và Ca đang áp dụng
     function timRiderPhuTrachTheoPhuongVaZone(quan, phuong, zoneId = '', preferExactZone = false, caMode = currentModalRiderFilterMode) {
       if (!ridersData || ridersData.length === 0) return [];
       const targetQ = normQ(quan);
@@ -3131,11 +3220,7 @@
         );
 
         if (isZoneMatch || isPhuongMatch) {
-          matched.push({
-            ...rd,
-            isZoneMatch,
-            isPhuongMatch
-          });
+          matched.push({ ...rd, isZoneMatch, isPhuongMatch });
         }
       });
 
@@ -3152,37 +3237,6 @@
       });
     }
 
-    // Hiển thị danh sách tên Rider gọn gàng (đã bỏ hoàn toàn ký hiệu Đi làm / OFF)
-    function renderBadgesRiderNganGon(rdList, maxShow = 4) {
-      if (!rdList || rdList.length === 0) {
-        return '<span class="text-muted small fst-italic">Chưa có RD cố định</span>';
-      }
-
-      let html = '<div class="d-flex flex-wrap gap-1 align-items-center">';
-      rdList.slice(0, maxShow).forEach(r => {
-        const caShort = (r.ca || '').includes('2') ? 'C2' : 'C1';
-        const caCls = caShort === 'C2' ? 'bg-warning text-dark' : 'bg-primary text-white';
-        const badgeBorder = caShort === 'C2' ? 'bg-warning-subtle text-dark border border-warning' : 'bg-primary-subtle text-dark border border-primary-subtle';
-        const safeId = (r.id || '').replace(/'/g, "\\'");
-        const safeName = (r.name || '').replace(/'/g, "\\'");
-
-        html += `
-          <span class="badge ${badgeBorder} fw-semibold p-1 d-inline-flex align-items-center gap-1"
-                style="font-size: 0.7rem; cursor: pointer;"
-                onclick="event.stopPropagation(); locDonTheoRiderTrongModal('${safeId}', '${safeName}')"
-                title="Mã RD: ${r.id} - ${r.name}\nCa: ${r.ca}\nPhường Deli: ${r.phuongDeli || '—'}\nZone Deli: ${r.zoneDeli || r.nhom || '—'}\n(Nhấn để lọc đơn của Rider này)">
-            <span class="badge ${caCls}" style="font-size: 0.6rem; padding: 1px 3px;">${caShort}</span>
-            <span>${r.name}</span>
-          </span>`;
-      });
-
-      if (rdList.length > maxShow) {
-        html += `<span class="badge bg-secondary-subtle text-secondary border" style="font-size: 0.68rem;">+${rdList.length - maxShow} RD</span>`;
-      }
-      html += '</div>';
-      return html;
-    }
-
     async function xemDonTheoKpi(type, label) {
       if (!ridersData || ridersData.length === 0) {
         try { await loadRiderData(); } catch (e) {}
@@ -3195,8 +3249,9 @@
       else if (type === 'wh_only') donList = uniqueOrders.filter(d => (d.loaiHang || '').toUpperCase() === 'WH');
       else donList = uniqueOrders.filter(d => normQ(d.quan) === normQ(type));
 
+      currentModalScopeType = type;
       const phuongList = layDanhSachPhuongTheoQuan(type);
-      hienThiModalDon(`Chi Tiết: ${label}`, donList, phuongList);
+      hienThiModalDon(label, donList, phuongList, false);
     }
 
     async function xemChiTietDon(quan, phuong) {
@@ -3216,16 +3271,107 @@
         const itemNorm = itemNumMatch ? `phường ${itemNumMatch[1] < 10 ? '0' + itemNumMatch[1] : itemNumMatch[1]}` : itemP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
         return (!targetQ || itemQ === targetQ) && (itemNorm === targetNorm || itemP.includes(targetNorm) || targetNorm.includes(itemP));
       });
+
+      currentModalScopeType = 'SINGLE_WARD';
       const singlePhuongList = [{ quan: quan || (donList[0]?.quan || ''), phuong: phuong, soLuong: donList.length }];
-      hienThiModalDon(`Đơn Rớt: ${phuong} ${quan ? '- ' + quan : ''}`, donList, singlePhuongList);
+      hienThiModalDon(`${phuong} ${quan ? '- ' + quan.toUpperCase() : ''}`, donList, singlePhuongList, true);
     }
 
-    function locDonTheoPhuongTrongModal(quan, phuong) {
-      if (!phuong) {
-        veBangRiderPhuTrachTrongModal(currentModalAllOrders, '');
-        veBangMaDonTrongModal(currentModalAllOrders, '');
+    // Chuyển giao diện Modal giữa Bước 1 (Danh sách Phường) và Bước 2 (2 bảng song song Rider & Mã đơn)
+    function capNhatCheDoHienThiModal(stepNum) {
+      currentModalStep = stepNum;
+      const dialog = document.getElementById('dialogModalChiTietDon');
+      const view1 = document.getElementById('viewModalBuoc1Phuong');
+      const view2 = document.getElementById('viewModalBuoc2ChiTiet');
+      const btnBack = document.getElementById('btnBackToWardListModal');
+
+      if (stepNum === 1) {
+        if (dialog) dialog.style.maxWidth = '820px';
+        if (view1) view1.style.display = 'block';
+        if (view2) view2.style.display = 'none';
+        if (btnBack) btnBack.style.display = 'none';
+      } else {
+        if (dialog) dialog.style.maxWidth = '1420px';
+        if (view1) view1.style.display = 'none';
+        if (view2) view2.style.display = 'block';
+        if (btnBack) btnBack.style.display = currentModalCanGoBack ? 'inline-flex' : 'none';
+      }
+    }
+
+    function quayLaiBuoc1PhuongModal() {
+      currentStep2ActiveRiderId = '';
+      veBuoc1DanhSachPhuong();
+      capNhatCheDoHienThiModal(1);
+    }
+
+    function veBuoc1DanhSachPhuong() {
+      const uniqueAllGlobal = [...new Map((cachedInboundOrders || []).map(item => [item.shipmentId, item])).values()];
+      const totalGlobal = uniqueAllGlobal.length;
+      const totalScope = currentModalAllOrders.length;
+      const pctOfGlobal = totalGlobal > 0 ? ((totalScope / totalGlobal) * 100).toFixed(1) : '0.0';
+
+      const isMultiDistrict = ['all', 'hv_only', 'mp_only', 'wh_only'].includes(currentModalScopeType);
+      document.getElementById('modalTitle').innerText = `Tổng hợp theo Phường - ${currentModalTitleBase.toUpperCase()}`;
+      document.getElementById('modalSubtitleCanvas').innerText = `${pctOfGlobal}% tổng đơn • Hiển thị ${currentModalPhuongList.length} phường (nhấn vào phường để xem tuyến Rider & chi tiết đơn)`;
+
+      const lblCountAll = document.getElementById('lblCountAllOrdersStep1');
+      if (lblCountAll) lblCountAll.innerText = totalScope.toLocaleString('vi-VN');
+
+      const inpSearch = document.getElementById('inputSearchPhuongBuoc1');
+      if (inpSearch) inpSearch.value = '';
+
+      const thead = document.getElementById('theadPhuongBuoc1');
+      if (thead) {
+        thead.innerHTML = `
+          <tr>
+            <th class="text-start ps-4">Phường</th>
+            ${isMultiDistrict ? '<th class="text-start" style="width: 130px;">Quận</th>' : ''}
+            <th class="text-end" style="width: 140px;">Số lượng đơn</th>
+            <th class="text-end" style="width: 120px;">Tỷ trọng</th>
+            <th class="text-center pe-3" style="width: 115px;">Chi tiết</th>
+          </tr>`;
+      }
+
+      const tbody = document.getElementById('tbodyPhuongInModal');
+      if (!tbody) return;
+
+      const sortedPhuong = [...(currentModalPhuongList || [])].sort((a, b) => (Number(b.soLuong) || 0) - (Number(a.soLuong) || 0));
+      if (sortedPhuong.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${isMultiDistrict ? 5 : 4}" class="text-center py-4 text-muted">Không có phường nào đang rớt đơn</td></tr>`;
         return;
       }
+
+      let html = '';
+      sortedPhuong.forEach(p => {
+        const pct = totalScope > 0 ? `${(((Number(p.soLuong) || 0) / totalScope) * 100).toFixed(1)}%` : '0.0%';
+        const safeQ = (p.quan || '').replace(/'/g, "\\'");
+        const safeP = (p.phuong || '').replace(/'/g, "\\'");
+        html += `
+          <tr class="row-phuong-modal" data-search="${p.phuong || ''} ${p.quan || ''}" style="cursor: pointer;" onclick="locDonTheoPhuongTrongModal('${safeQ}', '${safeP}')">
+            <td class="text-start ps-4 fw-semibold text-dark py-3">${p.phuong || '—'}</td>
+            ${isMultiDistrict ? `<td class="text-start text-muted fw-medium">${p.quan || '—'}</td>` : ''}
+            <td class="text-end font-monospace fw-bold text-dark fs-6">${(Number(p.soLuong) || 0).toLocaleString('vi-VN')}</td>
+            <td class="text-end font-monospace text-muted">${pct}</td>
+            <td class="text-center pe-3">
+              <span class="text-primary fw-semibold d-inline-flex align-items-center gap-1" style="font-size: 0.82rem;">
+                Xem đơn <i class="bi bi-chevron-right" style="font-size: 0.72rem;"></i>
+              </span>
+            </td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function locNhanhBangPhuongModal(kw) {
+      const cleanKw = (kw || '').trim().toLowerCase();
+      document.querySelectorAll('#tbodyPhuongInModal tr.row-phuong-modal').forEach(tr => {
+        const txt = (tr.getAttribute('data-search') || '').toLowerCase();
+        tr.style.display = (!cleanKw || txt.includes(cleanKw)) ? '' : 'none';
+      });
+    }
+
+    // Nhấn vào 1 Phường ở Bước 1 -> Chuyển sang Bước 2 (Trái: Tuyến Rider | Phải: Chi tiết Mã đơn)
+    function locDonTheoPhuongTrongModal(quan, phuong) {
       const targetQ = normQ(quan);
       let cleanP = (phuong || '').trim().toLowerCase().replace(/\s*\([^)]*\)/g, '').trim();
       const numMatch = cleanP.match(/(?:phường|p\.?)\s*0*(\d+)/i) || cleanP.match(/^0*(\d+)$/);
@@ -3238,299 +3384,198 @@
         const itemNorm = itemNumMatch ? `phường ${itemNumMatch[1] < 10 ? '0' + itemNumMatch[1] : itemNumMatch[1]}` : itemP.replace(/^(?:phường|p\.?)\s+/i, '').trim();
         return (!targetQ || itemQ === targetQ) && (itemNorm === targetNorm || itemP.includes(targetNorm) || targetNorm.includes(itemP));
       });
-      veBangRiderPhuTrachTrongModal(subList, `Phường: ${phuong}`);
-      veBangMaDonTrongModal(subList, `${phuong} (${subList.length} đơn)`);
+
+      moBuoc2ChiTietSongSong(subList, `${phuong}${quan ? ' - ' + quan.toUpperCase() : ''}`);
+    }
+
+    function moTatCaDonKhongLocPhuongModal() {
+      moBuoc2ChiTietSongSong(currentModalAllOrders, currentModalTitleBase.toUpperCase());
+    }
+
+    function moBuoc2ChiTietSongSong(ordersList, labelStr) {
+      currentStep2Orders = ordersList || [];
+      currentStep2WardLabel = labelStr || currentModalTitleBase;
+      currentStep2ActiveRiderId = '';
+      currentModalRiderFilterMode = layCaMacDinhTheoGioVN();
+
+      const hvCount = currentStep2Orders.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+      const autoNote = currentModalRiderFilterMode === 'COT1' ? 'CA COT 1 (< 13h30)' : 'CA COT 2 (≥ 13h30)';
+
+      document.getElementById('modalTitle').innerText = `Chi tiết: ${currentStep2WardLabel}`;
+      document.getElementById('modalSubtitleCanvas').innerText = `${currentStep2Orders.length} đơn chưa gán${hvCount > 0 ? ` • ⚠️ ${hvCount} đơn HV` : ''} • Tự động hiển thị tuyến Rider ${autoNote}`;
+
+      veBangRiderPhuTrachStep2();
+      veBangMaDonStep2(currentStep2Orders, '');
+      capNhatCheDoHienThiModal(2);
+    }
+
+    function doiBoLocRiderTrongModal(mode) {
+      currentModalRiderFilterMode = mode;
+      currentStep2ActiveRiderId = '';
+      veBangRiderPhuTrachStep2();
+      veBangMaDonStep2(currentStep2Orders, '');
     }
 
     function locDonTheoRiderTrongModal(riderId, riderName) {
-      if (!riderId) return;
-      const subList = currentModalAllOrders.filter(don => {
+      if (String(currentStep2ActiveRiderId) === String(riderId)) {
+        currentStep2ActiveRiderId = '';
+        veBangRiderPhuTrachStep2();
+        veBangMaDonStep2(currentStep2Orders, '');
+        return;
+      }
+      currentStep2ActiveRiderId = riderId;
+      const subList = currentStep2Orders.filter(don => {
         const rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true, 'ALL');
         if (rds.some(r => String(r.id) === String(riderId))) return true;
         const rdsBroad = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, false, 'ALL');
         return rdsBroad.some(r => String(r.id) === String(riderId));
       });
-      veBangMaDonTrongModal(subList, `Rider: ${riderName} - ID ${riderId} (${subList.length} đơn)`);
+      veBangRiderPhuTrachStep2();
+      veBangMaDonStep2(subList, `${riderName} (${riderId})`);
     }
 
-    function toggleBangRiderModal() {
-      isRiderModalSectionOpen = !isRiderModalSectionOpen;
-      const body = document.getElementById('collapseBodyRiderPhuTrachModal');
-      const icon = document.getElementById('iconToggleRiderModal');
-      const txt = document.getElementById('txtToggleRiderModal');
-      if (body) body.style.display = isRiderModalSectionOpen ? 'block' : 'none';
-      if (icon) icon.className = isRiderModalSectionOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
-      if (txt) txt.innerText = isRiderModalSectionOpen ? 'Thu gọn' : 'Mở rộng';
-    }
-
-    // Khi đổi giữa COT 1 / COT 2 / Tất cả -> Cập nhật đồng bộ cả 3 bảng trong Modal
-    function doiBoLocRiderTrongModal(mode) {
-      currentModalRiderFilterMode = mode;
-      veBangPhuongTrongModal();
-      veBangRiderPhuTrachTrongModal(window._lastOrdersForRiderModal || currentModalAllOrders, window._lastLabelForRiderModal || '');
-      veBangMaDonTrongModal(window._lastOrdersForMaDonModal || currentModalAllOrders, window._lastSubFilterLabelModal || '');
-    }
-
-    // Vẽ Bảng 1: Chi tiết phường chưa được gán (hiển thị Rider theo đúng Ca đang áp dụng)
-    function veBangPhuongTrongModal() {
-      const boxPhuong = document.getElementById('vungChiTietPhuongModal');
-      if (!boxPhuong) return;
-
-      if (!currentModalPhuongList || currentModalPhuongList.length === 0) {
-        boxPhuong.innerHTML = '';
-        boxPhuong.style.display = 'none';
-        return;
-      }
-
-      const caLabelHeader = currentModalRiderFilterMode === 'COT1' ? 'CA COT 1' : (currentModalRiderFilterMode === 'COT2' ? 'CA COT 2' : 'COT 1 & 2');
-      const totalOrders = currentModalAllOrders.length || currentModalPhuongList.reduce((s, i) => s + (Number(i.soLuong) || 0), 0);
-      let pHtml = `
-        <div class="card border-primary shadow-sm">
-          <div class="card-header bg-primary-subtle text-primary py-1 px-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <span class="fw-bold" style="font-size: 0.8rem;">
-              <i class="bi bi-geo-alt-fill me-1"></i>CHI TIẾT PHƯỜNG CHƯA ĐƯỢC GÁN (${currentModalAllOrders.length} đơn - ${currentModalPhuongList.length} phường)
-            </span>
-            <input type="text" class="form-control form-control-sm" style="width: 210px; height: 24px; font-size: 0.74rem;" placeholder="🔍 Lọc nhanh phường hoặc tên RD..." oninput="locNhanhBangPhuongModal(this.value)">
-          </div>
-          <div class="table-responsive" style="max-height: 210px; overflow-y: auto;">
-            <table class="table table-sm table-bordered table-hover align-middle mb-0 text-center" style="font-size: 0.77rem;">
-              <thead class="table-light sticky-top">
-                <tr>
-                  <th style="width: 40px;">STT</th>
-                  <th class="text-start" style="width: 165px;">Phường Chưa Gán</th>
-                  <th style="width: 95px;">Quận</th>
-                  <th class="text-start">Rider Phụ Trách Phường (${caLabelHeader})</th>
-                  <th style="width: 95px;">Số Đơn</th>
-                  <th style="width: 75px;">Tỷ Trọng</th>
-                  <th style="width: 85px;">Lọc Mã Đơn</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyPhuongInModal">`;
-
-      currentModalPhuongList.forEach((p, i) => {
-        const pct = totalOrders > 0 ? `${(((Number(p.soLuong) || 0) / totalOrders) * 100).toFixed(1)}%` : '0.0%';
-        const safeQ = (p.quan || '').replace(/'/g, "\\'");
-        const safeP = (p.phuong || '').replace(/'/g, "\\'");
-        const rdsPhuong = timRiderPhuTrachTheoPhuongVaZone(p.quan, p.phuong, '', false, currentModalRiderFilterMode);
-        const rdNamesSearch = rdsPhuong.map(r => `${r.id} ${r.name}`).join(' ');
-        const rdsBadgesHtml = renderBadgesRiderNganGon(rdsPhuong, 5);
-
-        pHtml += `
-          <tr class="row-phuong-modal" data-search="${p.phuong || ''} ${p.quan || ''} ${rdNamesSearch}">
-            <td class="text-muted small">${i + 1}</td>
-            <td class="text-start fw-bold text-dark">${p.phuong || '—'}</td>
-            <td class="text-secondary small fw-semibold">${p.quan || '—'}</td>
-            <td class="text-start">${rdsBadgesHtml}</td>
-            <td class="font-monospace fw-bold text-danger fs-6">${p.soLuong || 0}</td>
-            <td class="font-monospace small text-muted">${pct}</td>
-            <td>
-              <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="locDonTheoPhuongTrongModal('${safeQ}', '${safeP}')">
-                <i class="bi bi-funnel-fill me-1"></i>Xem đơn
-              </button>
-            </td>
-          </tr>`;
-      });
-
-      pHtml += `</tbody></table></div></div>`;
-      boxPhuong.innerHTML = pHtml;
-      boxPhuong.style.display = 'block';
-    }
-
-    // Vẽ Bảng 2: Danh sách Rider phụ trách tuyến đơn rớt (đã bỏ Đi làm / OFF, auto COT 1 trước 13h30 & COT 2 sau 13h30)
-    function veBangRiderPhuTrachTrongModal(ordersList, scopeLabel = '') {
-      const boxRider = document.getElementById('vungChiTietRiderPhuTrachModal');
-      if (!boxRider) return;
-
-      window._lastOrdersForRiderModal = ordersList;
-      window._lastLabelForRiderModal = scopeLabel;
+    // Vẽ Bảng Trái Bước 2: Tuyến Rider Phụ Trách
+    function veBangRiderPhuTrachStep2() {
+      const tbody = document.getElementById('tbodyRiderPhuTrachStep2');
+      if (!tbody) return;
 
       const riderMap = {};
-      (ordersList || []).forEach(don => {
+      (currentStep2Orders || []).forEach(don => {
         let rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true, 'ALL');
         if (rds.length === 0) {
           rds = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, false, 'ALL');
         }
         rds.forEach(r => {
           if (!riderMap[r.id]) {
-            riderMap[r.id] = {
-              ...r,
-              orderCount: 0,
-              hvOrderCount: 0
-            };
+            riderMap[r.id] = { ...r, orderCount: 0, hvOrderCount: 0 };
           }
           riderMap[r.id].orderCount++;
           if ((don.isHv || '').toLowerCase() === 'yes') riderMap[r.id].hvOrderCount++;
         });
       });
 
-      const allMatchedRiders = Object.values(riderMap).sort((a, b) => {
+      const allMatched = Object.values(riderMap).sort((a, b) => {
         if (b.orderCount !== a.orderCount) return b.orderCount - a.orderCount;
         if ((a.ca || '') !== (b.ca || '')) return (a.ca || '').localeCompare(b.ca || '');
         return (a.name || '').localeCompare(b.name || '', 'vi');
       });
 
-      if (allMatchedRiders.length === 0) {
-        boxRider.innerHTML = '';
-        boxRider.style.display = 'none';
+      const cntC1 = allMatched.filter(r => khopCaDangChon(r.ca, 'COT1')).length;
+      const cntC2 = allMatched.filter(r => khopCaDangChon(r.ca, 'COT2')).length;
+      const filtered = allMatched.filter(r => khopCaDangChon(r.ca, currentModalRiderFilterMode));
+
+      if (document.getElementById('cntRdStep2C1')) document.getElementById('cntRdStep2C1').innerText = cntC1;
+      if (document.getElementById('cntRdStep2C2')) document.getElementById('cntRdStep2C2').innerText = cntC2;
+      if (document.getElementById('cntRdStep2All')) document.getElementById('cntRdStep2All').innerText = allMatched.length;
+      if (document.getElementById('badgeCountRiderStep2')) document.getElementById('badgeCountRiderStep2').innerText = `${filtered.length} RD`;
+
+      const autoCaNow = layCaMacDinhTheoGioVN();
+      const lblAuto = document.getElementById('lblAutoCaNoteStep2');
+      if (lblAuto) lblAuto.innerText = `${autoCaNow === 'COT1' ? 'Auto COT 1 (< 13h30)' : 'Auto COT 2 (≥ 13h30)'} • Nhấn dòng RD để lọc đơn`;
+
+      document.querySelectorAll('#grpCaFilterStep2 button').forEach(btn => {
+        const ca = btn.getAttribute('data-ca');
+        const active = ca === currentModalRiderFilterMode;
+        if (ca === 'COT1') btn.className = `btn btn-xs fw-bold px-2 ${active ? 'btn-primary' : 'btn-outline-primary'}`;
+        else if (ca === 'COT2') btn.className = `btn btn-xs fw-bold px-2 ${active ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'}`;
+        else btn.className = `btn btn-xs fw-bold px-2 ${active ? 'btn-dark' : 'btn-outline-dark'}`;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Không có Rider cố định trong ca này</td></tr>';
         return;
       }
 
-      const countC1 = allMatchedRiders.filter(r => khopCaDangChon(r.ca, 'COT1')).length;
-      const countC2 = allMatchedRiders.filter(r => khopCaDangChon(r.ca, 'COT2')).length;
-      const autoCaNow = layCaMacDinhTheoGioVN();
-      const autoNote = autoCaNow === 'COT1' ? '🕒 Auto COT 1 (< 13h30)' : '🕒 Auto COT 2 (≥ 13h30)';
+      let html = '';
+      filtered.forEach((r, idx) => {
+        const isSelected = String(currentStep2ActiveRiderId) === String(r.id);
+        const caShort = (r.ca || '').includes('2') ? 'COT 2' : 'COT 1';
+        const caBadge = caShort === 'COT 2' ? '<span class="badge badge-cot2" style="font-size:0.65rem;">COT 2</span>' : '<span class="badge badge-cot1" style="font-size:0.65rem;">COT 1</span>';
+        const safeId = (r.id || '').replace(/'/g, "\\'");
+        const safeName = (r.name || '').replace(/'/g, "\\'");
+        const zoneTxt = r.zoneDeli || r.nhom || '—';
 
-      const filteredRiders = allMatchedRiders.filter(r => khopCaDangChon(r.ca, currentModalRiderFilterMode));
-
-      let rHtml = `
-        <div class="card border-success shadow-sm">
-          <div class="card-header bg-success-subtle text-dark py-1 px-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div class="d-flex align-items-center flex-wrap gap-1">
-              <span class="fw-bold text-success" style="font-size: 0.8rem;">
-                <i class="bi bi-people-fill me-1"></i>DANH SÁCH RIDER PHỤ TRÁCH TUYẾN ĐƠN RỚT ${scopeLabel ? `(${scopeLabel})` : ''}
-              </span>
-              <span class="badge bg-dark">${filteredRiders.length} RD</span>
-              <span class="badge bg-info text-dark" style="font-size: 0.7rem;">${autoNote}</span>
-            </div>
-            <div class="d-flex align-items-center flex-wrap gap-1">
-              <div class="btn-group btn-group-sm" role="group">
-                <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'COT1' ? 'btn-primary' : 'btn-outline-primary'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('COT1')">COT 1 (${countC1})</button>
-                <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'COT2' ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('COT2')">COT 2 (${countC2})</button>
-                <button type="button" class="btn btn-xs ${currentModalRiderFilterMode === 'ALL' ? 'btn-dark' : 'btn-outline-dark'} py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="doiBoLocRiderTrongModal('ALL')">Tất cả (${allMatchedRiders.length})</button>
-              </div>
-              <button type="button" class="btn btn-xs btn-outline-success bg-white py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="toggleBangRiderModal()">
-                <i class="bi ${isRiderModalSectionOpen ? 'bi-chevron-up' : 'bi-chevron-down'}" id="iconToggleRiderModal"></i>
-                <span id="txtToggleRiderModal">${isRiderModalSectionOpen ? 'Thu gọn' : 'Mở rộng'}</span>
-              </button>
-            </div>
-          </div>
-          <div id="collapseBodyRiderPhuTrachModal" style="display: ${isRiderModalSectionOpen ? 'block' : 'none'};">
-            <div class="table-responsive" style="max-height: 210px; overflow-y: auto;">
-              <table class="table table-sm table-bordered table-hover align-middle mb-0 text-center" style="font-size: 0.77rem;">
-                <thead class="table-light sticky-top">
-                  <tr>
-                    <th style="width: 40px;">STT</th>
-                    <th style="width: 85px;">Mã RD</th>
-                    <th class="text-start">Họ và Tên Rider</th>
-                    <th style="width: 75px;">Ca</th>
-                    <th class="text-start">Quận / Phường Deli Phụ Trách</th>
-                    <th class="text-start">Zone Deli (TỔNG QUAN RD)</th>
-                    <th style="width: 110px;">Đơn Rớt Tuyến</th>
-                    <th style="width: 85px;">Lọc Đơn</th>
-                  </tr>
-                </thead>
-                <tbody>`;
-
-      if (filteredRiders.length === 0) {
-        rHtml += `<tr><td colspan="8" class="py-3 text-muted">Không có Rider nào trong ca này</td></tr>`;
-      } else {
-        filteredRiders.forEach((r, idx) => {
-          const caBadge = (r.ca || '').includes('2')
-            ? '<span class="badge badge-cot2">COT 2</span>'
-            : '<span class="badge badge-cot1">COT 1</span>';
-          const safeId = (r.id || '').replace(/'/g, "\\'");
-          const safeName = (r.name || '').replace(/'/g, "\\'");
-
-          rHtml += `
-            <tr>
-              <td class="text-muted small">${idx + 1}</td>
-              <td class="font-monospace fw-bold text-primary">${r.id}</td>
-              <td class="text-start fw-bold text-dark">${r.name}</td>
-              <td>${caBadge}</td>
-              <td class="text-start small fw-semibold"><span class="text-primary">${r.quanDeli}</span> • P.${r.phuongDeli || '—'}</td>
-              <td class="text-start font-monospace small text-secondary">${r.zoneDeli || r.nhom || '—'}</td>
-              <td class="font-monospace fw-bold text-danger fs-6">
-                ${r.orderCount} đơn ${r.hvOrderCount > 0 ? `<span class="badge bg-danger ms-1" style="font-size:0.62rem;">${r.hvOrderCount} HV</span>` : ''}
-              </td>
-              <td>
-                <button type="button" class="btn btn-xs btn-outline-success py-0 px-2 fw-bold" style="font-size: 0.7rem;" onclick="locDonTheoRiderTrongModal('${safeId}', '${safeName}')">
-                  <i class="bi bi-funnel-fill me-1"></i>Xem
-                </button>
-              </td>
-            </tr>`;
-        });
-      }
-
-      rHtml += `</tbody></table></div></div></div>`;
-      boxRider.innerHTML = rHtml;
-      boxRider.style.display = 'block';
-    }
-
-    function locNhanhBangPhuongModal(kw) {
-      const cleanKw = (kw || '').trim().toLowerCase();
-      document.querySelectorAll('#tbodyPhuongInModal tr.row-phuong-modal').forEach(tr => {
-        const txt = (tr.getAttribute('data-search') || '').toLowerCase();
-        tr.style.display = (!cleanKw || txt.includes(cleanKw)) ? '' : 'none';
+        html += `
+          <tr class="${isSelected ? 'table-primary' : ''}" style="cursor: pointer;" onclick="locDonTheoRiderTrongModal('${safeId}', '${safeName}')" title="Nhấn để lọc mã đơn thuộc tuyến của ${r.name}">
+            <td class="text-center text-muted small">${idx + 1}</td>
+            <td class="text-start text-truncate" title="${r.name} (${r.id})">
+              <div class="fw-bold text-dark text-truncate" style="line-height: 1.2;">${r.name}</div>
+              <div class="font-monospace text-primary fw-semibold" style="font-size: 0.68rem;">${r.id}</div>
+            </td>
+            <td class="text-center">${caBadge}</td>
+            <td class="text-start font-monospace text-secondary" style="font-size: 0.68rem; white-space: normal; word-break: break-word; line-height: 1.25;">${zoneTxt}</td>
+            <td class="text-center font-monospace fw-bold text-danger">
+              ${r.orderCount}
+              ${r.hvOrderCount > 0 ? `<div class="badge bg-danger text-white mt-1" style="font-size: 0.58rem;">${r.hvOrderCount} HV</div>` : ''}
+            </td>
+          </tr>`;
       });
+      tbody.innerHTML = html;
     }
 
-    function veBangMaDonTrongModal(donList, subFilterLabel = '') {
+    // Vẽ Bảng Phải Bước 2: Chi Tiết Mã Đơn
+    function veBangMaDonStep2(donList, activeRiderLabel = '') {
       const tbody = document.getElementById('modalDonTbody');
       if (!tbody) return;
-      window._lastOrdersForMaDonModal = donList;
-      window._lastSubFilterLabelModal = subFilterLabel;
-      currentModalShipmentIds = donList.map(d => d.shipmentId).filter(Boolean);
+      currentModalShipmentIds = (donList || []).map(d => d.shipmentId).filter(Boolean);
 
-      const lblFilter = document.getElementById('lblSubFilterPhuongModal');
-      if (lblFilter) {
-        if (subFilterLabel) {
-          lblFilter.innerHTML = `<span class="badge bg-primary me-2">Đang lọc: ${subFilterLabel}</span><button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 fw-bold" style="font-size:0.72rem;" onclick="locDonTheoPhuongTrongModal('', '')"><i class="bi bi-arrow-counterclockwise me-1"></i>Xem tất cả (${currentModalAllOrders.length} đơn)</button>`;
+      const hvCount = (donList || []).filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
+      const badgeCount = document.getElementById('modalCountBadge');
+      if (badgeCount) {
+        badgeCount.innerText = `${(donList || []).length} đơn${hvCount > 0 ? ` (${hvCount} HV)` : ''}`;
+      }
+
+      const chipWrap = document.getElementById('lblActiveRiderFilterChip');
+      if (chipWrap) {
+        if (activeRiderLabel) {
+          chipWrap.innerHTML = `<span class="badge bg-primary d-inline-flex align-items-center gap-1" style="font-size:0.72rem; cursor:pointer;" onclick="locDonTheoRiderTrongModal('${currentStep2ActiveRiderId}', '')" title="Bấm để bỏ lọc Rider">${activeRiderLabel} <i class="bi bi-x-circle-fill"></i></span>`;
         } else {
-          lblFilter.innerHTML = `<span class="text-dark small fw-bold"><i class="bi bi-box-seam text-primary me-1"></i>Danh sách mã đơn (${donList.length} đơn):</span>`;
+          chipWrap.innerHTML = '';
         }
       }
 
-      if (donList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Không có mã đơn rớt chưa gán Rider nào</td></tr>';
-      } else {
-        let html = '';
-        donList.forEach((don, idx) => {
-          const isHv = (don.isHv || '').toLowerCase() === 'yes', isMp = (don.loaiHang || '').toUpperCase() === 'MP';
-          const badgeLoai = isMp ? '<span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">MP</span>' : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-bold">WH</span>';
-          const rdsForOrder = timRiderPhuTrachTheoPhuongVaZone(don.quan, don.phuong, don.zoneId, true, currentModalRiderFilterMode);
-          const riderCellHtml = renderBadgesRiderNganGon(rdsForOrder, 3);
-
-          html += `
-            <tr class="${isHv ? 'table-warning' : ''}">
-              <td class="text-center text-muted small">${idx + 1}</td>
-              <td class="font-monospace fw-bold ${isHv ? 'text-danger' : 'text-primary'}">${don.shipmentId}</td>
-              <td class="text-center">${badgeLoai}</td>
-              <td class="small fw-semibold text-dark">${don.phuong || '—'}</td>
-              <td class="text-center small font-monospace fw-bold text-secondary">${don.zoneId || '—'}</td>
-              <td class="text-start">${riderCellHtml}</td>
-              <td class="text-center">${isHv ? '<span class="badge bg-danger text-white fw-bold"><i class="bi bi-star-fill me-1"></i>HV</span>' : '<span class="text-muted small">No</span>'}</td>
-              <td class="small text-muted font-monospace text-center">${don.receivedTime || '—'}</td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
+      if (!donList || donList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Không có mã đơn rớt nào</td></tr>';
+        return;
       }
+
+      let html = '';
+      donList.forEach((don, idx) => {
+        const isHv = (don.isHv || '').toLowerCase() === 'yes';
+        const isMp = (don.loaiHang || '').toUpperCase() === 'MP';
+        const badgeLoai = isMp
+          ? '<span class="badge bg-success-subtle text-success border border-success-subtle fw-bold">MP</span>'
+          : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fw-bold">WH</span>';
+
+        html += `
+          <tr class="${isHv ? 'table-warning' : ''}">
+            <td class="text-center text-muted small">${idx + 1}</td>
+            <td class="text-start font-monospace fw-bold ${isHv ? 'text-danger' : 'text-primary'}">${don.shipmentId}</td>
+            <td class="text-center">${badgeLoai}</td>
+            <td class="text-center small font-monospace fw-semibold text-secondary">${don.zoneId || '—'}</td>
+            <td class="text-center">${isHv ? '<span class="badge bg-danger text-white fw-bold">HV</span>' : '<span class="text-muted small">No</span>'}</td>
+            <td class="text-center small text-muted font-monospace">${don.receivedTime || '—'}</td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
     }
 
-    function hienThiModalDon(title, donList, phuongList = []) {
+    function hienThiModalDon(title, donList, phuongList = [], openStep2Directly = false) {
       const modalEl = document.getElementById('modalChiTietDon');
       if (!modalEl) return;
 
       currentModalAllOrders = donList || [];
       currentModalPhuongList = phuongList || [];
-      currentModalTitleBase = title;
-      // Tự động chọn COT 1 nếu trước 13h30, từ 13h30 trở đi tự động chọn COT 2
-      currentModalRiderFilterMode = layCaMacDinhTheoGioVN();
+      currentModalTitleBase = title || 'Danh sách đơn';
+      currentModalCanGoBack = !openStep2Directly && currentModalPhuongList.length > 0;
 
-      document.getElementById('modalTitle').innerText = title;
-
-      const hvCount = currentModalAllOrders.filter(d => (d.isHv || '').toLowerCase() === 'yes').length;
-      const soPhuong = currentModalPhuongList.length;
-      let badgeText = `${currentModalAllOrders.length.toLocaleString('vi-VN')} đơn - ${soPhuong} phường chưa được gán`;
-      if (hvCount > 0) badgeText += ` (⚠️ ${hvCount} đơn HV)`;
-      const countBadgeEl = document.getElementById('modalCountBadge');
-      if (countBadgeEl) {
-        countBadgeEl.className = 'badge bg-danger fs-6 px-3 py-1 shadow-sm';
-        countBadgeEl.innerText = badgeText;
+      if (openStep2Directly || currentModalPhuongList.length === 0) {
+        moBuoc2ChiTietSongSong(currentModalAllOrders, currentModalTitleBase);
+      } else {
+        veBuoc1DanhSachPhuong();
+        capNhatCheDoHienThiModal(1);
       }
 
-      veBangPhuongTrongModal();
-      veBangRiderPhuTrachTrongModal(currentModalAllOrders, '');
-      veBangMaDonTrongModal(currentModalAllOrders, '');
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
     }
 
