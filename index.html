@@ -957,10 +957,21 @@
             <!-- CỘT PHẢI: XEM NHANH BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV -->
             <div class="col-12 col-lg-6 d-flex flex-column">
               <div class="card overflow-hidden h-100 d-flex flex-column">
-                <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center">
-                  <span class="fw-bold text-dark text-uppercase" style="font-size: 0.82rem; letter-spacing: 0.3px;">
-                    <i class="bi bi-shield-check text-primary me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
-                  </span>
+                <div class="card-header bg-white py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                  <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="fw-bold text-dark text-uppercase" style="font-size: 0.82rem; letter-spacing: 0.3px;">
+                      <i class="bi bi-shield-check text-primary me-1"></i>BÀN GIAO TRẠNG THÁI ĐƠN HÀNG HV
+                    </span>
+                    <button type="button"
+                            id="btnFilterHvPreviewIpChuaBG"
+                            class="btn btn-xs fw-bold py-0 px-2 d-inline-flex align-items-center gap-1"
+                            style="font-size: 0.72rem; height: 24px; border-radius: 999px; background: #fff1f2; color: #be123c; border: 1px solid #fecdd3;"
+                            onclick="toggleFilterHvPreviewIpChuaBG()"
+                            title="Nhấn để chỉ hiển thị các đơn HV IP chưa bàn giao">
+                      <i class="bi bi-funnel-fill"></i>
+                      <span id="txtFilterHvPreviewIpChuaBG">0 IP chưa bàn giao</span>
+                    </button>
+                  </div>
                   <a href="javascript:void(0)" class="small fw-semibold text-decoration-none text-primary" onclick="switchPendingCanvasTab('hv')">
                     Xem tất cả →
                   </a>
@@ -5423,49 +5434,223 @@ if (user.role === 'RIDER') {
       tbody.innerHTML = html;
     }
 
+    let isHvPreviewOnlyIpChuaBG = false;
+    let expandedHvPreviewOrderId = '';
+    let expandedHvPreviewCaMode = '';
+
+    function toggleFilterHvPreviewIpChuaBG() {
+      isHvPreviewOnlyIpChuaBG = !isHvPreviewOnlyIpChuaBG;
+      renderCanvasHvPreview();
+    }
+
+    async function toggleChiTietRdDonHvPreview(baseShipId) {
+      if (!baseShipId) return;
+      if (expandedHvPreviewOrderId === baseShipId) {
+        expandedHvPreviewOrderId = '';
+        renderCanvasHvPreview();
+        return;
+      }
+      if (!ridersData || ridersData.length === 0) {
+        try { await loadRiderData(); } catch (e) {}
+      }
+      expandedHvPreviewOrderId = baseShipId;
+      expandedHvPreviewCaMode = typeof layCaMacDinhTheoGioVN === 'function' ? layCaMacDinhTheoGioVN() : 'COT1';
+      renderCanvasHvPreview();
+    }
+
+    function doiCaRdTrongHvPreview(caMode, ev) {
+      if (ev) ev.stopPropagation();
+      expandedHvPreviewCaMode = caMode;
+      renderCanvasHvPreview();
+    }
+
+    function copyMaDonHvPreview(shipId, ev) {
+      if (ev) ev.stopPropagation();
+      if (!shipId) return;
+      navigator.clipboard.writeText(shipId)
+        .then(() => {
+          const el = ev?.currentTarget;
+          if (el) {
+            const orig = el.innerHTML;
+            el.innerHTML = '<i class="bi bi-check2"></i> Đã chép';
+            setTimeout(() => { el.innerHTML = orig; }, 1200);
+          }
+        })
+        .catch(() => {});
+    }
+
     function renderCanvasHvPreview() {
       const wrap = document.getElementById('canvasHvPreviewList');
       const tabBadge = document.getElementById('badgeCanvasTabHvCount');
-      const allHv = listBanGiaoHv || [];
-      if (tabBadge) tabBadge.innerText = allHv.length;
+      const btnIpFilter = document.getElementById('btnFilterHvPreviewIpChuaBG');
+      const txtIpFilter = document.getElementById('txtFilterHvPreviewIpChuaBG');
+
+      const rawHv = listBanGiaoHv || [];
+      if (tabBadge) tabBadge.innerText = rawHv.length;
       if (!wrap) return;
 
       const kw = (document.getElementById('canvasSearchGlobal')?.value || '').trim().toLowerCase();
       const qFilter = document.getElementById('canvasFilterQuanGlobal')?.value || 'ALL';
 
-      const filtered = allHv.filter(item => {
+      // Chuẩn hóa trạng thái & nhận diện đơn IP giống bảng chi tiết HV
+      const normalized = rawHv.map(item => {
+        const isIp = Boolean(item.isIp) ||
+                     (item.whsId || '').toUpperCase().includes('VNWL') ||
+                     (item.maDon || '').toLowerCase().includes('ip');
+        const baseId = (item.maDon || '').split(/\s*-\s*/)[0].trim();
+        const maDonHienThi = isIp ? `${baseId} - đơn IP` : (item.maDon || '—');
+        const trangThaiChuan = typeof chuanHoaTrangThaiHvFrontend === 'function'
+          ? chuanHoaTrangThaiHvFrontend(item)
+          : (item.trangThai || '—');
+        const isDaBG = typeof kiemTraDaBanGiaoHvItem === 'function'
+          ? kiemTraDaBanGiaoHvItem(trangThaiChuan)
+          : false;
+        return { ...item, baseId, isIp, maDonHienThi, trangThaiChuan, isDaBG };
+      });
+
+      const baseFiltered = normalized.filter(item => {
         const matchQ = qFilter === 'ALL' || normQ(item.quanPhuong) === normQ(qFilter);
-        const matchKw = !kw || `${item.maDon} ${item.quanPhuong} ${item.tenRd} ${item.trangThai}`.toLowerCase().includes(kw);
+        const matchKw = !kw || `${item.maDonHienThi} ${item.zoneId || ''} ${item.quanPhuong} ${item.tenRd} ${item.trangThaiChuan}`.toLowerCase().includes(kw);
         return matchQ && matchKw;
       });
 
+      // Cập nhật số lượng & trạng thái thẻ lọc "IP chưa bàn giao"
+      const countIpChuaBG = baseFiltered.filter(i => i.isIp && !i.isDaBG).length;
+      if (txtIpFilter) {
+        txtIpFilter.innerText = isHvPreviewOnlyIpChuaBG
+          ? `Đang lọc: ${countIpChuaBG} IP chưa BG`
+          : `${countIpChuaBG} IP chưa bàn giao`;
+      }
+      if (btnIpFilter) {
+        if (isHvPreviewOnlyIpChuaBG) {
+          btnIpFilter.style.background = '#dc2626';
+          btnIpFilter.style.color = '#ffffff';
+          btnIpFilter.style.border = '1px solid #b91c1c';
+        } else {
+          btnIpFilter.style.background = '#fff1f2';
+          btnIpFilter.style.color = '#be123c';
+          btnIpFilter.style.border = '1px solid #fecdd3';
+        }
+      }
+
+      // Lọc riêng đơn HV IP chưa bàn giao nếu đang bật thẻ lọc
+      const filtered = (isHvPreviewOnlyIpChuaBG
+        ? baseFiltered.filter(i => i.isIp && !i.isDaBG)
+        : baseFiltered
+      ).sort((a, b) => {
+        const rA = typeof layThuTuTrangThaiHv === 'function' ? layThuTuTrangThaiHv(a.trangThaiChuan) : 5;
+        const rB = typeof layThuTuTrangThaiHv === 'function' ? layThuTuTrangThaiHv(b.trangThaiChuan) : 5;
+        if (rA !== rB) return rA - rB;
+        if (a.isIp !== b.isIp) return a.isIp ? -1 : 1;
+        const qA = typeof layThuTuQuanBanGiaoHv === 'function' ? layThuTuQuanBanGiaoHv(a.quanPhuong) : 6;
+        const qB = typeof layThuTuQuanBanGiaoHv === 'function' ? layThuTuQuanBanGiaoHv(b.quanPhuong) : 6;
+        if (qA !== qB) return qA - qB;
+        return (a.quanPhuong || '').localeCompare(b.quanPhuong || '', 'vi');
+      });
+
       if (filtered.length === 0) {
-        wrap.innerHTML = '<div class="text-center py-3 text-muted small">Không có đơn hàng HV nào trong phạm vi này</div>';
+        wrap.innerHTML = isHvPreviewOnlyIpChuaBG
+          ? '<div class="text-center py-4 text-success fw-semibold small"><i class="bi bi-check-circle-fill me-1"></i>Không còn đơn HV IP nào chưa bàn giao!</div>'
+          : '<div class="text-center py-3 text-muted small">Không có đơn hàng HV nào trong phạm vi này</div>';
         return;
       }
 
       let html = '';
-      filtered.slice(0, 6).forEach(item => {
-        const tt = typeof chuanHoaTrangThaiHvFrontend === 'function' ? chuanHoaTrangThaiHvFrontend(item) : (item.trangThai || '—');
-        const isIp = Boolean(item.isIp) || (item.maDon || '').toLowerCase().includes('ip');
+      filtered.forEach(item => {
+        const tt = item.trangThaiChuan;
+        const isIp = item.isIp;
+        const isExpanded = expandedHvPreviewOrderId === item.baseId;
+        const safeBaseId = (item.baseId || '').replace(/'/g, "\\'");
+
         const ttPill = tt === 'Giao thành công'
           ? 'background:#dcfce7; color:#15803d;'
-          : (tt === 'Đang đi giao' ? 'background:#e0f2fe; color:#0369a1;' : 'background:#f1f5f9; color:#334155;');
-        const rdTen = (item.tenRd && item.tenRd !== '0') ? item.tenRd : 'Chưa gán';
+          : (tt === 'Đang đi giao'
+              ? 'background:#e0f2fe; color:#0369a1;'
+              : (tt === 'Chờ kho xử lý' ? 'background:#fee2e2; color:#dc2626;' : 'background:#f1f5f9; color:#334155;'));
+
+        const rdTen = (item.tenRd && item.tenRd !== '0' && item.tenRd !== '—') ? item.tenRd : 'Chưa gán';
+        const cardBg = isIp ? '#fff1f2' : '#ffffff';
+        const cardBorder = isExpanded ? '1.5px solid #2563eb' : (isIp ? '1px solid #fecdd3' : '1px solid #f1f5f9');
+
+        // Nếu đang nhấn mở đơn này -> Tìm danh sách RD phụ trách theo Quận/Phường & Zone ID từ TỔNG QUAN RD
+        let expandedPanelHtml = '';
+        if (isExpanded) {
+          const qpParts = (item.quanPhuong || '').split(/\s*[-•]\s*/);
+          const qStr = qpParts[0] || item.quanPhuong || '';
+          const pStr = qpParts.slice(1).join(' - ') || item.quanPhuong || '';
+
+          let allMatchedRd = typeof timRiderPhuTrachTheoPhuongVaZone === 'function'
+            ? timRiderPhuTrachTheoPhuongVaZone(qStr, pStr, item.zoneId || '', true, 'ALL')
+            : [];
+          if (allMatchedRd.length === 0 && typeof timRiderPhuTrachTheoPhuongVaZone === 'function') {
+            allMatchedRd = timRiderPhuTrachTheoPhuongVaZone(qStr, pStr, item.zoneId || '', false, 'ALL');
+          }
+
+          const activeCa = expandedHvPreviewCaMode || (typeof layCaMacDinhTheoGioVN === 'function' ? layCaMacDinhTheoGioVN() : 'COT1');
+          const c1Count = allMatchedRd.filter(r => khopCaDangChon(r.ca, 'COT1')).length;
+          const c2Count = allMatchedRd.filter(r => khopCaDangChon(r.ca, 'COT2')).length;
+          const rdsShown = allMatchedRd.filter(r => khopCaDangChon(r.ca, activeCa));
+
+          let rdItemsHtml = '';
+          if (rdsShown.length === 0) {
+            rdItemsHtml = '<div class="text-muted fst-italic" style="font-size:0.73rem;">Chưa tìm thấy RD cố định trong ca này (thử bấm chuyển ca bên trên)</div>';
+          } else {
+            rdItemsHtml = '<div class="d-flex flex-wrap gap-1 mt-1">';
+            rdsShown.forEach(r => {
+              const isC2 = (r.ca || '').includes('2');
+              const caCls = isC2 ? 'bg-warning text-dark' : 'bg-primary text-white';
+              const chipBg = r.isZoneMatch ? 'background:#eff6ff; border:1px solid #93c5fd;' : 'background:#f8fafc; border:1px solid #cbd5e1;';
+              rdItemsHtml += `
+                <div class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded" style="${chipBg} font-size:0.73rem;" title="Zone Deli: ${r.zoneDeli || r.nhom || '—'} | Phường Deli: ${r.phuongDeli || '—'}">
+                  <span class="badge ${caCls}" style="font-size:0.6rem; padding:1px 4px;">${isC2 ? 'C2' : 'C1'}</span>
+                  <span class="fw-bold text-dark">${r.name}</span>
+                  <span class="font-monospace text-primary" style="font-size:0.68rem;">(${r.id})</span>
+                </div>`;
+            });
+            rdItemsHtml += '</div>';
+          }
+
+          expandedPanelHtml = `
+            <div class="mt-2 pt-2 bg-white rounded p-2" style="border: 1px solid #dbeafe;" onclick="event.stopPropagation()">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1">
+                <div class="d-flex align-items-center flex-wrap gap-1" style="font-size:0.72rem;">
+                  <span class="fw-bold text-primary"><i class="bi bi-people-fill me-1"></i>RD phụ trách (${rdsShown.length})</span>
+                  ${item.zoneId ? `<span class="badge bg-light text-secondary border font-monospace" style="font-size:0.67rem;">Zone: ${item.zoneId}</span>` : ''}
+                  <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1" style="font-size:0.66rem;" onclick="copyMaDonHvPreview('${safeBaseId}', event)">
+                    <i class="bi bi-clipboard"></i> Copy mã
+                  </button>
+                </div>
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="btn btn-xs py-0 px-2 fw-bold ${activeCa === 'COT1' ? 'btn-primary' : 'btn-outline-primary'}" style="font-size:0.66rem;" onclick="doiCaRdTrongHvPreview('COT1', event)">COT 1 (${c1Count})</button>
+                  <button type="button" class="btn btn-xs py-0 px-2 fw-bold ${activeCa === 'COT2' ? 'btn-warning text-dark' : 'btn-outline-warning text-dark'}" style="font-size:0.66rem;" onclick="doiCaRdTrongHvPreview('COT2', event)">COT 2 (${c2Count})</button>
+                  <button type="button" class="btn btn-xs py-0 px-2 fw-bold ${activeCa === 'ALL' ? 'btn-dark' : 'btn-outline-dark'}" style="font-size:0.66rem;" onclick="doiCaRdTrongHvPreview('ALL', event)">Tất cả</button>
+                </div>
+              </div>
+              ${rdItemsHtml}
+              ${item.lyDoOnhold ? `<div class="mt-1 small text-danger fw-semibold" style="font-size:0.71rem;"><i class="bi bi-exclamation-circle me-1"></i>Lý do On-Hold: ${item.lyDoOnhold}</div>` : ''}
+            </div>`;
+        }
 
         html += `
-          <div class="d-flex justify-content-between align-items-center p-2 rounded mb-1" style="border-bottom: 1px solid #f1f5f9; background:${isIp ? '#fff1f2' : '#ffffff'}; cursor:pointer;" onclick="switchPendingCanvasTab('hv')">
-            <div>
-              <div class="font-monospace fw-bold ${isIp ? 'text-danger' : 'text-dark'}" style="font-size:0.8rem;">${item.maDon || '—'}</div>
-              <div class="text-muted" style="font-size:0.72rem;">${item.quanPhuong || '—'} • RD: <b>${rdTen}</b></div>
+          <div class="p-2 rounded mb-1"
+               style="border: ${cardBorder}; background: ${cardBg}; cursor: pointer; transition: all 0.14s ease;"
+               onclick="toggleChiTietRdDonHvPreview('${safeBaseId}')">
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <div class="flex-grow-1">
+                <div class="font-monospace fw-bold ${isIp ? 'text-danger' : 'text-dark'} d-flex align-items-center gap-1" style="font-size:0.81rem;">
+                  <span>${item.maDonHienThi}</span>
+                  <i class="bi ${isExpanded ? 'bi-chevron-up text-primary' : 'bi-chevron-down text-muted'}" style="font-size:0.7rem;"></i>
+                </div>
+                <div class="text-muted" style="font-size:0.72rem;">
+                  ${item.quanPhuong || '—'} • RD: <b>${rdTen}</b>
+                </div>
+              </div>
+              <span class="badge fw-semibold px-2 py-1 flex-shrink-0" style="${ttPill} border-radius:999px; font-size:0.7rem;">${tt}</span>
             </div>
-            <span class="badge fw-semibold px-2 py-1" style="${ttPill} border-radius:999px; font-size:0.7rem;">${tt}</span>
+            ${expandedPanelHtml}
           </div>`;
       });
 
-      if (filtered.length > 6) {
-        html += `<div class="text-center pt-1"><a href="javascript:void(0)" class="small fw-semibold text-primary text-decoration-none" onclick="switchPendingCanvasTab('hv')">+ Xem thêm ${filtered.length - 6} đơn HV khác →</a></div>`;
-      }
       wrap.innerHTML = html;
     }
 
